@@ -110,6 +110,7 @@ class OwnerListingsTest extends TestCase
 
         $admin = User::factory()->create();
         DB::table('users')->where('id', $admin->id)->update(['is_admin' => true]);
+        $admin->refresh();
         $listingId = DB::table('listings')->where('property_id', $propertyId)->value('id');
         $this->actingAs($admin)->postJson("/api/v1/admin/listings/{$listingId}/approve")
             ->assertConflict();

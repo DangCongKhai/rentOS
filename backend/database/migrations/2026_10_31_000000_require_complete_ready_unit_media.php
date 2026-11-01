@@ -14,13 +14,13 @@ return new class extends Migration
                 '{standard}',
                 ((shared_amenities->'standard') - 'shared_laundry')
                     || CASE
-                        WHEN NOT ((shared_amenities->'standard') ? 'laundry')
+                        WHEN NOT jsonb_exists(shared_amenities->'standard', 'laundry')
                             THEN jsonb_build_object('laundry', shared_amenities->'standard'->'shared_laundry')
                         ELSE '{}'::jsonb
                     END,
                 true
             )
-            WHERE (shared_amenities->'standard') ? 'shared_laundry'
+            WHERE jsonb_exists(shared_amenities->'standard', 'shared_laundry')
             SQL);
         $this->replaceValidationRules(requireUnitMedia: true, allowUnavailableMarketedUnits: true);
     }
@@ -28,7 +28,6 @@ return new class extends Migration
     public function down(): void
     {
         $this->replaceValidationRules(requireUnitMedia: false, allowUnavailableMarketedUnits: false);
-
     }
 
     private function replaceValidationRules(bool $requireUnitMedia, bool $allowUnavailableMarketedUnits): void
