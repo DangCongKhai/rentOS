@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-const API_BASE = "https://www.tinhthanhpho.com/api/v1";
+const API_BASE = `${(process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "")}/api/v1/locations`;
 
 type AdministrativeUnit = {
   code: string;
@@ -50,11 +50,12 @@ export function VietnamLocationPicker({
   const [loadingCities, setLoadingCities] = useState(true);
   const [loadingWards, setLoadingWards] = useState(false);
   const [error, setError] = useState("");
+  const [retry, setRetry] = useState(0);
 
   useEffect(() => {
     let active = true;
 
-    loadUnits(`${API_BASE}/new-provinces?limit=100`)
+    loadUnits(`${API_BASE}/provinces`)
       .then((units) => {
         if (active) {
           setCities(units);
@@ -75,7 +76,7 @@ export function VietnamLocationPicker({
     return () => {
       active = false;
     };
-  }, [initialCity]);
+  }, [initialCity, retry]);
 
   useEffect(() => {
     if (!cityCode) {
@@ -84,7 +85,7 @@ export function VietnamLocationPicker({
 
     let active = true;
 
-    loadUnits(`${API_BASE}/new-provinces/${encodeURIComponent(cityCode)}/wards?limit=1000`)
+    loadUnits(`${API_BASE}/provinces/${encodeURIComponent(cityCode)}/wards`)
       .then((units) => {
         if (active) setWards(units);
       })
@@ -98,7 +99,7 @@ export function VietnamLocationPicker({
     return () => {
       active = false;
     };
-  }, [cityCode]);
+  }, [cityCode, retry]);
 
   function selectCity(code: string) {
     setCityCode(code);
@@ -144,7 +145,7 @@ export function VietnamLocationPicker({
         </select>
       </label>
 
-      {error && <p className="text-sm text-rose-700 sm:col-span-2" role="alert">{error}</p>}
+      {error && <div className="flex items-center gap-3 text-sm text-rose-700 sm:col-span-2" role="alert"><span>{error}</span><button type="button" onClick={() => { setError(""); setRetry((value) => value + 1); }} className="font-semibold underline">Thử lại</button></div>}
     </div>
   );
 }

@@ -1006,6 +1006,51 @@ class OwnerPropertiesTest extends TestCase
         ]);
     }
 
+    public function test_owner_can_reorder_and_deselect_unit_gallery_photos(): void
+    {
+        $owner = User::factory()->create();
+        $property = $this->actingAs($owner)->postJson('/api/v1/owner/properties', $this->validProperty())->assertCreated();
+        $propertyId = $property->json('data.id');
+        $unitId = $property->json('data.units.0.id');
+        $mediaIds = [];
+
+        foreach ([0, 1] as $sortOrder) {
+            $mediaId = (string) Str::uuid();
+            $mediaIds[] = $mediaId;
+            DB::table('property_media')->insert([
+                'id' => $mediaId,
+                'property_id' => $propertyId,
+                'unit_id' => $unitId,
+                'uploaded_by' => $owner->id,
+                'client_operation_id' => (string) Str::uuid(),
+                'storage_path' => "properties/{$propertyId}/units/{$unitId}/{$mediaId}.jpg",
+                'sha256' => str_repeat('a', 64),
+                'mime_type' => 'image/jpeg',
+                'size_bytes' => 100,
+                'sort_order' => $sortOrder,
+                'is_selected_for_listing' => true,
+            ]);
+        }
+
+        $this->putJson("/api/v1/owner/properties/{$propertyId}/units/{$unitId}/gallery", [
+            'expected_content_revision' => 1,
+            'items' => [
+                ['media_id' => $mediaIds[0], 'revision' => 1, 'sort_order' => 1, 'is_selected_for_listing' => true],
+                ['media_id' => $mediaIds[1], 'revision' => 1, 'sort_order' => 0, 'is_selected_for_listing' => false],
+            ],
+        ])->assertOk()
+            ->assertJsonPath('data.0.id', $mediaIds[1])
+            ->assertJsonPath('data.0.is_selected_for_listing', false)
+            ->assertJsonPath('data.1.id', $mediaIds[0])
+            ->assertJsonPath('meta.content_revision', 2);
+
+        $this->assertDatabaseHas('audit_logs', [
+            'entity_type' => 'property_media',
+            'entity_id' => $mediaIds[1],
+            'action' => 'property_media.gallery_updated',
+        ]);
+    }
+
     private function createMedia(string $ownerId, string $propertyId, int $sortOrder): string
     {
         $mediaId = (string) Str::uuid();

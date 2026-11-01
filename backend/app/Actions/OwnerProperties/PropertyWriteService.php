@@ -847,9 +847,9 @@ class PropertyWriteService
      * @param  array<string, mixed>  $attributes
      * @return array{media: EloquentCollection<int, PropertyMedia>, content_revision: int}
      */
-    public function updateGallery(User $owner, Property $property, array $attributes): array
+    public function updateGallery(User $owner, Property $property, array $attributes, ?Unit $unit = null): array
     {
-        return DB::transaction(function () use ($owner, $property, $attributes): array {
+        return DB::transaction(function () use ($owner, $property, $attributes, $unit): array {
             $property = Property::query()
                 ->whereKey($property->id)
                 ->lockForUpdate()
@@ -857,6 +857,11 @@ class PropertyWriteService
 
             $owner = $this->lockActiveOwner($owner);
             Gate::authorize('update', $property);
+
+            if ($unit !== null) {
+                $unit = Unit::query()->whereKey($unit->id)->where('property_id', $property->id)
+                    ->whereNull('archived_at')->lockForUpdate()->firstOrFail();
+            }
 
             abort_if($property->archived_at !== null, 409);
             abort_unless(
@@ -868,7 +873,7 @@ class PropertyWriteService
             $mediaIds = array_column($items, 'media_id');
             $mediaById = PropertyMedia::query()
                 ->where('property_id', $property->id)
-                ->whereNull('unit_id')
+                ->where('unit_id', $unit?->id)
                 ->whereNull('deleted_at')
                 ->whereNull('purged_at')
                 ->whereIn('id', $mediaIds)
@@ -878,7 +883,7 @@ class PropertyWriteService
 
             if ($mediaById->count() !== count($mediaIds)) {
                 throw ValidationException::withMessages([
-                    'items' => 'Every photo must be an active shared photo belonging to this property.',
+                    'items' => 'Every photo must be active and belong to the selected property or unit.',
                 ]);
             }
 
@@ -961,7 +966,7 @@ class PropertyWriteService
 
             $media = PropertyMedia::query()
                 ->where('property_id', $property->id)
-                ->whereNull('unit_id')
+                ->where('unit_id', $unit?->id)
                 ->whereNull('deleted_at')
                 ->whereNull('purged_at')
                 ->orderBy('sort_order')

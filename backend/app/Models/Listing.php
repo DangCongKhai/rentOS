@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /** @property-read Property $property */
 class Listing extends Model
@@ -96,15 +97,28 @@ class Listing extends Model
                 ->whereNull('unit_id')->where('is_selected_for_listing', true)
                 ->whereNull('deleted_at')->whereNull('purged_at'))
             ->whereHas('property.units', fn (Builder $unit) => $unit
-                ->where('is_marketed', true)->where('operational_status', 'READY')->whereNull('archived_at'))
+                ->where('is_marketed', true)->where('operational_status', 'READY')->whereNull('archived_at')
+                ->whereNotNull('description')->whereRaw("btrim(description) <> ''")
+                ->whereNotNull('area_m2')->whereNotNull('advertised_monthly_rent')
+                ->whereNotNull('deposit')->whereNotNull('max_occupants')
+                ->whereExists(fn (QueryBuilder $media) => $media->selectRaw('1')->from('property_media')
+                    ->whereColumn('property_media.property_id', 'units.property_id')
+                    ->whereColumn('property_media.unit_id', 'units.id')
+                    ->where('property_media.is_selected_for_listing', true)
+                    ->whereNull('property_media.deleted_at')->whereNull('property_media.purged_at')))
             ->whereDoesntHave('property.units', fn (Builder $unit) => $unit
                 ->where('is_marketed', true)
+                ->where('operational_status', 'READY')
+                ->whereNull('archived_at')
                 ->where(function (Builder $invalid): void {
-                    $invalid->where('operational_status', '<>', 'READY')
-                        ->orWhereNotNull('archived_at')
-                        ->orWhereNull('description')->orWhereRaw("btrim(description) = ''")
+                    $invalid->whereNull('description')->orWhereRaw("btrim(description) = ''")
                         ->orWhereNull('area_m2')->orWhereNull('advertised_monthly_rent')
-                        ->orWhereNull('deposit')->orWhereNull('max_occupants');
+                        ->orWhereNull('deposit')->orWhereNull('max_occupants')
+                        ->orWhereNotExists(fn (QueryBuilder $media) => $media->selectRaw('1')->from('property_media')
+                            ->whereColumn('property_media.property_id', 'units.property_id')
+                            ->whereColumn('property_media.unit_id', 'units.id')
+                            ->where('property_media.is_selected_for_listing', true)
+                            ->whereNull('property_media.deleted_at')->whereNull('property_media.purged_at'));
                 }));
     }
 }

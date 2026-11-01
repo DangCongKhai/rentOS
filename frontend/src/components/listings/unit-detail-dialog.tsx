@@ -71,8 +71,11 @@ export function UnitDetailDialog({
             <Spec title="Thời hạn thuê tối thiểu" body={`${unit.minimum_rental_months} tháng`} />
             <Spec title="Số người tối đa" body={`${unit.max_occupants} người`} />
             <Spec title="Thú cưng" body={petLabels[unit.pets ?? ""] ?? "Hỏi chủ nhà"} />
+            <Spec title="Hút thuốc" body={unit.smoking === "NOT_ALLOWED" ? "Không cho phép" : unit.smoking === "OUTDOOR_ONLY" ? "Chỉ ngoài trời" : unit.smoking === "ALLOWED" ? "Được phép" : "Hỏi chủ nhà"} />
             {unit.held_start && unit.held_end ? <Spec title="Giữ chỗ" body={`${unit.held_start} – ${unit.held_end}`} /> : null}
           </div>
+
+          {unit.rules.length > 0 ? <section className="grid gap-2"><h3 className="text-lg font-bold text-[#091216]">Quy định áp dụng cho căn</h3><ul className="list-disc space-y-1 pl-5 text-sm text-[#454e5c]">{unit.rules.map((rule) => <li key={rule}>{rule}</li>)}</ul></section> : null}
 
           <section aria-label={`Tiện ích trong căn ${unit.label}`} className="grid gap-3">
             <h3 className="text-xl font-bold text-[#091216]">Tiện ích trong căn</h3>

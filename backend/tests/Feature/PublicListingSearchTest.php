@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\PublicListingFixture;
@@ -23,7 +24,7 @@ class PublicListingSearchTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_occupied_listing_stays_in_search_with_an_available_from_label(): void
+    public function test_no_date_search_requires_a_unit_free_for_its_minimum_rental_term(): void
     {
         $published = PublicListingFixture::published([
             'name' => 'Nhà Hải Châu',
@@ -45,16 +46,15 @@ class PublicListingSearchTest extends TestCase
             ],
         ]);
         PublicListingFixture::blockUnit($published->unitIds[0], '2026-11-01', '2027-05-01');
-        PublicListingFixture::blockUnit($published->unitIds[1], '2026-11-01', '2027-05-01');
 
         $response = $this->getJson('/api/v1/listings');
 
         $response->assertOk()
             ->assertJsonPath('data.0.id', $published->listingId)
             ->assertJsonPath('data.0.title', 'Studio full nội thất gần biển Mỹ Khê')
-            ->assertJsonPath('data.0.availability_label', 'Trống từ 02/05/2027')
-            ->assertJsonPath('data.0.available_unit_count', 0)
-            ->assertJsonPath('data.0.rent_min', '3800000')
+            ->assertJsonPath('data.0.availability_label', 'Còn trống')
+            ->assertJsonPath('data.0.available_unit_count', 1)
+            ->assertJsonPath('data.0.rent_min', '4500000')
             ->assertJsonPath('data.0.rent_max', '4500000')
             ->assertJsonPath('data.0.minimum_rental_months', 3)
             ->assertJsonPath('data.0.property.name', 'Nhà Hải Châu')
@@ -69,6 +69,20 @@ class PublicListingSearchTest extends TestCase
         $this->assertSame($response->json('data.0.cover_url'), $response->json('data.0.image_urls.0'));
         $this->assertCount(3, $response->json('data.0.image_urls'));
         $this->assertArrayNotHasKey('district', $response->json('data.0.property'));
+    }
+
+    public function test_no_date_search_hides_listing_when_all_marketed_units_are_blocked_during_minimum_term(): void
+    {
+        $published = PublicListingFixture::published([
+            'units' => [[
+                'minimum_rental_months' => 3,
+            ]],
+        ]);
+        PublicListingFixture::blockUnit($published->unitIds[0], '2026-11-01', '2027-02-01');
+
+        $this->getJson('/api/v1/listings')
+            ->assertOk()
+            ->assertJsonPath('data', []);
     }
 
     public function test_later_block_produces_available_until_label(): void
@@ -160,5 +174,19 @@ class PublicListingSearchTest extends TestCase
                 'key' => 'laundry',
                 'scope' => 'PROPERTY',
             ]);
+    }
+
+    public function test_owner_and_public_amenity_catalogs_share_canonical_keys_and_scopes(): void
+    {
+        $owner = User::factory()->create();
+        $publicCatalog = $this->getJson('/api/v1/amenities')->assertOk();
+        $ownerCatalog = $this->actingAs($owner)->getJson('/api/v1/owner/amenities')->assertOk();
+
+        $this->assertSame(
+            collect($publicCatalog->json('data'))->mapWithKeys(fn (array $item): array => [$item['key'] => $item['scopes']])->all(),
+            collect($ownerCatalog->json('data'))->mapWithKeys(fn (array $item): array => [
+                $item['key'] => array_map(static fn (string $scope): string => $scope === 'shared' ? 'PROPERTY' : 'UNIT', $item['scopes']),
+            ])->all(),
+        );
     }
 }

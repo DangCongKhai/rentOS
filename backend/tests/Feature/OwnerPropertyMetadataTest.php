@@ -4,7 +4,9 @@ namespace Tests\Feature;
 
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Tests\Support\PublicListingFixture;
 use Tests\TestCase;
 
 class OwnerPropertyMetadataTest extends TestCase
@@ -16,11 +18,62 @@ class OwnerPropertyMetadataTest extends TestCase
         $owner = User::factory()->create();
 
         $this->actingAs($owner)
-            ->getJson('/api/v1/amenities?q=AC')
+            ->getJson('/api/v1/owner/amenities?q=AC')
             ->assertOk()
             ->assertJsonCount(1, 'data')
             ->assertJsonPath('data.0.key', 'air_conditioning')
             ->assertJsonPath('data.0.label', 'Điều hòa');
+    }
+
+    public function test_owner_catalog_requires_an_owner_session(): void
+    {
+        $this->getJson('/api/v1/owner/amenities')->assertUnauthorized();
+
+        $owner = User::factory()->create();
+        $this->actingAs($owner)->getJson('/api/v1/owner/amenities')
+            ->assertOk()
+            ->assertJsonFragment(['key' => 'wifi', 'label' => 'Wi-Fi']);
+    }
+
+    public function test_contract_policy_snapshot_does_not_change_when_advertised_policies_are_edited(): void
+    {
+        $published = PublicListingFixture::published([
+            'policies' => [
+                'schema_version' => 1,
+                'pets' => 'NOT_ALLOWED',
+                'smoking' => 'NOT_ALLOWED',
+                'shared_rules' => [],
+            ],
+        ]);
+        PublicListingFixture::blockUnit($published->unitIds[0], '2026-11-01', '2027-02-01');
+        $contractId = DB::table('tenancy_contracts')->value('id');
+        $snapshot = DB::table('tenancy_contracts')->where('id', $contractId)->value('policies_snapshot');
+
+        $this->actingAs($published->owner)->patchJson("/api/v1/owner/properties/{$published->propertyId}", [
+            'expected_content_revision' => 1,
+            'policies' => [
+                'schema_version' => 1,
+                'pets' => 'ALLOWED',
+                'smoking' => 'ALLOWED',
+                'shared_rules' => ['Quiet hours after 10 PM'],
+            ],
+        ])->assertOk();
+
+        $this->actingAs($published->owner)->patchJson(
+            "/api/v1/owner/properties/{$published->propertyId}/units/{$published->unitIds[0]}",
+            [
+                'expected_content_revision' => 2,
+                'policy_overrides' => [
+                    'smoking' => 'OUTDOOR_ONLY',
+                    'additional_rules' => ['No shoes indoors'],
+                ],
+            ],
+        )->assertOk()->assertJsonPath('data.policy_overrides.smoking', 'OUTDOOR_ONLY');
+
+        $this->assertSame(
+            $snapshot,
+            DB::table('tenancy_contracts')->where('id', $contractId)->value('policies_snapshot'),
+        );
     }
 
     public function test_property_policy_and_amenity_text_is_normalized_and_audited(): void

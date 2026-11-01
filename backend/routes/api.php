@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\V1\AdminListingsController;
 use App\Http\Controllers\Api\V1\AmenitiesController;
 use App\Http\Controllers\Api\V1\CurrentUserController;
+use App\Http\Controllers\Api\V1\LocationsController;
 use App\Http\Controllers\Api\V1\OwnerListingsController;
 use App\Http\Controllers\Api\V1\OwnerPropertiesController;
 use App\Http\Controllers\Api\V1\PublicListingsController;
@@ -20,6 +21,8 @@ Route::prefix('v1')->group(function (): void {
     Route::get('/listings', [PublicListingsController::class, 'index'])->name('api.v1.listings.index');
     Route::get('/listings/{listing}', [PublicListingsController::class, 'show'])->name('api.v1.listings.show');
     Route::get('/amenities', [AmenitiesController::class, 'index'])->name('api.v1.amenities.index');
+    Route::get('/locations/provinces', [LocationsController::class, 'provinces'])->name('api.v1.locations.provinces');
+    Route::get('/locations/provinces/{provinceCode}/wards', [LocationsController::class, 'wards'])->name('api.v1.locations.wards');
 });
 
 Route::middleware('auth:sanctum')->prefix('v1')->group(function (): void {
@@ -27,6 +30,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function (): void {
     Route::patch('/me', [CurrentUserController::class, 'update'])->name('api.v1.me.update');
     Route::get('/tenant/tenancies', [TenantTenanciesController::class, 'index'])->name('api.v1.tenant.tenancies');
     Route::get('/owner/properties', [OwnerPropertiesController::class, 'index'])->name('api.v1.owner.properties');
+    Route::get('/owner/amenities', [AmenitiesController::class, 'ownerCatalog'])->name('api.v1.owner.amenities.index');
     Route::post('/owner/properties', [OwnerPropertiesController::class, 'store'])->name('api.v1.owner.properties.store');
     Route::get('/owner/properties/{property}', [OwnerPropertiesController::class, 'show'])->name('api.v1.owner.properties.show');
     Route::put('/owner/properties/{property}', [OwnerPropertiesController::class, 'update'])->name('api.v1.owner.properties.update');
@@ -39,6 +43,7 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function (): void {
     Route::post('/owner/properties/{property}/media', [OwnerPropertiesController::class, 'storeMedia'])->name('api.v1.owner.properties.media.store');
     Route::get('/owner/properties/{property}/media', [OwnerPropertiesController::class, 'indexMedia'])->name('api.v1.owner.properties.media.index');
     Route::put('/owner/properties/{property}/gallery', [OwnerPropertiesController::class, 'updateGallery'])->name('api.v1.owner.properties.gallery.update');
+    Route::put('/owner/properties/{property}/units/{unit}/gallery', [OwnerPropertiesController::class, 'updateUnitGallery'])->name('api.v1.owner.properties.units.gallery.update');
     Route::delete('/owner/properties/{property}/media/{media}', [OwnerPropertiesController::class, 'archiveMedia'])->name('api.v1.owner.properties.media.archive');
     Route::get('/owner/properties/{property}/listing', [OwnerListingsController::class, 'show'])->name('api.v1.owner.properties.listing.show');
     Route::post('/owner/properties/{property}/listing', [OwnerListingsController::class, 'store'])->name('api.v1.owner.properties.listing.store');

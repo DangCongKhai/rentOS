@@ -70,6 +70,25 @@ class OwnerListingsTest extends TestCase
         $this->assertDatabaseHas('listings', ['property_id' => $propertyId, 'moderation_status' => 'DRAFT']);
     }
 
+    public function test_listing_submission_requires_selected_live_media_for_each_ready_marketed_unit(): void
+    {
+        $owner = User::factory()->create();
+        $propertyId = $this->createCompleteProperty($owner->id);
+        $unitId = (string) DB::table('units')->where('property_id', $propertyId)->value('id');
+        $coverId = $this->createMedia($owner->id, $propertyId);
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing", $this->listingPayload($coverId))->assertCreated();
+        DB::table('property_media')->where('unit_id', $unitId)->update(['is_selected_for_listing' => false]);
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 1,
+        ])->assertUnprocessable()->assertJsonValidationErrors("units.{$unitId}.photos");
+
+        DB::table('property_media')->where('unit_id', $unitId)->update(['is_selected_for_listing' => true]);
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 1,
+        ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
+    }
+
     public function test_editing_a_pending_listing_invalidates_its_submitted_snapshot(): void
     {
         $owner = User::factory()->create();
@@ -88,6 +107,12 @@ class OwnerListingsTest extends TestCase
         $response->assertOk()->assertJsonPath('data.moderation_status', 'DRAFT')
             ->assertJsonPath('data.submitted_content_revision', null)
             ->assertJsonPath('data.property_content_revision', 2);
+
+        $admin = User::factory()->create();
+        DB::table('users')->where('id', $admin->id)->update(['is_admin' => true]);
+        $listingId = DB::table('listings')->where('property_id', $propertyId)->value('id');
+        $this->actingAs($admin)->postJson("/api/v1/admin/listings/{$listingId}/approve")
+            ->assertConflict();
     }
 
     public function test_admin_rejection_requires_a_reason_and_owner_can_resubmit(): void
@@ -154,6 +179,33 @@ class OwnerListingsTest extends TestCase
         $this->assertSame(0, Listing::query()->publiclyVisible()->count());
     }
 
+    public function test_marketed_maintenance_unit_does_not_block_submission_if_a_ready_unit_is_complete(): void
+    {
+        $owner = User::factory()->create();
+        $propertyId = $this->createCompleteProperty($owner->id);
+        $coverId = $this->createMedia($owner->id, $propertyId);
+        $maintenanceUnitId = (string) Str::uuid();
+        DB::table('units')->insert([
+            'id' => $maintenanceUnitId,
+            'property_id' => $propertyId,
+            'client_operation_id' => (string) Str::uuid(),
+            'label' => 'Unit under maintenance',
+            'unit_kind' => 'ROOM',
+            'bedrooms' => 1,
+            'bathrooms' => 1,
+            'bathroom_arrangement' => 'PRIVATE',
+            'minimum_rental_months' => 3,
+            'operational_status' => 'MAINTENANCE',
+            'is_marketed' => true,
+        ]);
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing", $this->listingPayload($coverId))->assertCreated();
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 1,
+        ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
+    }
+
     private function listingPayload(?string $coverId): array
     {
         return [
@@ -194,6 +246,7 @@ class OwnerListingsTest extends TestCase
             'id' => (string) Str::uuid(), 'property_id' => $id, 'unit_id' => $unitId, 'uploaded_by' => $ownerId,
             'client_operation_id' => (string) Str::uuid(), 'storage_path' => "properties/{$id}/units/{$unitId}/test.jpg",
             'sha256' => str_repeat('a', 64), 'mime_type' => 'image/jpeg', 'size_bytes' => 100,
+            'is_selected_for_listing' => true,
         ]);
 
         return $id;

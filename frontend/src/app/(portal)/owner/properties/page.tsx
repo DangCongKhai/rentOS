@@ -18,6 +18,7 @@ import {
   getOwnerPropertyMedia,
   removeOwnerMedia,
   updateOwnerGallery,
+  updateOwnerUnitGallery,
   updateOwnerProperty,
   updateOwnerUnit,
   uploadOwnerMedia,
@@ -51,7 +52,6 @@ function listingUnitFieldErrors(unit: {
   if (unit.advertised_monthly_rent == null || Number(unit.advertised_monthly_rent) <= 0) errors.advertised_monthly_rent = "Nhập giá thuê tháng lớn hơn 0.";
   if (unit.deposit == null || Number(unit.deposit) < 0) errors.deposit = "Nhập tiền đặt cọc.";
   if (unit.max_occupants == null || unit.max_occupants < 1) errors.max_occupants = "Nhập số người tối đa.";
-  if (unit.operational_status && unit.operational_status !== "READY") errors.operational_status = "Chuyển trạng thái vận hành sang Sẵn sàng.";
   return errors;
 }
 
@@ -69,6 +69,7 @@ function AmenityFields({ catalog, scope, value }: { catalog: AmenityCatalogEntry
     <div className="flex flex-wrap gap-2">
       {entries.map((item) => <label key={item.key} className="inline-flex min-h-10 cursor-pointer items-center gap-2 rounded-lg border border-slate-200 px-3 text-sm text-slate-700">
         <input type="checkbox" name={`amenity:${item.key}`} defaultChecked={selected.has(item.key)} className="size-4 accent-[#3368a0]" />{item.label}
+        <input type="text" name={`amenity_details:${item.key}`} defaultValue={value?.standard[item.key]?.details ?? ""} maxLength={160} aria-label={`Ghi chú ${item.label}`} placeholder="Ghi chú tùy chọn" className="ml-2 w-40 rounded-md border border-slate-200 px-2 py-1 text-xs" />
       </label>)}
     </div>
     <label className="block text-xs font-medium text-slate-600">Tiện nghi riêng, mỗi dòng một mục
@@ -80,12 +81,31 @@ function AmenityFields({ catalog, scope, value }: { catalog: AmenityCatalogEntry
 function amenitiesFromForm(form: FormData, catalog: AmenityCatalogEntry[], scope: "shared" | "unit"): AmenityDocument {
   const standard: AmenityDocument["standard"] = {};
   for (const amenity of catalog.filter((item) => item.scopes.includes(scope))) {
-    if (form.get(`amenity:${amenity.key}`) === "on") standard[amenity.key] = { enabled: true };
+    if (form.get(`amenity:${amenity.key}`) === "on") {
+      const details = fieldValue(form, `amenity_details:${amenity.key}`);
+      standard[amenity.key] = { enabled: true, ...(details ? { details } : {}) };
+    }
   }
   return {
     schema_version: 1,
     standard,
     custom: fieldValue(form, "custom_amenities").split("\n").map((item) => item.trim()).filter(Boolean),
+  };
+}
+
+function unitAmenityDefaultsFromForm(form: FormData, catalog: AmenityCatalogEntry[], index: number): AmenityDocument {
+  const prefix = `bulk_${index}_`;
+  const standard: AmenityDocument["standard"] = {};
+  for (const amenity of catalog.filter((item) => item.scopes.includes("unit"))) {
+    if (form.get(`${prefix}amenity:${amenity.key}`) === "on") {
+      const details = fieldValue(form, `${prefix}details:${amenity.key}`);
+      standard[amenity.key] = { enabled: true, ...(details ? { details } : {}) };
+    }
+  }
+  return {
+    schema_version: 1,
+    standard,
+    custom: fieldValue(form, `${prefix}custom_amenities`).split("\n").map((item) => item.trim()).filter(Boolean),
   };
 }
 
@@ -99,6 +119,7 @@ export default function OwnerPropertiesPage() {
   const [editingUnit, setEditingUnit] = useState<OwnerUnit | null>(null);
   const [bulkLabels, setBulkLabels] = useState("");
   const [galleryItems, setGalleryItems] = useState<OwnerPropertyMedia[]>([]);
+  const [unitGalleryItems, setUnitGalleryItems] = useState<Record<string, OwnerPropertyMedia[]>>({});
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -112,7 +133,6 @@ export default function OwnerPropertiesPage() {
   const [uploadedPhotoCount, setUploadedPhotoCount] = useState(0);
 
   const sharedMedia = useMemo(() => media.filter((item) => item.unit_id === null), [media]);
-  const unitMedia = useMemo(() => media.filter((item) => item.unit_id !== null), [media]);
 
   const loadProperty = useCallback(async (id: string) => {
     if (!id) {
@@ -124,6 +144,11 @@ export default function OwnerPropertiesPage() {
     setProperty(detail);
     setMedia(photos);
     setGalleryItems(photos.filter((item) => item.unit_id === null).sort((a, b) => a.sort_order - b.sort_order));
+    setUnitGalleryItems(Object.fromEntries(
+      photos.filter((item) => item.unit_id !== null)
+        .reduce((groups, item) => groups.set(item.unit_id!, [...(groups.get(item.unit_id!) ?? []), item]), new Map<string, OwnerPropertyMedia[]>())
+        .entries(),
+    ));
   }, []);
 
   useEffect(() => {
@@ -326,7 +351,7 @@ export default function OwnerPropertiesPage() {
     event.preventDefault();
     if (!property) return;
     const form = new FormData(event.currentTarget);
-    const labels = bulkLabels.split("\n").map((label) => label.trim()).filter(Boolean);
+    const labels = bulkPreviewLabels;
     if (labels.length === 0) return;
     setBusy(true);
     setError(null);
@@ -334,14 +359,23 @@ export default function OwnerPropertiesPage() {
       await createOwnerUnitBatch(property.id, {
         expected_content_revision: property.content_revision,
         client_operation_id: crypto.randomUUID(),
-        units: labels.map((label) => ({
+        units: labels.map((label, index) => ({
           client_operation_id: crypto.randomUUID(),
-          label,
-          unit_kind: fieldValue(form, "unit_kind"),
-          bedrooms: numberValue(form, "bedrooms") ?? 0,
-          bathrooms: numberValue(form, "bathrooms") ?? 1,
-          bathroom_arrangement: fieldValue(form, "bathroom_arrangement"),
-          minimum_rental_months: numberValue(form, "minimum_rental_months") ?? 3,
+          label: fieldValue(form, `bulk_${index}_label`) || label,
+          unit_kind: fieldValue(form, `bulk_${index}_unit_kind`) || "ROOM",
+          description: fieldValue(form, `bulk_${index}_description`) || null,
+          area_m2: numberValue(form, `bulk_${index}_area_m2`),
+          bedrooms: numberValue(form, `bulk_${index}_bedrooms`) ?? 0,
+          bathrooms: numberValue(form, `bulk_${index}_bathrooms`) ?? 1,
+          bathroom_arrangement: fieldValue(form, `bulk_${index}_bathroom_arrangement`) || "PRIVATE",
+          minimum_rental_months: numberValue(form, `bulk_${index}_minimum_rental_months`) ?? 3,
+          advertised_monthly_rent: numberValue(form, `bulk_${index}_rent`),
+          deposit: numberValue(form, `bulk_${index}_deposit`),
+          max_occupants: numberValue(form, `bulk_${index}_max_occupants`),
+          amenities: unitAmenityDefaultsFromForm(form, catalog, index),
+          policy_overrides: {
+            additional_rules: fieldValue(form, `bulk_${index}_additional_rules`).split("\n").map((rule) => rule.trim()).filter(Boolean),
+          },
         })),
       });
       setBulkLabels("");
@@ -454,6 +488,47 @@ export default function OwnerPropertiesPage() {
     await saveGalleryItems(galleryItems);
   }
 
+  async function saveUnitGalleryItems(unitId: string, items: OwnerPropertyMedia[]): Promise<boolean> {
+    if (!property) return false;
+    setBusy(true);
+    setError(null);
+    try {
+      await updateOwnerUnitGallery(property.id, unitId, {
+        expected_content_revision: property.content_revision,
+        items: items.map((item, index) => ({
+          media_id: item.id,
+          revision: item.revision,
+          sort_order: index,
+          is_selected_for_listing: item.is_selected_for_listing,
+        })),
+      });
+      await reloadProperty();
+      setNotice("Thứ tự và lựa chọn ảnh phòng đã được lưu.");
+      return true;
+    } catch (caught) {
+      reportError(caught);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function moveUnitGalleryItem(unitId: string, index: number, direction: -1 | 1) {
+    const current = unitGalleryItems[unitId] ?? [];
+    const targetIndex = index + direction;
+    if (busy || targetIndex < 0 || targetIndex >= current.length) return;
+    const reordered = [...current];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+    setUnitGalleryItems((items) => ({ ...items, [unitId]: reordered }));
+    if (!await saveUnitGalleryItems(unitId, reordered)) {
+      setUnitGalleryItems((items) => ({ ...items, [unitId]: current }));
+    }
+  }
+
+  async function saveUnitGallery(unitId: string) {
+    await saveUnitGalleryItems(unitId, unitGalleryItems[unitId] ?? []);
+  }
+
   async function removePhoto(photo: OwnerPropertyMedia) {
     if (!property || !window.confirm("Gỡ ảnh khỏi thư viện? Tệp được lưu giữ trong lịch sử.")) return;
     setBusy(true);
@@ -471,6 +546,7 @@ export default function OwnerPropertiesPage() {
 
   const policy = property?.policies;
   const units = property?.units.filter((unit) => !unit.archived_at) ?? [];
+  const bulkPreviewLabels = bulkLabels.split("\n").map((label) => label.trim()).filter(Boolean);
   const listedProperties = summaries.filter(({ property: item }) => showArchived || !item.archived_at);
   const listingStatus = (listing: OwnerListing | null) => {
     if (!listing) return "Chưa có tin";
@@ -553,7 +629,7 @@ export default function OwnerPropertiesPage() {
             <div className="flex flex-wrap gap-2 sm:col-span-2"><button type="submit" disabled={busy} className={buttonClass}>{busy ? "Đang lưu…" : editingUnit ? "Lưu phòng" : "Thêm phòng"}</button>{editingUnit && <button type="button" onClick={() => setEditingUnit(null)} className={secondaryButtonClass}>Hủy sửa</button>}</div>
           </form></section>
 
-          {property.rental_arrangement === "SEPARATE_UNITS" && <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-semibold text-slate-900">Thêm nhiều phòng</h2><p className="mt-1 text-sm text-slate-600">Nhập mỗi tên phòng trên một dòng. Xem trước danh sách trước khi tạo.</p><form onSubmit={addUnitBatch} className="mt-4 space-y-3"><textarea value={bulkLabels} onChange={(event) => setBulkLabels(event.target.value)} rows={4} className={fieldClass} placeholder={'Phòng 101\nPhòng 102\nPhòng 103'} /><div className="grid gap-3 sm:grid-cols-3"><label className="text-xs font-medium text-slate-600">Loại phòng<select name="unit_kind" className={fieldClass}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option></select></label><label className="text-xs font-medium text-slate-600">Phòng ngủ<input name="bedrooms" type="number" min="0" defaultValue={1} className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Phòng tắm<select name="bathroom_arrangement" className={fieldClass}><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label></div><div className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">Xem trước: {bulkLabels.split("\n").map((label) => label.trim()).filter(Boolean).length} phòng · {bulkLabels.split("\n").map((label) => label.trim()).filter(Boolean).slice(0, 6).join(", ")}</div><button type="submit" disabled={busy || !bulkLabels.trim()} className={buttonClass}>Tạo các phòng xem trước</button></form></section>}
+          {property.rental_arrangement === "SEPARATE_UNITS" && <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-semibold text-slate-900">Thêm nhiều phòng</h2><p className="mt-1 text-sm text-slate-600">Tạo danh sách xem trước rồi chỉnh từng căn trước khi lưu. Lô sẽ được lưu nguyên tử.</p><form onSubmit={addUnitBatch} className="mt-4 space-y-4"><label className="block text-sm font-medium text-slate-700">Tên phòng, mỗi tên một dòng<textarea value={bulkLabels} onChange={(event) => setBulkLabels(event.target.value)} rows={3} className={fieldClass} placeholder={'Phòng 101\nPhòng 102\nPhòng 103'} /></label>{bulkPreviewLabels.length > 0 && <div className="space-y-4">{bulkPreviewLabels.map((label, index) => <fieldset key={`${index}-${label}`} className="grid gap-3 rounded-xl border border-slate-200 p-4 sm:grid-cols-2"><legend className="px-1 text-sm font-semibold text-slate-800">Căn xem trước {index + 1}</legend><label className="text-xs font-medium text-slate-600 sm:col-span-2">Tên căn<input name={`bulk_${index}_label`} defaultValue={label} className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Loại căn<select name={`bulk_${index}_unit_kind`} className={fieldClass}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label><label className="text-xs font-medium text-slate-600">Diện tích (m²)<input name={`bulk_${index}_area_m2`} type="number" min="0.1" step="0.1" className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Phòng ngủ<input name={`bulk_${index}_bedrooms`} type="number" min="0" defaultValue={1} className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Phòng tắm<input name={`bulk_${index}_bathrooms`} type="number" min="0" step="0.5" defaultValue={1} className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Cách dùng phòng tắm<select name={`bulk_${index}_bathroom_arrangement`} className={fieldClass}><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label><label className="text-xs font-medium text-slate-600">Giá thuê tháng (₫)<input name={`bulk_${index}_rent`} type="number" min="1" className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Tiền đặt cọc (₫)<input name={`bulk_${index}_deposit`} type="number" min="0" className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Thời hạn thuê tối thiểu (tháng)<input name={`bulk_${index}_minimum_rental_months`} type="number" min="3" defaultValue={3} className={fieldClass} /></label><label className="text-xs font-medium text-slate-600">Số người tối đa<input name={`bulk_${index}_max_occupants`} type="number" min="1" className={fieldClass} /></label><label className="text-xs font-medium text-slate-600 sm:col-span-2">Mô tả<textarea name={`bulk_${index}_description`} rows={2} className={fieldClass} /></label><div className="sm:col-span-2"><p className="text-xs font-semibold text-slate-700">Tiện nghi căn này</p><div className="mt-2 flex flex-wrap gap-2">{catalog.filter((item) => item.scopes.includes("unit")).map((amenity) => <label key={amenity.key} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 px-2 py-1.5 text-xs"><input type="checkbox" name={`bulk_${index}_amenity:${amenity.key}`} className="size-4 accent-[#3368a0]" />{amenity.label}</label>)}</div><label className="mt-2 block text-xs text-slate-600">Tiện nghi riêng, mỗi dòng một mục<textarea name={`bulk_${index}_custom_amenities`} rows={2} className={fieldClass} /></label></div></fieldset>)}</div>}<p className="rounded-lg bg-slate-50 p-3 text-sm text-slate-600">Xem trước {bulkPreviewLabels.length} căn. Mỗi căn có giá, diện tích, thời hạn thuê, mô tả và tiện nghi riêng.</p><button type="submit" disabled={busy || bulkPreviewLabels.length === 0 || bulkPreviewLabels.length > 50} className={buttonClass}>Tạo {bulkPreviewLabels.length || "các"} căn</button></form></section>}
           </div>}
         </div>
 
@@ -564,7 +640,9 @@ export default function OwnerPropertiesPage() {
 
           <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><div className="flex flex-wrap items-start justify-between gap-3"><div><h2 className="text-lg font-semibold text-slate-900">Ảnh bất động sản</h2><p className="mt-1 text-sm text-slate-600">Thay đổi thứ tự bằng mũi tên; thay đổi được lưu ngay. Bấm nút để lưu lựa chọn hiển thị.</p></div><button type="button" onClick={() => void saveGallery()} disabled={busy || sharedMedia.length === 0} className={secondaryButtonClass}>Lưu lựa chọn hiển thị</button></div>{galleryItems.length === 0 ? <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Chưa có ảnh dùng chung.</p> : <ol className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">{galleryItems.map((item, index) => <li key={item.id} className="overflow-hidden rounded-xl border border-slate-200 bg-white"><div className="relative flex aspect-[4/3] items-center justify-center overflow-hidden bg-[#d9e3ed] text-sm text-slate-500">{item.preview_url ? <Image src={item.preview_url} alt={item.caption || `Ảnh bất động sản ${index + 1}`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" /> : <span>{item.mime_type.split("/")[1]?.toUpperCase() ?? "ẢNH"}</span>}</div><div className="space-y-3 p-3"><p className="truncate text-sm font-semibold text-slate-800">{item.caption || `Ảnh dùng chung ${index + 1}`}</p><p className="text-xs text-slate-500">{(item.size_bytes / (1024 * 1024)).toFixed(1)} MB</p><div className="flex items-center justify-between gap-2"><label className="inline-flex items-center gap-2 text-xs font-medium text-slate-700"><input type="checkbox" checked={item.is_selected_for_listing} onChange={(event) => setGalleryItems((items) => items.map((candidate) => candidate.id === item.id ? { ...candidate, is_selected_for_listing: event.target.checked } : candidate))} className="size-4 accent-[#3368a0]" />Hiển thị trên tin đăng</label><div className="flex gap-1"><button type="button" onClick={() => void moveGalleryItem(index, -1)} disabled={busy || galleryItems.length < 2 || index === 0} aria-label="Di chuyển ảnh lên" title={galleryItems.length < 2 ? "Cần ít nhất hai ảnh để sắp xếp" : "Di chuyển ảnh lên"} className="size-8 rounded-lg border border-slate-200 text-slate-700 disabled:opacity-40">↑</button><button type="button" onClick={() => void moveGalleryItem(index, 1)} disabled={busy || galleryItems.length < 2 || index === galleryItems.length - 1} aria-label="Di chuyển ảnh xuống" title={galleryItems.length < 2 ? "Cần ít nhất hai ảnh để sắp xếp" : "Di chuyển ảnh xuống"} className="size-8 rounded-lg border border-slate-200 text-slate-700 disabled:opacity-40">↓</button><button type="button" onClick={() => void removePhoto(item)} disabled={busy} className="size-8 rounded-lg text-rose-700 hover:bg-rose-50" aria-label="Gỡ ảnh">×</button></div></div></div></li>)}</ol>}</section>
 
-          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-semibold text-slate-900">Ảnh các phòng</h2><p className="mt-1 text-sm text-slate-600">Ảnh gắn với phòng được chọn cho tin đăng khi tải lên.</p>{unitMedia.length === 0 ? <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Chưa có ảnh phòng.</p> : <ul className="mt-4 space-y-2">{unitMedia.map((item) => <li key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 p-3"><div><p className="text-sm font-semibold text-slate-800">{property.units.find((unit) => unit.id === item.unit_id)?.label ?? "Phòng đã lưu trữ"}</p><p className="mt-1 text-xs text-slate-500">{item.caption || item.id.slice(0, 8)} · {item.mime_type}</p></div><button type="button" onClick={() => void removePhoto(item)} disabled={busy} className="min-h-10 shrink-0 rounded-lg px-3 text-xs font-semibold text-rose-700 hover:bg-rose-50">Gỡ ảnh</button></li>)}</ul>}</section>
+          <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6"><h2 className="text-lg font-semibold text-slate-900">Ảnh các phòng</h2><p className="mt-1 text-sm text-slate-600">Chọn ảnh xuất hiện trên tin, sắp xếp thứ tự và gỡ ảnh cho từng phòng.</p>
+            {units.filter((unit) => unitGalleryItems[unit.id]?.length).length === 0 ? <p className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">Chưa có ảnh phòng.</p> : <div className="mt-4 space-y-6">{units.filter((unit) => unitGalleryItems[unit.id]?.length).map((unit) => <section key={unit.id} aria-label={`Ảnh ${unit.label}`}><div className="flex flex-wrap items-center justify-between gap-2"><h3 className="font-semibold text-slate-800">{unit.label}</h3><button type="button" onClick={() => void saveUnitGallery(unit.id)} disabled={busy} className={secondaryButtonClass}>Lưu lựa chọn</button></div><ol className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{(unitGalleryItems[unit.id] ?? []).map((item, index) => <li key={item.id} className="overflow-hidden rounded-xl border border-slate-200"><div className="relative flex aspect-[4/3] items-center justify-center bg-[#d9e3ed] text-sm text-slate-500">{item.preview_url ? <Image src={item.preview_url} alt={item.caption || `Ảnh ${unit.label} ${index + 1}`} fill unoptimized sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw" className="object-cover" /> : <span>{item.mime_type.split("/")[1]?.toUpperCase() ?? "ẢNH"}</span>}</div><div className="space-y-3 p-3"><p className="truncate text-sm font-semibold text-slate-800">{item.caption || `Ảnh ${index + 1}`}</p><label className="inline-flex items-center gap-2 text-xs text-slate-700"><input type="checkbox" checked={item.is_selected_for_listing} onChange={(event) => setUnitGalleryItems((current) => ({ ...current, [unit.id]: (current[unit.id] ?? []).map((photo) => photo.id === item.id ? { ...photo, is_selected_for_listing: event.target.checked } : photo) }))} className="size-4 accent-[#3368a0]" />Hiển thị trên tin đăng</label><div className="flex gap-1"><button type="button" onClick={() => void moveUnitGalleryItem(unit.id, index, -1)} disabled={busy || index === 0} aria-label={`Di chuyển ảnh ${unit.label} lên`} className="size-8 rounded-lg border border-slate-200 disabled:opacity-40">↑</button><button type="button" onClick={() => void moveUnitGalleryItem(unit.id, index, 1)} disabled={busy || index === (unitGalleryItems[unit.id]?.length ?? 0) - 1} aria-label={`Di chuyển ảnh ${unit.label} xuống`} className="size-8 rounded-lg border border-slate-200 disabled:opacity-40">↓</button><button type="button" onClick={() => void removePhoto(item)} disabled={busy} className="size-8 rounded-lg text-rose-700" aria-label={`Gỡ ảnh ${unit.label}`}>×</button></div></div></li>)}</ol></section>)}</div>}
+          </section>
           <p className="text-sm text-slate-500">Bỏ chọn ảnh chỉ ẩn ảnh khỏi tin đăng; gỡ ảnh sẽ lưu lại tệp trong lịch sử.</p>
       </div>}
     </div>}

@@ -8,83 +8,97 @@ use Normalizer;
 class AmenityCatalog
 {
     /**
-     * @var array<string, array{label: string, scopes: array<int, string>, aliases: array<int, string>}>
+     * @var array<string, array{label: string, label_vi: string, scopes: array<int, string>, aliases: array<int, string>}>
      */
     private const CATALOG = [
         'wifi' => [
             'label' => 'Wi-Fi',
+            'label_vi' => 'Wifi',
             'scopes' => ['shared', 'unit'],
             'aliases' => ['wi-fi', 'wireless', 'internet'],
         ],
         'elevator' => [
             'label' => 'Thang máy',
+            'label_vi' => 'Thang máy',
             'scopes' => ['shared'],
             'aliases' => ['lift'],
         ],
         'air_conditioning' => [
             'label' => 'Điều hòa',
+            'label_vi' => 'Máy lạnh',
             'scopes' => ['unit'],
             'aliases' => ['aircon', 'air con', 'ac', 'máy lạnh'],
         ],
         'parking' => [
             'label' => 'Chỗ đỗ xe',
+            'label_vi' => 'Chỗ để xe',
             'scopes' => ['shared'],
             'aliases' => ['motorbike parking', 'car parking'],
         ],
         'pool' => [
             'label' => 'Hồ bơi',
+            'label_vi' => 'Hồ bơi',
             'scopes' => ['shared'],
             'aliases' => ['swimming pool'],
         ],
         'gym' => [
             'label' => 'Phòng tập',
+            'label_vi' => 'Phòng tập',
             'scopes' => ['shared'],
             'aliases' => ['fitness room'],
         ],
-        'shared_laundry' => [
+        'laundry' => [
             'label' => 'Khu giặt chung',
+            'label_vi' => 'Giặt là chung',
             'scopes' => ['shared'],
-            'aliases' => ['shared washing area'],
+            'aliases' => ['shared_laundry', 'shared washing area'],
         ],
         'security' => [
             'label' => 'An ninh',
+            'label_vi' => 'An ninh',
             'scopes' => ['shared'],
             'aliases' => ['security cameras', 'guard'],
         ],
         'balcony' => [
             'label' => 'Ban công',
+            'label_vi' => 'Ban công',
             'scopes' => ['unit'],
             'aliases' => ['terrace'],
         ],
         'kitchen' => [
             'label' => 'Nhà bếp',
+            'label_vi' => 'Bếp',
             'scopes' => ['unit'],
             'aliases' => ['cooking area'],
         ],
         'washing_machine' => [
             'label' => 'Máy giặt riêng',
+            'label_vi' => 'Máy giặt',
             'scopes' => ['unit'],
             'aliases' => ['washer'],
         ],
         'refrigerator' => [
             'label' => 'Tủ lạnh',
+            'label_vi' => 'Tủ lạnh',
             'scopes' => ['unit'],
             'aliases' => ['fridge'],
         ],
         'water_heater' => [
             'label' => 'Bình nước nóng',
+            'label_vi' => 'Bình nước nóng',
             'scopes' => ['unit'],
             'aliases' => ['hot water'],
         ],
         'furnished' => [
             'label' => 'Có nội thất',
+            'label_vi' => 'Có nội thất',
             'scopes' => ['unit'],
             'aliases' => ['furniture'],
         ],
     ];
 
     /**
-     * @return array<int, array{key: string, label: string, scopes: array<int, string>, aliases: array<int, string>}>
+     * @return array<int, array{key: string, label: string, label_vi: string, scope: 'PROPERTY'|'UNIT', scopes: array<int, string>, aliases: array<int, string>}>
      */
     public static function search(?string $query = null): array
     {
@@ -106,7 +120,15 @@ class AmenityCatalog
                 continue;
             }
 
-            $entries[] = ['key' => $key, ...$entry];
+            $scopes = array_map(
+                static fn (string $scope): string => $scope === 'shared' ? 'PROPERTY' : 'UNIT',
+                $entry['scopes'],
+            );
+            $entries[] = [
+                'key' => $key,
+                ...$entry,
+                'scope' => $scopes[0],
+            ];
         }
 
         return $entries;
@@ -115,6 +137,48 @@ class AmenityCatalog
     public static function supportsScope(string $key, string $scope): bool
     {
         return isset(self::CATALOG[$key]) && in_array($scope, self::CATALOG[$key]['scopes'], true);
+    }
+
+    /**
+     * @return array<string, array{label: string, label_vi: string, scopes: array<int, string>, aliases: array<int, string>}>
+     */
+    public static function definitions(): array
+    {
+        return self::CATALOG;
+    }
+
+    /**
+     * @return list<string>
+     */
+    public static function scopesFor(string $key): array
+    {
+        return self::CATALOG[$key]['scopes'] ?? [];
+    }
+
+    public static function labelFor(string $key): ?string
+    {
+        return self::CATALOG[$key]['label_vi'] ?? null;
+    }
+
+    /**
+     * @return list<array{key: string, scope: 'PROPERTY'|'UNIT', scopes: list<'PROPERTY'|'UNIT'>, label_vi: string, label: string}>
+     */
+    public static function publicCatalog(): array
+    {
+        return array_map(static function (string $key, array $item): array {
+            $scopes = array_map(
+                static fn (string $scope): string => $scope === 'shared' ? 'PROPERTY' : 'UNIT',
+                $item['scopes'],
+            );
+
+            return [
+                'key' => $key,
+                'scope' => $scopes[0],
+                'scopes' => $scopes,
+                'label_vi' => $item['label_vi'],
+                'label' => $item['label'],
+            ];
+        }, array_keys(self::CATALOG), array_values(self::CATALOG));
     }
 
     public static function normalizeText(string $text): string

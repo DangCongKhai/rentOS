@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\OwnerProperties\AmenityCatalog as OwnerAmenityCatalog;
-use App\Domain\Amenities\AmenityCatalog;
+use App\Actions\OwnerProperties\AmenityCatalog;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AmenitiesController extends Controller
 {
@@ -18,38 +19,27 @@ class AmenitiesController extends Controller
 
         if ($query !== null) {
             return response()->json([
-                'data' => OwnerAmenityCatalog::search($query),
+                'data' => AmenityCatalog::search($query),
             ]);
         }
 
-        $ownerItems = collect(OwnerAmenityCatalog::search())
-            ->keyBy('key');
-        $data = collect(AmenityCatalog::publicCatalog())
-            ->map(function (array $item) use ($ownerItems): array {
-                $ownerItem = $ownerItems->get($item['key']);
+        return response()->json([
+            'data' => AmenityCatalog::publicCatalog(),
+        ]);
+    }
 
-                return [
-                    ...$item,
-                    'label' => $ownerItem['label'] ?? $item['label_vi'],
-                    'scopes' => $ownerItem['scopes'] ?? [$item['scope'] === 'PROPERTY' ? 'shared' : 'unit'],
-                ];
-            });
+    public function ownerCatalog(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        abort_unless($user instanceof User && $user->canManageOwnerProducts(), 403);
+        abort_if($user->currentAccessToken() instanceof PersonalAccessToken, 403);
 
-        foreach ($ownerItems as $key => $item) {
-            if (! array_key_exists($key, AmenityCatalog::KEYS)) {
-                $scope = in_array('shared', $item['scopes'], true) ? 'PROPERTY' : 'UNIT';
-                $data->push([
-                    'key' => $key,
-                    'scope' => $scope,
-                    'label_vi' => $item['label'],
-                    'label' => $item['label'],
-                    'scopes' => $item['scopes'],
-                ]);
-            }
-        }
+        $query = $request->validate([
+            'q' => ['sometimes', 'nullable', 'string', 'max:80'],
+        ])['q'] ?? null;
 
         return response()->json([
-            'data' => $data->values(),
-        ]);
+            'data' => AmenityCatalog::search($query),
+        ])->header('Cache-Control', 'private, no-store');
     }
 }

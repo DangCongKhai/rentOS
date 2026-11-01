@@ -52,4 +52,8 @@ return [
         'require_verified_email' => (bool) env('OWNER_REQUIRE_VERIFIED_EMAIL', true),
     ],
 
+    'tinhthanhpho' => [
+        'url' => env('TINHTHANHPHO_API_URL', 'https://www.tinhthanhpho.com/api/v1'),
+    ],
+
 ];

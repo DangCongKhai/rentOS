@@ -45,6 +45,8 @@ class PublicListingDetailTest extends TestCase
         $response->assertOk()
             ->assertJsonPath('data.title', 'Studio full nội thất gần biển Mỹ Khê')
             ->assertJsonPath('data.property.shared_rules.0', 'Không hút thuốc trong nhà')
+            ->assertJsonPath('data.units.0.smoking', 'NOT_ALLOWED')
+            ->assertJsonPath('data.units.0.rules.0', 'Không hút thuốc trong nhà')
             ->assertJsonPath('data.property.shared_amenities.0.key', 'laundry')
             ->assertJsonPath('data.units.0.availability_label', 'Đã được giữ/đặt. Trống từ 02/05/2027')
             ->assertJsonPath('data.units.0.held_start', '2026-11-01')

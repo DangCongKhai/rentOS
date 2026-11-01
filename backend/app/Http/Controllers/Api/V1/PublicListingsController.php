@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Amenities\AmenityCatalog;
+use App\Actions\OwnerProperties\AmenityCatalog;
 use App\Domain\Discovery\EligibleUnitQuery;
 use App\Domain\Discovery\ListingSearchCriteria;
 use App\Domain\Discovery\LocationQuery;
@@ -132,7 +132,7 @@ class PublicListingsController extends Controller
             ->keyBy(fn (Listing $listing): string => (string) $listing->id);
 
         $propertyIds = $listings->pluck('property_id')->map(fn (mixed $id): string => (string) $id)->all();
-        $units = $this->eligibleUnits($propertyIds, $criteria)->get()->groupBy(
+        $units = $this->eligibleUnits($propertyIds, $criteria, true)->get()->groupBy(
             fn (Unit $unit): string => (string) $unit->property_id,
         );
         $photos = PropertyMedia::query()
@@ -166,10 +166,10 @@ class PublicListingsController extends Controller
      * @param  list<string>  $propertyIds
      * @return Builder<Unit>
      */
-    private function eligibleUnits(array $propertyIds, ListingSearchCriteria $criteria): Builder
+    private function eligibleUnits(array $propertyIds, ListingSearchCriteria $criteria, bool $requireFree = false): Builder
     {
         $query = Unit::query()->select('units.*')->whereIn('units.property_id', $propertyIds);
-        EligibleUnitQuery::constrain($query, $criteria, false);
+        EligibleUnitQuery::constrain($query, $criteria, $requireFree);
 
         return $query;
     }
@@ -213,8 +213,16 @@ class PublicListingsController extends Controller
             $amenities = $this->documentAsArray($unit->amenities);
             $policyOverrides = $this->documentAsArray($unit->policy_overrides);
             $standard = $amenities['standard'] ?? [];
+            $propertyPolicies = $this->documentAsArray($property->policies);
+            $unitRules = $policyOverrides['additional_rules'] ?? [];
+            $sharedRules = $propertyPolicies['shared_rules'] ?? [];
             $unit->setAttribute('public_availability', $described);
-            $unit->setAttribute('effective_pets', $policyOverrides['pets'] ?? $property->policies['pets'] ?? null);
+            $unit->setAttribute('effective_pets', $policyOverrides['pets'] ?? $propertyPolicies['pets'] ?? null);
+            $unit->setAttribute('effective_smoking', $policyOverrides['smoking'] ?? $propertyPolicies['smoking'] ?? null);
+            $unit->setAttribute('effective_rules', array_values(array_unique([
+                ...(is_array($sharedRules) ? $sharedRules : []),
+                ...(is_array($unitRules) ? $unitRules : []),
+            ])));
             $unit->setAttribute('public_amenities', $this->amenityPayload(is_array($standard) ? $standard : []));
             $unit->setAttribute('public_custom_amenities', $amenities['custom'] ?? []);
             $unit->setAttribute('public_photos', $this->mediaPayload($media->get((string) $unit->id, collect())));
@@ -310,16 +318,7 @@ class PublicListingsController extends Controller
 
     private function isPublic(Listing $listing): bool
     {
-        $property = $listing->property;
-
-        return $listing->publication_status === 'PUBLISHED'
-            && $listing->moderation_status === 'APPROVED'
-            && $listing->archived_at === null
-            && $listing->admin_suspended_at === null
-            && $property->archived_at === null
-            && trim((string) $property->address_line) !== ''
-            && trim((string) $property->city) !== ''
-            && trim((string) $property->description) !== '';
+        return Listing::query()->publiclyVisible()->whereKey($listing->id)->exists();
     }
 
     /**
@@ -361,12 +360,13 @@ class PublicListingsController extends Controller
             if (! is_string($key) || ! is_array($value) || ($value['enabled'] ?? false) !== true) {
                 continue;
             }
-            if (! array_key_exists($key, AmenityCatalog::KEYS)) {
+            $label = AmenityCatalog::labelFor($key);
+            if ($label === null) {
                 continue;
             }
             $items[] = [
                 'key' => $key,
-                'label_vi' => AmenityCatalog::KEYS[$key]['label_vi'],
+                'label_vi' => $label,
                 'details' => isset($value['details']) ? (string) $value['details'] : null,
             ];
         }

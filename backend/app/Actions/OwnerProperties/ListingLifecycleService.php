@@ -99,7 +99,7 @@ class ListingLifecycleService
                 throw ValidationException::withMessages(['listing' => 'Only a draft or rejected listing can be submitted.']);
             }
 
-            $this->assertCompletePackage($property, $listing);
+            $this->assertCompletePackage($property, $listing, requireAvailability: false);
             $before = $this->snapshot($listing);
             $listing->moderation_status = 'PENDING';
             $listing->submitted_at = now();
@@ -129,7 +129,7 @@ class ListingLifecycleService
                 throw ValidationException::withMessages(['listing' => 'An administrator has suspended this listing.']);
             }
 
-            $this->assertCompletePackage($property, $listing);
+            $this->assertCompletePackage($property, $listing, requireAvailability: true);
             $before = $this->snapshot($listing);
             $listing->publication_status = 'PUBLISHED';
             $listing->save();
@@ -238,7 +238,7 @@ class ListingLifecycleService
         }
     }
 
-    private function assertCompletePackage(Property $property, Listing $listing): void
+    private function assertCompletePackage(Property $property, Listing $listing, bool $requireAvailability): void
     {
         $missing = [];
         foreach (['address_line', 'city', 'description'] as $field) {
@@ -254,18 +254,77 @@ class ListingLifecycleService
             $missing['cover_media_id'] = 'Vui lòng chọn một ảnh dùng chung làm ảnh bìa tin đăng.';
         }
 
-        $marketed = DB::table('units')->where('property_id', $property->id)->where('is_marketed', true)->whereNull('archived_at')->get();
-        if ($marketed->isEmpty()) {
-            $missing['units'] = 'Bật mục “Quảng cáo” cho ít nhất một căn muốn đăng tin.';
+        $marketed = DB::table('units')
+            ->where('property_id', $property->id)
+            ->where('is_marketed', true)
+            ->whereNull('archived_at')
+            ->get();
+        $readyMarketed = $marketed->where('operational_status', 'READY');
+        if ($readyMarketed->isEmpty()) {
+            $missing['units'] = 'Cần ít nhất một căn đang quảng cáo và ở trạng thái sẵn sàng.';
         }
-        foreach ($marketed as $unit) {
-            if ($unit->operational_status !== 'READY' || ! is_string($unit->description) || trim($unit->description) === ''
+        foreach ($readyMarketed as $unit) {
+            if (! is_string($unit->description) || trim($unit->description) === ''
                 || $unit->area_m2 === null || $unit->advertised_monthly_rent === null || $unit->deposit === null || $unit->max_occupants === null) {
-                $missing["units.{$unit->id}"] = 'Mỗi căn đang bật “Quảng cáo” cần ở trạng thái Sẵn sàng và có mô tả, diện tích, giá thuê, tiền cọc, số người tối đa.';
+                $missing["units.{$unit->id}"] = 'Mỗi căn sẵn sàng để quảng cáo cần có mô tả, diện tích, giá thuê, tiền cọc và số người tối đa.';
 
                 continue;
             }
+
+            $hasSelectedLivePhoto = DB::table('property_media')
+                ->where('property_id', $property->id)
+                ->where('unit_id', $unit->id)
+                ->where('is_selected_for_listing', true)
+                ->whereNull('deleted_at')
+                ->whereNull('purged_at')
+                ->exists();
+
+            if (! $hasSelectedLivePhoto) {
+                $missing["units.{$unit->id}.photos"] = 'Tải lên và chọn ít nhất một ảnh còn hiệu lực cho mỗi căn sẵn sàng được quảng cáo.';
+            }
         }
+
+        if ($requireAvailability) {
+            $today = now()->toDateString();
+            $hasAvailableUnit = DB::table('units')
+                ->where('property_id', $property->id)
+                ->where('is_marketed', true)
+                ->where('operational_status', 'READY')
+                ->whereNull('archived_at')
+                ->whereNotNull('description')
+                ->whereRaw("btrim(description) <> ''")
+                ->whereNotNull('area_m2')
+                ->whereNotNull('advertised_monthly_rent')
+                ->whereNotNull('deposit')
+                ->whereNotNull('max_occupants')
+                ->whereExists(function ($query): void {
+                    $query->selectRaw('1')
+                        ->from('property_media')
+                        ->whereColumn('property_media.property_id', 'units.property_id')
+                        ->whereColumn('property_media.unit_id', 'units.id')
+                        ->where('property_media.is_selected_for_listing', true)
+                        ->whereNull('property_media.deleted_at')
+                        ->whereNull('property_media.purged_at');
+                })
+                ->whereNotExists(function ($query) use ($today): void {
+                    $query->selectRaw('1')
+                        ->from('tenancies')
+                        ->whereColumn('tenancies.unit_id', 'units.id')
+                        ->whereIn('tenancies.status', ['PENDING_CONFIRMATION', 'CONFIRMED', 'ACTIVE'])
+                        ->whereNotNull('tenancies.blocked_start_date')
+                        ->whereNotNull('tenancies.blocked_end_date')
+                        ->whereRaw(
+                            "daterange(tenancies.blocked_start_date, tenancies.blocked_end_date + 1, '[)') && daterange(?::date, (?::date + make_interval(months => units.minimum_rental_months))::date, '[)')",
+                            [$today, $today],
+                        );
+                })
+                ->exists();
+
+            if (! $hasAvailableUnit) {
+                $missing['units.availability'] = 'Cần ít nhất một căn đủ điều kiện và không bị giữ trong thời hạn thuê tối thiểu tính từ hôm nay.';
+            }
+        }
+
         if ($missing !== []) {
             throw ValidationException::withMessages($missing);
         }

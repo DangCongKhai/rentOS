@@ -39,12 +39,31 @@ function numberFromForm(form: FormData, name: string, fallback: number | null = 
 function documentFromForm(form: FormData, catalog: AmenityCatalogEntry[]): AmenityDocument {
   const standard: AmenityDocument["standard"] = {};
   for (const amenity of catalog.filter((item) => item.scopes.includes("shared"))) {
-    if (form.get(`amenity:${amenity.key}`) === "on") standard[amenity.key] = { enabled: true };
+    if (form.get(`amenity:${amenity.key}`) === "on") {
+      const details = read(form, `amenity_details:${amenity.key}`);
+      standard[amenity.key] = { enabled: true, ...(details ? { details } : {}) };
+    }
   }
   return {
     schema_version: 1,
     standard,
     custom: read(form, "custom_amenities").split("\n").map((item) => item.trim()).filter(Boolean),
+  };
+}
+
+function unitAmenityDocumentFromForm(form: FormData, catalog: AmenityCatalogEntry[], index: number): AmenityDocument {
+  const prefix = `new_${index}_`;
+  const standard: AmenityDocument["standard"] = {};
+  for (const amenity of catalog.filter((item) => item.scopes.includes("unit"))) {
+    if (form.get(`${prefix}amenity:${amenity.key}`) === "on") {
+      const details = read(form, `${prefix}details:${amenity.key}`);
+      standard[amenity.key] = { enabled: true, ...(details ? { details } : {}) };
+    }
+  }
+  return {
+    schema_version: 1,
+    standard,
+    custom: read(form, `${prefix}custom_amenities`).split("\n").map((item) => item.trim()).filter(Boolean),
   };
 }
 
@@ -157,18 +176,23 @@ export default function NewOwnerPropertyPage() {
           await createOwnerUnitBatch(property.id, {
             expected_content_revision: property.content_revision,
             client_operation_id: crypto.randomUUID(),
-            units: unitLabels.map((label) => ({
+            units: unitLabels.map((label, index) => ({
               client_operation_id: crypto.randomUUID(),
-              label: label.trim(),
-              unit_kind: read(form, "unit_kind") || "ROOM",
-              bedrooms: numberFromForm(form, "bedrooms", 0) ?? 0,
-              bathrooms: numberFromForm(form, "bathrooms", 1) ?? 1,
-              bathroom_arrangement: read(form, "bathroom_arrangement") || "PRIVATE",
-              minimum_rental_months: minMonths,
-              advertised_monthly_rent: rent,
-              deposit,
-              max_occupants: maxOccupants,
-              area_m2: numberFromForm(form, "area_m2"),
+              label: read(form, `new_${index}_label`) || label.trim(),
+              unit_kind: read(form, `new_${index}_unit_kind`) || read(form, "unit_kind") || "ROOM",
+              description: read(form, `new_${index}_description`) || null,
+              bedrooms: numberFromForm(form, `new_${index}_bedrooms`, numberFromForm(form, "bedrooms", 0)) ?? 0,
+              bathrooms: numberFromForm(form, `new_${index}_bathrooms`, numberFromForm(form, "bathrooms", 1)) ?? 1,
+              bathroom_arrangement: read(form, `new_${index}_bathroom_arrangement`) || read(form, "bathroom_arrangement") || "PRIVATE",
+              minimum_rental_months: numberFromForm(form, `new_${index}_minimum_rental_months`, minMonths) ?? minMonths,
+              advertised_monthly_rent: numberFromForm(form, `new_${index}_rent`, rent),
+              deposit: numberFromForm(form, `new_${index}_deposit`, deposit),
+              max_occupants: numberFromForm(form, `new_${index}_max_occupants`, maxOccupants),
+              area_m2: numberFromForm(form, `new_${index}_area_m2`, numberFromForm(form, "area_m2")),
+              amenities: unitAmenityDocumentFromForm(form, catalog, index),
+              policy_overrides: {
+                additional_rules: read(form, `new_${index}_additional_rules`).split("\n").map((rule) => rule.trim()).filter(Boolean),
+              },
             })),
           });
         } else {
@@ -264,10 +288,11 @@ export default function NewOwnerPropertyPage() {
           <label className="text-sm font-semibold text-slate-700">Phòng ngủ<input name="bedrooms" type="number" min={0} defaultValue={0} className={inputClass} /></label>
           <label className="text-sm font-semibold text-slate-700">Phòng tắm<input name="bathrooms" type="number" min={0} defaultValue={1} className={inputClass} /></label>
           <label className="text-sm font-semibold text-slate-700 sm:col-span-2">Sắp xếp phòng tắm<select name="bathroom_arrangement" className={inputClass}><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label>
+          {rentalArrangement === "SEPARATE_UNITS" && unitLabels.map((label, index) => <fieldset key={`${index}-${label}`} className="grid gap-3 rounded-xl border border-slate-200 p-4 sm:col-span-2 sm:grid-cols-2"><legend className="px-1 text-sm font-semibold text-slate-800">Căn {index + 1} · {label}</legend><label className="text-sm font-medium text-slate-700">Tên căn<input name={`new_${index}_label`} value={label} onChange={(event) => setUnitLabels((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Loại căn<select name={`new_${index}_unit_kind`} defaultValue="ROOM" className={inputClass}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label><label className="text-sm font-medium text-slate-700">Diện tích (m²)<input name={`new_${index}_area_m2`} type="number" min="0.1" step="0.1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Giá thuê tháng (₫)<input name={`new_${index}_rent`} type="number" min="1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Tiền đặt cọc (₫)<input name={`new_${index}_deposit`} type="number" min="0" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Thời hạn thuê tối thiểu<input name={`new_${index}_minimum_rental_months`} type="number" min="3" defaultValue={3} className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Số người tối đa<input name={`new_${index}_max_occupants`} type="number" min="1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Phòng ngủ<input name={`new_${index}_bedrooms`} type="number" min="0" defaultValue={0} className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Phòng tắm<input name={`new_${index}_bathrooms`} type="number" min="0" defaultValue={1} className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Cách dùng phòng tắm<select name={`new_${index}_bathroom_arrangement`} className={inputClass}><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label><label className="text-sm font-medium text-slate-700 sm:col-span-2">Mô tả căn<textarea name={`new_${index}_description`} rows={2} className={inputClass} /></label><div className="sm:col-span-2"><p className="text-sm font-semibold text-slate-800">Tiện nghi trong căn</p><div className="mt-2 grid gap-2 sm:grid-cols-2">{catalog.filter((amenity) => amenity.scopes.includes("unit")).map((amenity) => <label key={amenity.key} className="rounded-lg border border-slate-200 p-2 text-xs"><span className="inline-flex items-center gap-2"><input type="checkbox" name={`new_${index}_amenity:${amenity.key}`} className="size-4 accent-[#3368a0]" />{amenity.label}</span><input type="text" name={`new_${index}_details:${amenity.key}`} aria-label={`Ghi chú ${amenity.label}`} maxLength={160} placeholder="Ghi chú tùy chọn" className={`${inputClass} mt-2`} /></label>)}</div><label className="mt-2 block text-sm text-slate-700">Tiện nghi riêng, mỗi dòng một mục<textarea name={`new_${index}_custom_amenities`} rows={2} className={inputClass} /></label><label className="mt-2 block text-sm text-slate-700">Quy định riêng, mỗi dòng một mục<textarea name={`new_${index}_additional_rules`} rows={2} className={inputClass} /></label></div></fieldset>)}
         </div>
 
         <div hidden={step !== 3} className="space-y-6">
-          <fieldset><legend className="mb-3 text-sm font-semibold text-slate-800">Tiện nghi dùng chung</legend>{loadingCatalog ? <p className="text-sm text-slate-500">Đang tải tiện nghi…</p> : <div className="flex flex-wrap gap-2">{amenityEntries.map((amenity) => <label key={amenity.key} className="inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 px-3 text-sm text-slate-700"><input type="checkbox" name={`amenity:${amenity.key}`} className="size-4 accent-[#3368a0]" />{amenity.label}</label>)}</div>}</fieldset>
+          <fieldset><legend className="mb-3 text-sm font-semibold text-slate-800">Tiện nghi dùng chung</legend>{loadingCatalog ? <p className="text-sm text-slate-500">Đang tải tiện nghi…</p> : <div className="grid gap-2 sm:grid-cols-2">{amenityEntries.map((amenity) => <label key={amenity.key} className="rounded-xl border border-slate-200 p-3 text-sm text-slate-700"><span className="inline-flex items-center gap-2"><input type="checkbox" name={`amenity:${amenity.key}`} className="size-4 accent-[#3368a0]" />{amenity.label}</span><input type="text" name={`amenity_details:${amenity.key}`} maxLength={160} aria-label={`Ghi chú ${amenity.label}`} placeholder="Ghi chú tùy chọn" className={`${inputClass} mt-2`} /></label>)}</div>}</fieldset>
           <label className="block text-sm font-semibold text-slate-700">Tiện nghi riêng, mỗi dòng một mục<textarea name="custom_amenities" rows={3} className={inputClass} placeholder="Ví dụ: Ban công hướng biển" /></label>
           <div className="grid gap-4 sm:grid-cols-2"><label className="text-sm font-semibold text-slate-700">Thú cưng<select name="pets" defaultValue="NOT_ALLOWED" className={inputClass}><option value="NOT_ALLOWED">Không cho phép</option><option value="WITH_APPROVAL">Cần phê duyệt</option><option value="ALLOWED">Được phép</option></select></label><label className="text-sm font-semibold text-slate-700">Hút thuốc<select name="smoking" defaultValue="NOT_ALLOWED" className={inputClass}><option value="NOT_ALLOWED">Không cho phép</option><option value="OUTDOOR_ONLY">Chỉ ngoài trời</option><option value="ALLOWED">Được phép</option></select></label></div>
           <label className="block text-sm font-semibold text-slate-700">Quy định dùng chung<textarea name="shared_rules" rows={3} className={inputClass} placeholder="Mỗi dòng một quy định" /></label>

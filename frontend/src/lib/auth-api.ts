@@ -283,7 +283,7 @@ export async function getOwnerProperties(includeArchived = false): Promise<Owner
 }
 
 export async function getAmenityCatalog(): Promise<AmenityCatalogEntry[]> {
-  return request<AmenityCatalogEntry[]>("/api/v1/amenities");
+  return request<AmenityCatalogEntry[]>("/api/v1/owner/amenities");
 }
 
 export async function getOwnerProperty(propertyId: string): Promise<OwnerPropertyDetail> {
@@ -411,6 +411,15 @@ export async function updateOwnerGallery(propertyId: string, input: {
   items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
 }): Promise<OwnerPropertyMedia[]> {
   return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/gallery`, {
+    method: "PUT", body: JSON.stringify(input),
+  });
+}
+
+export async function updateOwnerUnitGallery(propertyId: string, unitId: string, input: {
+  expected_content_revision: number;
+  items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
+}): Promise<OwnerPropertyMedia[]> {
+  return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/gallery`, {
     method: "PUT", body: JSON.stringify(input),
   });
 }

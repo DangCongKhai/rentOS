@@ -13,6 +13,7 @@ use App\Http\Requests\StoreUnitRequest;
 use App\Http\Requests\StoreUnitsBatchRequest;
 use App\Http\Requests\UpdatePropertyGalleryRequest;
 use App\Http\Requests\UpdatePropertyRequest;
+use App\Http\Requests\UpdateUnitGalleryRequest;
 use App\Http\Requests\UpdateUnitRequest;
 use App\Http\Resources\PropertyMediaResource;
 use App\Http\Resources\PropertyResource;
@@ -199,6 +200,25 @@ class OwnerPropertiesController extends Controller
             $request->user(),
             $property,
             $request->validated(),
+        );
+
+        return PropertyMediaResource::collection($result['media'])
+            ->additional(['meta' => ['content_revision' => $result['content_revision']]])
+            ->response()
+            ->header('Cache-Control', 'private, no-store');
+    }
+
+    public function updateUnitGallery(
+        UpdateUnitGalleryRequest $request,
+        Property $property,
+        Unit $unit,
+        PropertyWriteService $propertyWriter,
+    ): JsonResponse {
+        $result = $propertyWriter->updateGallery(
+            $request->user(),
+            $property,
+            $request->validated(),
+            $unit,
         );
 
         return PropertyMediaResource::collection($result['media'])
