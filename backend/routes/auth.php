@@ -20,18 +20,21 @@ Route::middleware('guest')->group(function () {
     Route::get('login', [AuthenticatedSessionController::class, 'create'])
         ->name('login');
 
-    // Vô hiệu hóa các route forgot-password và reset-password của Breeze tại đây
-    // để nhường quyền xử lý hoàn toàn cho Laravel Fortify (Headless API cho Next.js).
-    // Fortify đã được cấu hình custom Action ResetUserPassword và response JSON chuẩn (200/422).
-    // Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
-    //     ->name('password.request');
+    // Giữ lại các route GET để render màn hình Blade (vì Fortify có views => false nên không xung đột).
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
 
+    // Vô hiệu hóa route POST forgot-password của Breeze để nhường quyền xử lý hoàn toàn
+    // cho Laravel Fortify (Headless API cho Next.js, trả về response JSON 200/422).
     // Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
     //     ->name('password.email');
 
-    // Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
-    //     ->name('password.reset');
+    // Giữ lại route GET reset-password để render view Blade nhập mật khẩu mới.
+    Route::get('reset-password/{token}', [NewPasswordController::class, 'create'])
+        ->name('password.reset');
 
+    // Vô hiệu hóa route POST reset-password của Breeze để Fortify xử lý logic đổi mật khẩu
+    // an toàn qua custom Action ResetUserPassword và trả về redirect/API chuẩn.
     // Route::post('reset-password', [NewPasswordController::class, 'store'])
     //     ->name('password.store');
 

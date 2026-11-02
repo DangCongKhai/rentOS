@@ -65,7 +65,7 @@ class PasswordResetTest extends TestCase
 
             $response
                 ->assertSessionHasNoErrors()
-                ->assertRedirect(route('login'));
+                ->assertRedirect(config('fortify.redirects.password-reset'));
 
             return true;
         });
