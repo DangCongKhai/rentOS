@@ -2,7 +2,7 @@
 
 namespace App\Http\Requests\Api\V1;
 
-use App\Domain\Amenities\AmenityCatalog;
+use App\Actions\OwnerProperties\AmenityCatalog;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -28,7 +28,7 @@ class PublicListingIndexRequest extends FormRequest
             'bathrooms' => ['nullable', 'integer', 'min:0'],
             'occupants' => ['nullable', 'integer', 'min:1'],
             'amenities' => ['nullable', 'array'],
-            'amenities.*' => ['string', Rule::in(array_keys(AmenityCatalog::KEYS))],
+            'amenities.*' => ['string', Rule::in(array_keys(AmenityCatalog::definitions()))],
             'pets' => ['nullable', 'string', Rule::in(['ALLOWED', 'ASK_OWNER', 'NOT_ALLOWED'])],
             'page' => ['nullable', 'integer', 'min:1'],
             'per_page' => ['nullable', 'integer', 'min:1', 'max:20'],

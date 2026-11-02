@@ -441,7 +441,7 @@ class AccountAuthFlowsTest extends TestCase
         ]);
         $this->assertDatabaseHas('sessions', ['id' => 'dummy-session-123']);
 
-        $token = Password::broker()->createToken($user);
+        $token = Password::createToken($user);
 
         $response = $this->postJson('/reset-password', [
             'token' => $token,
@@ -468,7 +468,7 @@ class AccountAuthFlowsTest extends TestCase
             'email_verified_at' => $verifiedAt,
             'account_status' => 'ACTIVE',
         ]);
-        $token = Password::broker()->createToken($user);
+        $token = Password::createToken($user);
 
         $this->postJson('/reset-password', [
             'token' => $token,
@@ -498,7 +498,7 @@ class AccountAuthFlowsTest extends TestCase
         ])->assertStatus(422)->assertJsonValidationErrors('email');
 
         // 2. Expired token (travel past 60 min expiration)
-        $token = Password::broker()->createToken($user);
+        $token = Password::createToken($user);
         $this->travel(65)->minutes();
 
         $this->postJson('/reset-password', [
@@ -511,7 +511,7 @@ class AccountAuthFlowsTest extends TestCase
         $this->travelBack();
 
         // 3. Already used token cannot be reused
-        $freshToken = Password::broker()->createToken($user);
+        $freshToken = Password::createToken($user);
         $this->postJson('/reset-password', [
             'token' => $freshToken,
             'email' => 'expired@example.test',
@@ -532,7 +532,7 @@ class AccountAuthFlowsTest extends TestCase
     public function test_reset_password_requires_valid_complexity_and_matching_confirmation(): void
     {
         $user = User::factory()->create(['email' => 'rules@example.test']);
-        $token = Password::broker()->createToken($user);
+        $token = Password::createToken($user);
 
         // Mismatched confirmation
         $this->postJson('/reset-password', [

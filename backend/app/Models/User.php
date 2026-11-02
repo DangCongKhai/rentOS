@@ -70,4 +70,11 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return (bool) $this->is_admin;
     }
+
+    public function canManageOwnerProducts(): bool
+    {
+        return $this->account_status === 'ACTIVE'
+            && ((app()->environment('local') && ! config('services.owner.require_verified_email', true))
+                || $this->email_verified_at !== null);
+    }
 }

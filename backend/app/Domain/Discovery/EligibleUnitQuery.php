@@ -2,8 +2,10 @@
 
 namespace App\Domain\Discovery;
 
-use App\Domain\Amenities\AmenityCatalog;
+use App\Actions\OwnerProperties\AmenityCatalog;
+use App\Models\Listing;
 use App\Models\Unit;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
@@ -37,9 +39,8 @@ final class EligibleUnitQuery
     public static function matchingListingIds(ListingSearchCriteria $criteria): array
     {
         self::useWordSimilarityThreshold();
-        $requireFree = $criteria->moveInDate !== null;
         $query = Unit::query()->select('discovery_listings.id as listing_id');
-        self::constrain($query, $criteria, $requireFree);
+        self::constrain($query, $criteria, true);
 
         if ($criteria->location !== null) {
             $needle = $criteria->location->value();
@@ -66,6 +67,7 @@ final class EligibleUnitQuery
             ->join('properties as discovery_properties', 'discovery_properties.id', '=', 'units.property_id')
             ->join('listings as discovery_listings', 'discovery_listings.property_id', '=', 'discovery_properties.id')
             ->where('discovery_listings.publication_status', 'PUBLISHED')
+            ->whereIn('discovery_listings.id', Listing::query()->publiclyVisible()->select('listings.id'))
             ->where('discovery_listings.moderation_status', 'APPROVED')
             ->whereNull('discovery_listings.archived_at')
             ->whereNull('discovery_listings.admin_suspended_at')
@@ -80,7 +82,16 @@ final class EligibleUnitQuery
             ->whereNotNull('units.area_m2')
             ->whereNotNull('units.advertised_monthly_rent')
             ->whereNotNull('units.deposit')
-            ->whereNotNull('units.max_occupants');
+            ->whereNotNull('units.max_occupants')
+            ->whereExists(function (Builder|QueryBuilder $media): void {
+                $media->selectRaw('1')
+                    ->from('property_media')
+                    ->whereColumn('property_media.property_id', 'units.property_id')
+                    ->whereColumn('property_media.unit_id', 'units.id')
+                    ->where('property_media.is_selected_for_listing', true)
+                    ->whereNull('property_media.deleted_at')
+                    ->whereNull('property_media.purged_at');
+            });
 
         if ($criteria->location !== null) {
             $needle = $criteria->location->value();
@@ -126,16 +137,21 @@ final class EligibleUnitQuery
         }
 
         foreach ($criteria->amenityKeys as $key) {
-            $document = AmenityCatalog::scope($key) === 'PROPERTY'
-                ? 'discovery_properties.shared_amenities'
-                : 'units.amenities';
-            $unitQuery->whereRaw(
-                "({$document}->'standard'->?->>'enabled') = 'true'",
-                [$key],
-            );
+            $unitQuery->where(function (Builder|QueryBuilder $match) use ($key): void {
+                foreach (AmenityCatalog::scopesFor($key) as $scope) {
+                    $document = $scope === 'shared'
+                        ? 'discovery_properties.shared_amenities'
+                        : 'units.amenities';
+                    $match->orWhereRaw(
+                        "({$document}->'standard'->?->>'enabled') = 'true'",
+                        [$key],
+                    );
+                }
+            });
         }
 
-        if ($requireFree && $criteria->moveInDate !== null) {
+        if ($requireFree) {
+            $availabilityStart = $criteria->moveInDate ?? CarbonImmutable::today()->toDateString();
             $unitQuery->whereRaw(
                 "NOT EXISTS (
                     SELECT 1
@@ -145,7 +161,7 @@ final class EligibleUnitQuery
                       AND daterange(blocking.blocked_start_date, blocking.blocked_end_date + 1, '[)')
                           && daterange(?::date, (?::date + make_interval(months => units.minimum_rental_months))::date, '[)')
                 )",
-                [$criteria->moveInDate, $criteria->moveInDate],
+                [$availabilityStart, $availabilityStart],
             );
         }
     }

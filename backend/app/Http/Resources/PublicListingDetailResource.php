@@ -36,7 +36,7 @@ class PublicListingDetailResource extends JsonResource
                 'description' => $property->description,
                 'shared_rules' => $property->policies['shared_rules'] ?? [],
                 'shared_amenities' => $this->resource->getAttribute('public_shared_amenities'),
-                'custom_amenities' => $property->shared_amenities['custom'] ?? [],
+                'custom_amenities' => $this->resource->getAttribute('public_custom_amenities'),
             ],
             'owner' => [
                 'name' => $property->owner?->name,

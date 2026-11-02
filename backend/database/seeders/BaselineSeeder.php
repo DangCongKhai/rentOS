@@ -229,7 +229,6 @@ class BaselineSeeder extends Seeder
                     'rental_arrangement' => $place['rental_arrangement'],
                     'address_line' => $place['address_line'],
                     'ward' => $place['ward'],
-                    'district' => $place['district'],
                     'city' => $place['city'],
                     'description' => $place['description'],
                     'shared_amenities' => json_encode([
@@ -551,7 +550,6 @@ class BaselineSeeder extends Seeder
             'rental_arrangement' => $whole ? 'WHOLE_SPACE' : 'SEPARATE_UNITS',
             'address_line' => $address,
             'ward' => null,
-            'district' => $district,
             'city' => 'Đà Nẵng',
             'description' => "Nhà cho thuê demo tại {$district}, Đà Nẵng. Tọa độ lấy từ dữ liệu mở, không đại diện cho một tin đăng thật.",
             'latitude' => $latitude,

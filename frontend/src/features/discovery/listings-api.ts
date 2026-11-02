@@ -79,6 +79,8 @@ export type PublicUnit = {
   held_start: string | null;
   held_end: string | null;
   pets: string | null;
+  smoking: string | null;
+  rules: string[];
   amenities: PublicAmenity[];
   custom_amenities: string[];
   photos: PublicMedia[];

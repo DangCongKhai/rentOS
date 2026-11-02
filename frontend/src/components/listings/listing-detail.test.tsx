@@ -52,6 +52,8 @@ const listing: ListingDetail = {
       held_start: "2026-11-01",
       held_end: "2027-05-01",
       pets: "NOT_ALLOWED",
+      smoking: "NOT_ALLOWED",
+      rules: ["Không hút thuốc trong nhà"],
       amenities: [],
       custom_amenities: ["Máy giặt riêng"],
       photos: [],

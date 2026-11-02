@@ -7,6 +7,14 @@ import { ApiError, getOwnerProperties, type OwnerProperty } from "@/lib/auth-api
 import { useAuth } from "@/lib/auth-context";
 import { PortalEmptyState } from "@/components/portal-empty-state";
 
+function propertyTypeLabel(value: string): string {
+  return value === "HOUSE" ? "Nhà" : value === "APARTMENT_BUILDING" ? "Tòa căn hộ" : value === "APARTMENT" ? "Căn hộ" : value;
+}
+
+function rentalArrangementLabel(value: string): string {
+  return value === "WHOLE_SPACE" ? "Thuê nguyên căn" : value === "SEPARATE_UNITS" ? "Thuê theo phòng" : value;
+}
+
 export default function OwnerPortalPage() {
   const router = useRouter();
   const { user } = useAuth();
@@ -126,11 +134,11 @@ export default function OwnerPortalPage() {
                       </div>
                       <div>
                         <span className="text-slate-400">Loại hình: </span>
-                        <span className="font-medium text-slate-700">{property.property_type}</span>
+                        <span className="font-medium text-slate-700">{propertyTypeLabel(property.property_type)}</span>
                       </div>
                       <div>
                         <span className="text-slate-400">Hình thức: </span>
-                        <span className="font-medium text-slate-700">{property.rental_arrangement}</span>
+                        <span className="font-medium text-slate-700">{rentalArrangementLabel(property.rental_arrangement)}</span>
                       </div>
                     </div>
                   </div>
