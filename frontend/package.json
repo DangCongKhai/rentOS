@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:admin-queue": "node --experimental-strip-types --test src/lib/admin-review-queue.test.mjs",
     "test:admin-review": "node --experimental-strip-types --test src/lib/admin-review-queue.test.mjs src/lib/admin-review-decision.test.mjs",
-    "test": "vitest run"
+    "test": "vitest run && npm run test:admin-review"
   },
   "dependencies": {
     "next": "16.4.2",

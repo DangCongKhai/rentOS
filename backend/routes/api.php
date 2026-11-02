@@ -3,9 +3,9 @@
 use App\Http\Controllers\Api\V1\AdminDashboardController;
 use App\Http\Controllers\Api\V1\AdminListingReviewMediaController;
 use App\Http\Controllers\Api\V1\AdminListingReviewsController;
+use App\Http\Controllers\Api\V1\AmenitiesController;
 use App\Http\Controllers\Api\V1\CurrentUserController;
 use App\Http\Controllers\Api\V1\OwnerPropertiesController;
-use App\Http\Controllers\Api\V1\AmenitiesController;
 use App\Http\Controllers\Api\V1\PublicListingsController;
 use App\Http\Controllers\Api\V1\TenantTenanciesController;
 use App\Http\Middleware\EnsureAdminSession;
