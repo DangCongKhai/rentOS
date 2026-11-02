@@ -33,7 +33,7 @@ describe("new owner property wizard", () => {
     render(<NewOwnerPropertyPage />);
 
     await user.click(screen.getByRole("button", { name: "Hình thức thuê" }));
-    await user.click(screen.getByRole("radio", { name: /Từng căn riêng lẻ/ }));
+    await user.click(screen.getByRole("radio", { name: /Cho thuê từng căn\/phòng/ }));
     await user.clear(screen.getByLabelText("Số lượng"));
     await user.type(screen.getByLabelText("Số lượng"), "2");
     fireEvent.change(screen.getByLabelText("Tên căn 1"), { target: { value: "Phòng A" } });
