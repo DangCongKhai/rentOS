@@ -428,7 +428,7 @@ class AccountAuthFlowsTest extends TestCase
         ]);
         $oldRememberToken = $user->remember_token;
 
-        $user->createToken('cli-token');
+        $user->createToken('cli-token', ['account:read'], now()->addHour());
         $this->assertDatabaseCount('personal_access_tokens', 1);
 
         DB::table('sessions')->insert([
