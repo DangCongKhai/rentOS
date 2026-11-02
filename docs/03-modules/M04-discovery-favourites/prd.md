@@ -2,12 +2,12 @@
 
 ## Outcome
 
-Visitors browse safe public advertisements; location and all unit/date filters must match an eligible unit for the entire requested interval.
+Visitors browse safe public advertisements. Location and the other unit filters must match one eligible unit. When a move-in date is set, that same unit must be free for the implied stay.
 
 ## Scope and screens/actions
 
-- Landing page/search/cards/detail; address/ward/district/city query, preserved filter URLs and pagination; no map/GPS/radius/geocoding in MVP.
-- Count and rent range come from the same qualifying unit set. Without dates, label the per-unit minimum-term default. Search never reserves properties and units.
+- Landing page, search, cards, and detail. Location searches the stored address, ward, and city. Filter URLs and pagination are preserved. Maps, GPS, radius, and geocoding stay out of the MVP.
+- With no move-in date, a listing stays in the results even when every unit is held. The card label and available count describe units free today, and the rent range includes every eligible unit, including held ones. A move-in date removes the listing unless one unit is free for the implied stay. Search never reserves properties or units.
 - Authenticated property-level heart saves are private, persistent and idempotent; hidden targets become generic removable placeholders. No contact/reservation side effect.
 
 ## Functional requirements
@@ -16,7 +16,7 @@ Visitors browse safe public advertisements; location and all unit/date filters m
 
 **Priority:** P0 Must. **Actors:** Guest; User. **Delivery:** Primary: RNT-06.
 
-Search public eligible listings by text/address and paginated filters. Query units whose full desired interval has no blocking tenancy overlap. Without dates use today through each unit minimum rental term; label this default. Never use property RENTED or a stored availability count. Include a location input searching stored property address, ward, district and city. Trim/collapse whitespace and match case-insensitively while preserving Vietnamese text. Combine location AND other filters; dates/unit filters must match one eligible unit throughout the requested interval. Preserve filters in URL/pagination; clear location independently. Maps/GPS/radius/geocoding remain deferred.
+Search public eligible listings by text/address and paginated filters. The visitor enters one move-in date. The stay ends at that date plus the unit’s minimum rental months. There is no search end date. A unit qualifies when that stay has no blocking tenancy overlap. With no move-in date, a listing stays in the results even when every unit is held. The card label and available count describe units free today, for example “Trống từ 02/05/2027” with count 0, or “Còn trống đến 31/01/2027” with count 1. Sending a move-in date removes the listing unless one unit is free for the whole implied stay. The listing stays published either way. Never use property RENTED or a stored availability count. Location searches the stored property address, ward, and city. Trim and collapse whitespace and match case-insensitively while preserving Vietnamese text. Combine location and other filters. The move-in date and unit filters must match one eligible unit for the whole implied stay. Preserve filters in the URL and pagination, and clear location independently. Maps, GPS, radius, and geocoding remain deferred.
 
 Acceptance: [6 cases for FR19](../../06-acceptance/test-scenarios.md#fr19); IDs FR19-AC01, FR19-AC02, FR19-AC03, FR19-AC04, FR19-AC05, FR19-AC06.
 
@@ -24,7 +24,7 @@ Acceptance: [6 cases for FR19](../../06-acceptance/test-scenarios.md#fr19); IDs 
 
 **Priority:** P0 Must. **Actors:** Guest; User. **Delivery:** Primary: RNT-06.
 
-Support price, area, type, amenities, occupants and controlled policy filters on the same available unit. Start/end dates are both required when filtering dates; inclusive end is converted to [start,end+1day). Amenity filters use canonical catalog keys with enabled=true on eligible units/property scope; distinguish shared laundry from an in-unit washing machine. Custom descriptions never automatically match standard filters (FR87).
+Support price, unit kind, bedrooms, bathrooms, catalog amenities, and pets on the same eligible unit. Area range and occupant count are not search filters. A move-in date is optional. When it is set, the stay is that date plus the unit’s minimum rental months, checked as a half-open range against blocking tenancies. Amenity filters use canonical catalog keys with enabled=true on eligible units or property scope. Distinguish shared laundry from an in-unit washing machine. Custom descriptions never automatically match standard filters (FR87).
 
 Acceptance: [4 cases for FR20](../../06-acceptance/test-scenarios.md#fr20); IDs FR20-AC01, FR20-AC02, FR20-AC03, FR20-AC04.
 
@@ -32,7 +32,7 @@ Acceptance: [4 cases for FR20](../../06-acceptance/test-scenarios.md#fr20); IDs 
 
 **Priority:** P0 Must. **Actors:** Guest; User. **Delivery:** Primary: RNT-06.
 
-Show shared photos, advertised rules, unit photos/specifications/prices and date-qualified availability. Owner contact rental request form has contact name/phone/message and desired date range. Never display agreement documents or other prospects contact details. Display canonical localized amenity labels with owner details, separating shared property facilities, private unit features and additional custom text (FR87).
+Show the shared gallery, advertised rules, unit photos, specifications, prices, and availability. Listing detail does not reapply the search move-in date. When the listing still has at least one available unit, held units stay on the page with their held label. Saving an enquiry is FR25 in RNT-07, not this requirement. Never display agreement documents or other prospects’ contact details. Display canonical localized amenity labels with owner details, separating shared property facilities, private unit features, and additional custom text (FR87).
 
 Acceptance: [4 cases for FR21](../../06-acceptance/test-scenarios.md#fr21); IDs FR21-AC01, FR21-AC02, FR21-AC03, FR21-AC04.
 

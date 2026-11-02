@@ -2,16 +2,18 @@
 
 namespace App\Console\Commands;
 
-use Database\Seeders\BaselineSeeder;
+use App\Domain\Media\SharedStorageRetention;
+use Database\Seeders\SeedImageLibrary;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
 use Illuminate\Console\Command;
 use Illuminate\Http\Client\ConnectionException;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
-#[Signature('fixtures:media-upload')]
-#[Description('Upsert committed baseline media fixtures to private Supabase Storage')]
+#[Signature('fixtures:media-upload {--overwrite : Replace seed library objects that already exist}')]
+#[Description('Upload the shared seed image library once to the public Supabase Storage bucket')]
 class FixturesMediaUpload extends Command
 {
     /**
@@ -39,15 +41,8 @@ class FixturesMediaUpload extends Command
             'services.supabase.storage.bucket',
             'SUPABASE_STORAGE_BUCKET',
         );
-        $fixtureDirectory = config('services.supabase.storage.fixture_directory');
 
         if ($supabaseUrl === null || $serviceRoleKey === null || $bucket === null) {
-            return self::FAILURE;
-        }
-
-        if (! is_string($fixtureDirectory) || trim($fixtureDirectory) === '') {
-            $this->components->error('The media fixture directory is not configured.');
-
             return self::FAILURE;
         }
 
@@ -57,44 +52,83 @@ class FixturesMediaUpload extends Command
             return self::FAILURE;
         }
 
-        $validatedFixtures = $this->validateFixtures($fixtureDirectory);
+        try {
+            $library = SeedImageLibrary::load();
+        } catch (\RuntimeException $exception) {
+            $this->components->error($exception->getMessage());
 
-        if ($validatedFixtures === null) {
             return self::FAILURE;
         }
 
-        foreach ($validatedFixtures as $fixture) {
-            $uploadUrl = rtrim($supabaseUrl, '/').'/storage/v1/object/'
-                .rawurlencode($bucket).'/'.$this->encodeStoragePath($fixture['storage_path']);
+        $uploaded = 0;
+        $skipped = 0;
+
+        foreach ($library->images() as $image) {
+            if (! str_starts_with($image['storage_path'], SharedStorageRetention::SEED_PREFIX)) {
+                $this->components->error("Refusing to upload outside the seed library: {$image['storage_path']}.");
+
+                return self::FAILURE;
+            }
+
+            $metadata = $library->metadata($image['file']);
+            $encodedPath = $this->encodeStoragePath($image['storage_path']);
+            $infoUrl = rtrim($supabaseUrl, '/').'/storage/v1/object/info/'
+                .rawurlencode($bucket).'/'.$encodedPath;
 
             try {
-                $response = Http::withHeaders([
-                    'Authorization' => 'Bearer '.$serviceRoleKey,
-                    'apikey' => $serviceRoleKey,
-                    'x-upsert' => 'true',
-                ])
-                    ->connectTimeout((int) config('services.supabase.storage.connect_timeout', 5))
-                    ->timeout((int) config('services.supabase.storage.timeout', 30))
-                    ->withBody($fixture['bytes'], $fixture['mime_type'])
+                $info = $this->request($serviceRoleKey)->get($infoUrl);
+            } catch (ConnectionException) {
+                $this->components->error("Storage connection failed for {$image['storage_path']}.");
+
+                return self::FAILURE;
+            }
+
+            $exists = $this->objectExists($info, $image['storage_path'], $metadata['size_bytes']);
+
+            if ($exists === null) {
+                return self::FAILURE;
+            }
+
+            if ($exists && ! $this->option('overwrite')) {
+                $skipped++;
+
+                continue;
+            }
+
+            $bytes = file_get_contents($library->absolutePath($image['file']));
+
+            if ($bytes === false) {
+                $this->components->error("Fixture file is unreadable: {$image['file']}.");
+
+                return self::FAILURE;
+            }
+
+            $uploadUrl = rtrim($supabaseUrl, '/').'/storage/v1/object/'
+                .rawurlencode($bucket).'/'.$encodedPath;
+
+            try {
+                $response = $this->request($serviceRoleKey)
+                    ->withHeaders(['x-upsert' => $this->option('overwrite') ? 'true' : 'false'])
+                    ->withBody($bytes, $metadata['mime_type'])
                     ->post($uploadUrl);
             } catch (ConnectionException) {
-                $this->components->error(
-                    "Storage connection failed for {$fixture['storage_path']}.",
-                );
+                $this->components->error("Storage connection failed for {$image['storage_path']}.");
 
                 return self::FAILURE;
             }
 
             if (! $response->successful()) {
                 $this->components->error(
-                    "Storage upload failed with HTTP {$response->status()} for {$fixture['storage_path']}.",
+                    "Storage upload failed with HTTP {$response->status()} for {$image['storage_path']}.",
                 );
 
                 return self::FAILURE;
             }
+
+            $uploaded++;
         }
 
-        $this->components->info('Uploaded '.count($validatedFixtures).' media fixtures with upsert semantics.');
+        $this->components->info("Uploaded {$uploaded} seed library objects and skipped {$skipped} existing objects.");
 
         return self::SUCCESS;
     }
@@ -112,76 +146,44 @@ class FixturesMediaUpload extends Command
         return trim($value);
     }
 
-    /**
-     * @return array<int, array{storage_path: string, mime_type: string, bytes: string}>|null
-     */
-    private function validateFixtures(string $fixtureDirectory): ?array
+    private function request(string $serviceRoleKey): PendingRequest
     {
-        $validated = [];
+        return Http::withHeaders([
+            'Authorization' => 'Bearer '.$serviceRoleKey,
+            'apikey' => $serviceRoleKey,
+        ])
+            ->connectTimeout((int) config('services.supabase.storage.connect_timeout', 5))
+            ->timeout((int) config('services.supabase.storage.timeout', 30));
+    }
 
-        foreach (BaselineSeeder::mediaFixtures() as $fixture) {
-            $sourcePath = rtrim($fixtureDirectory, DIRECTORY_SEPARATOR)
-                .DIRECTORY_SEPARATOR.$fixture['source_file'];
+    /**
+     * @return bool|null True when the object exists, false when it is missing, null when the lookup failed.
+     */
+    private function objectExists(Response $info, string $storagePath, int $sizeBytes): ?bool
+    {
+        if ($info->successful()) {
+            $remoteSize = $info->json('size');
 
-            if (! is_file($sourcePath) || ! is_readable($sourcePath)) {
-                $this->components->error("Fixture file is missing or unreadable: {$fixture['source_file']}.");
-
-                return null;
-            }
-
-            $bytes = file_get_contents($sourcePath);
-            $sha256 = hash_file('sha256', $sourcePath);
-            $size = filesize($sourcePath);
-            $mimeType = mime_content_type($sourcePath);
-
-            if (
-                $bytes === false
-                || $sha256 === false
-                || $size === false
-                || $size < 1
-                || ! is_string($mimeType)
-            ) {
-                $this->components->error("Fixture file is invalid: {$fixture['source_file']}.");
-
-                return null;
-            }
-
-            $media = DB::table('property_media')->where('id', $fixture['id'])->first();
-
-            if ($media === null) {
-                $this->components->error("Missing property_media row {$fixture['id']}; run Part A first.");
-
-                return null;
-            }
-
-            if (
-                $media->property_id !== $fixture['property_id']
-                || $media->unit_id !== $fixture['unit_id']
-                || $media->uploaded_by !== BaselineSeeder::OWNER_USER_ID
-                || $media->client_operation_id !== $fixture['client_operation_id']
-                || $media->storage_path !== $fixture['storage_path']
-                || $media->sha256 !== $sha256
-                || $media->mime_type !== $mimeType
-                || $media->size_bytes !== $size
-                || ! $media->is_selected_for_listing
-                || $media->deleted_at !== null
-                || $media->purged_at !== null
-            ) {
+            if (is_numeric($remoteSize) && (int) $remoteSize !== $sizeBytes && ! $this->option('overwrite')) {
                 $this->components->error(
-                    "The property_media metadata does not match fixture {$fixture['source_file']}.",
+                    "Existing object {$storagePath} does not match the local library. Re-run with --overwrite to replace it.",
                 );
 
                 return null;
             }
 
-            $validated[] = [
-                'storage_path' => $fixture['storage_path'],
-                'mime_type' => $mimeType,
-                'bytes' => $bytes,
-            ];
+            return true;
         }
 
-        return $validated;
+        if (in_array($info->status(), [400, 404], true)) {
+            return false;
+        }
+
+        $this->components->error(
+            "Storage lookup failed with HTTP {$info->status()} for {$storagePath}.",
+        );
+
+        return null;
     }
 
     private function encodeStoragePath(string $storagePath): string

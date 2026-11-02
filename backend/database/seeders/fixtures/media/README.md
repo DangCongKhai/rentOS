@@ -1,12 +1,13 @@
-# Baseline media fixtures
+# Baseline media library
 
-These are real 32×24 RGB PNG images generated specifically for rentOS. They are project-authored test fixtures, contain no third-party content, and are covered by the repository license.
+These photographs are real Pexels photos, resized to WebP for the demo. Each slot is a real picture of that kind of room or building. They are not photos of the Đà Nẵng buildings in `da-nang-places.json`, and they must not be presented as homes that are actually for rent. Photographer, Pexels license, and source page for every file are stored in `manifest.json`.
 
-The seeder reuses these two images for every published property. Paths follow `properties/{property_uuid}/gallery-01.png` and `properties/{property_uuid}/unit-01.png`.
+Refresh the library with:
 
-- `published-property-gallery-01.png`
-  - SHA-256: `709e629a13ad48a08e4299023879077b3836b49428b7dd2d1efec815a5a42029`
-- `published-property-unit-01.png`
-  - SHA-256: `0b7a96dc052bf841dc8d21f3f765a6d67abcdedf96a0bdffbc57d43eb3cdca20`
+```bash
+python3 database/seeders/fixtures/media/download_library.py
+```
 
-`BaselineSeeder` calculates each row's MIME type, byte size, and SHA-256 digest from these committed bytes. `fixtures:media-upload` validates the file and matching `property_media` row before uploading.
+`manifest.json` lists 22 coherent sets plus shared parking and laundry images. Files live under `library/` and are uploaded once to paths under `seed/`. Many properties reuse one path. `BaselineSeeder` copies each file's SHA-256, MIME type, and byte size onto every `property_media` row that references it.
+
+`fixtures:media-upload` sends each path once. It skips an object that is already in the bucket unless `--overwrite` is set.

@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Media\SharedStorageRetention;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -10,11 +12,9 @@ use RuntimeException;
 
 class BaselineSeeder extends Seeder
 {
+    public const int MAX_PROPERTY_COUNT = 300;
+
     public const int USER_COUNT = 10;
-
-    public const int PROPERTY_COUNT = 100;
-
-    public const int PUBLISHED_PROPERTY_COUNT = 100;
 
     public const string ADMIN_USER_ID = '10000000-0000-4000-8000-000000000001';
 
@@ -30,9 +30,9 @@ class BaselineSeeder extends Seeder
 
     public const string DRAFT_UNIT_ID = '30000000-0000-4000-8000-000000000017';
 
-    public const string PROPERTY_COVER_MEDIA_ID = '40000000-0000-4000-8000-000000000001';
+    public const string PROPERTY_COVER_MEDIA_ID = '40000000-0000-4000-8000-000000000100';
 
-    public const string UNIT_MEDIA_ID = '41000000-0000-4000-8000-000000000001';
+    public const string UNIT_MEDIA_ID = '40000000-0000-4000-8000-000000000101';
 
     public const string PUBLISHED_LISTING_ID = '50000000-0000-4000-8000-000000000001';
 
@@ -60,6 +60,14 @@ class BaselineSeeder extends Seeder
         10 => ['name' => 'Gia Han Truong', 'email' => 'tenant4@example.com', 'phone' => '+84981220463'],
     ];
 
+    /** @var list<array{osmId: string, name: ?string, latitude: string, longitude: string, district: ?string, addressLine: ?string}>|null */
+    private static ?array $places = null;
+
+    public static function propertyCount(): int
+    {
+        return min(self::MAX_PROPERTY_COUNT, count(self::places()));
+    }
+
     /**
      * @return array<int, string>
      */
@@ -73,7 +81,7 @@ class BaselineSeeder extends Seeder
      */
     public static function propertyIds(): array
     {
-        return self::ids('20000000', self::PROPERTY_COUNT);
+        return self::ids('20000000', self::propertyCount());
     }
 
     /**
@@ -81,7 +89,7 @@ class BaselineSeeder extends Seeder
      */
     public static function unitIds(): array
     {
-        return self::ids('30000000', self::PROPERTY_COUNT);
+        return self::ids('30000000', self::propertyCount());
     }
 
     /**
@@ -89,7 +97,7 @@ class BaselineSeeder extends Seeder
      */
     public static function listingIds(): array
     {
-        return self::ids('50000000', self::PROPERTY_COUNT);
+        return self::ids('50000000', self::propertyCount());
     }
 
     /**
@@ -100,11 +108,17 @@ class BaselineSeeder extends Seeder
         return array_column(self::mediaFixtures(), 'id');
     }
 
+    public static function coverMediaId(int $number): string
+    {
+        return self::id('40000000', $number * 100);
+    }
+
     /**
      * @return array<int, array{
      *     id: string,
      *     property_id: string,
      *     unit_id: ?string,
+     *     uploaded_by: string,
      *     client_operation_id: string,
      *     source_file: string,
      *     storage_path: string,
@@ -114,31 +128,36 @@ class BaselineSeeder extends Seeder
      */
     public static function mediaFixtures(): array
     {
+        $library = SeedImageLibrary::load();
         $fixtures = [];
 
-        for ($number = 1; $number <= self::PUBLISHED_PROPERTY_COUNT; $number++) {
-            $propertyId = self::id('20000000', $number);
+        for ($number = 1; $number <= self::propertyCount(); $number++) {
             $place = self::place($number);
-            $fixtures[] = [
-                'id' => self::id('40000000', $number),
-                'property_id' => $propertyId,
-                'unit_id' => null,
-                'client_operation_id' => self::id('42000000', $number),
-                'source_file' => 'published-property-gallery-01.png',
-                'storage_path' => "properties/{$propertyId}/gallery-01.png",
-                'caption' => "Street view of {$place['name']}",
-                'sort_order' => 0,
-            ];
-            $fixtures[] = [
-                'id' => self::id('41000000', $number),
-                'property_id' => $propertyId,
-                'unit_id' => self::id('30000000', $number),
-                'client_operation_id' => self::id('43000000', $number),
-                'source_file' => 'published-property-unit-01.png',
-                'storage_path' => "properties/{$propertyId}/unit-01.png",
-                'caption' => "{$place['unit_label']} at {$place['name']}",
-                'sort_order' => 1,
-            ];
+            $images = $library->imagesFor(
+                $place['property_type'],
+                $place['unit_kind'],
+                $number,
+                $place['shared_amenities']['parking']['enabled'],
+                $place['shared_amenities']['laundry']['enabled'],
+            );
+
+            foreach ($images as $index => $image) {
+                if ($index === 0 && $image['level'] !== 'property') {
+                    throw new RuntimeException('The first library image for a property must be property-level cover media.');
+                }
+
+                $fixtures[] = [
+                    'id' => self::id('40000000', $number * 100 + $index),
+                    'property_id' => self::id('20000000', $number),
+                    'unit_id' => $image['level'] === 'unit' ? self::id('30000000', $number) : null,
+                    'uploaded_by' => self::ownerId($number),
+                    'client_operation_id' => self::id('42000000', $number * 100 + $index),
+                    'source_file' => $image['file'],
+                    'storage_path' => $image['storage_path'],
+                    'caption' => $image['caption'].' — '.$place['name'],
+                    'sort_order' => $index,
+                ];
+            }
         }
 
         return $fixtures;
@@ -153,14 +172,19 @@ class BaselineSeeder extends Seeder
             throw new LogicException('Baseline seeding is forbidden in production.');
         }
 
-        DB::transaction(function (): void {
+        $fixtures = self::mediaFixtures();
+
+        DB::transaction(function () use ($fixtures): void {
             $this->seedUsers();
             $this->seedProperties();
             $this->seedUnits();
-            $this->seedMedia();
+            $this->seedMedia($fixtures);
             $this->seedListings();
             $this->seedFavourites();
+            $this->removeStaleBaselineMedia(array_column($fixtures, 'id'));
         });
+
+        $this->report(count($fixtures));
     }
 
     private function seedUsers(): void
@@ -192,26 +216,20 @@ class BaselineSeeder extends Seeder
 
     private function seedProperties(): void
     {
-        $ownerIds = array_map(
-            fn (int $number): string => self::id('10000000', $number),
-            range(2, 6),
-        );
-
-        for ($number = 1; $number <= self::PROPERTY_COUNT; $number++) {
+        for ($number = 1; $number <= self::propertyCount(); $number++) {
             $place = self::place($number);
-            $published = $number <= self::PUBLISHED_PROPERTY_COUNT;
 
             DB::table('properties')->updateOrInsert(
                 ['id' => self::id('20000000', $number)],
                 [
-                    'owner_id' => $ownerIds[($number - 1) % count($ownerIds)],
+                    'owner_id' => self::ownerId($number),
                     'client_operation_id' => self::id('21000000', $number),
                     'name' => $place['name'],
                     'property_type' => $place['property_type'],
                     'rental_arrangement' => $place['rental_arrangement'],
-                    'address_line' => $published ? $place['address_line'] : null,
-                    'ward' => $published ? $place['ward'] : null,
-                    'district' => $published ? $place['district'] : null,
+                    'address_line' => $place['address_line'],
+                    'ward' => $place['ward'],
+                    'district' => $place['district'],
                     'city' => $place['city'],
                     'description' => $place['description'],
                     'shared_amenities' => json_encode([
@@ -226,8 +244,8 @@ class BaselineSeeder extends Seeder
                         'shared_rules' => $place['rules'],
                     ], JSON_THROW_ON_ERROR),
                     'content_revision' => 1,
-                    'latitude' => $published ? $place['latitude'] : null,
-                    'longitude' => $published ? $place['longitude'] : null,
+                    'latitude' => $place['latitude'],
+                    'longitude' => $place['longitude'],
                     'archived_at' => null,
                     'created_at' => self::FIXED_TIMESTAMP,
                     'updated_at' => self::FIXED_TIMESTAMP,
@@ -238,9 +256,8 @@ class BaselineSeeder extends Seeder
 
     private function seedUnits(): void
     {
-        for ($number = 1; $number <= self::PROPERTY_COUNT; $number++) {
+        for ($number = 1; $number <= self::propertyCount(); $number++) {
             $place = self::place($number);
-            $published = $number <= self::PUBLISHED_PROPERTY_COUNT;
 
             DB::table('units')->updateOrInsert(
                 ['id' => self::id('30000000', $number)],
@@ -249,9 +266,9 @@ class BaselineSeeder extends Seeder
                     'client_operation_id' => self::id('31000000', $number),
                     'label' => $place['unit_label'],
                     'unit_kind' => $place['unit_kind'],
-                    'description' => $published ? $place['unit_description'] : null,
+                    'description' => $place['unit_description'],
                     'floor' => $place['floor'],
-                    'area_m2' => $published ? $place['area_m2'] : null,
+                    'area_m2' => $place['area_m2'],
                     'bedrooms' => $place['bedrooms'],
                     'bathrooms' => $place['bathrooms'],
                     'bathroom_arrangement' => $place['bathroom_arrangement'],
@@ -260,12 +277,12 @@ class BaselineSeeder extends Seeder
                         'standard' => $place['unit_amenities'],
                         'custom' => [],
                     ], JSON_THROW_ON_ERROR),
-                    'advertised_monthly_rent' => $published ? $place['rent'] : null,
-                    'deposit' => $published ? $place['deposit'] : null,
+                    'advertised_monthly_rent' => $place['rent'],
+                    'deposit' => $place['deposit'],
                     'minimum_rental_months' => $place['minimum_rental_months'],
-                    'max_occupants' => $published ? $place['max_occupants'] : null,
+                    'max_occupants' => $place['max_occupants'],
                     'operational_status' => 'READY',
-                    'is_marketed' => $published,
+                    'is_marketed' => true,
                     'policy_overrides' => '{}',
                     'archived_at' => null,
                     'created_at' => self::FIXED_TIMESTAMP,
@@ -275,29 +292,22 @@ class BaselineSeeder extends Seeder
         }
     }
 
-    private function seedMedia(): void
+    /**
+     * @param  array<int, array{id: string, property_id: string, unit_id: ?string, uploaded_by: string, client_operation_id: string, source_file: string, storage_path: string, caption: string, sort_order: int}>  $fixtures
+     */
+    private function seedMedia(array $fixtures): void
     {
-        foreach (self::mediaFixtures() as $fixture) {
-            $sourcePath = database_path('seeders/fixtures/media/'.$fixture['source_file']);
+        $library = SeedImageLibrary::load();
 
-            if (! is_file($sourcePath)) {
-                throw new RuntimeException("Baseline media fixture is missing: {$sourcePath}");
-            }
-
-            $mimeType = mime_content_type($sourcePath);
-            $sha256 = hash_file('sha256', $sourcePath);
-            $size = filesize($sourcePath);
-
-            if ($mimeType !== 'image/png' || $sha256 === false || $size === false || $size < 1) {
-                throw new RuntimeException("Baseline media fixture is invalid: {$sourcePath}");
-            }
+        foreach ($fixtures as $fixture) {
+            $metadata = $library->metadata($fixture['source_file']);
 
             DB::table('property_media')->updateOrInsert(
                 ['id' => $fixture['id']],
                 [
                     'property_id' => $fixture['property_id'],
                     'unit_id' => $fixture['unit_id'],
-                    'uploaded_by' => self::OWNER_USER_ID,
+                    'uploaded_by' => $fixture['uploaded_by'],
                     'client_operation_id' => $fixture['client_operation_id'],
                     'storage_path' => $fixture['storage_path'],
                     'caption' => $fixture['caption'],
@@ -307,9 +317,9 @@ class BaselineSeeder extends Seeder
                     'created_at' => self::FIXED_TIMESTAMP,
                     'updated_at' => self::FIXED_TIMESTAMP,
                     'deleted_at' => null,
-                    'sha256' => $sha256,
-                    'mime_type' => $mimeType,
-                    'size_bytes' => $size,
+                    'sha256' => $metadata['sha256'],
+                    'mime_type' => $metadata['mime_type'],
+                    'size_bytes' => $metadata['size_bytes'],
                 ],
             );
         }
@@ -317,16 +327,15 @@ class BaselineSeeder extends Seeder
 
     private function seedListings(): void
     {
-        for ($number = 1; $number <= self::PROPERTY_COUNT; $number++) {
+        for ($number = 1; $number <= self::propertyCount(); $number++) {
             $place = self::place($number);
             $id = self::id('50000000', $number);
-            $published = $number <= self::PUBLISHED_PROPERTY_COUNT;
             $base = [
                 'property_id' => self::id('20000000', $number),
                 'client_operation_id' => self::id('51000000', $number),
                 'title' => $place['listing_title'],
                 'description' => $place['listing_description'],
-                'cover_media_id' => $published ? self::id('40000000', $number) : null,
+                'cover_media_id' => self::coverMediaId($number),
                 'review_reason' => null,
                 'archived_at' => null,
                 'admin_suspended_at' => null,
@@ -334,25 +343,6 @@ class BaselineSeeder extends Seeder
                 'suspension_reason' => null,
                 'updated_at' => self::FIXED_TIMESTAMP,
             ];
-
-            if (! $published) {
-                DB::table('listings')->updateOrInsert(
-                    ['id' => $id],
-                    $base + [
-                        'moderation_status' => 'DRAFT',
-                        'publication_status' => 'DRAFT',
-                        'submitted_revision' => null,
-                        'submitted_at' => null,
-                        'reviewed_by' => null,
-                        'reviewed_at' => null,
-                        'created_at' => self::FIXED_TIMESTAMP,
-                        'submitted_content_revision' => null,
-                        'approved_content_revision' => null,
-                    ],
-                );
-
-                continue;
-            }
 
             if (! DB::table('listings')->where('id', $id)->exists()) {
                 DB::table('listings')->insert([
@@ -368,7 +358,7 @@ class BaselineSeeder extends Seeder
                     'updated_at' => self::FIXED_TIMESTAMP,
                 ]);
                 DB::table('listings')->where('id', $id)->update([
-                    'cover_media_id' => self::id('40000000', $number),
+                    'cover_media_id' => self::coverMediaId($number),
                     'moderation_status' => 'PENDING',
                     'submitted_revision' => 1,
                     'submitted_at' => self::FIXED_TIMESTAMP,
@@ -412,38 +402,60 @@ class BaselineSeeder extends Seeder
     }
 
     /**
-     * Neighbourhood anchors spread across Vietnam. Four properties are placed around each one.
-     *
-     * @var array<int, array{city: string, district: string, ward: string, street: string, latitude: float, longitude: float, rent_base: int}>
+     * @param  list<string>  $keepIds
      */
-    private const array AREAS = [
-        ['city' => 'Ha Noi', 'district' => 'Hoan Kiem', 'ward' => 'Hang Bac', 'street' => 'Hang Bac', 'latitude' => 21.0285, 'longitude' => 105.8542, 'rent_base' => 12000000],
-        ['city' => 'Ha Noi', 'district' => 'Tay Ho', 'ward' => 'Quang An', 'street' => 'Quang An', 'latitude' => 21.0583, 'longitude' => 105.8230, 'rent_base' => 15000000],
-        ['city' => 'Ha Noi', 'district' => 'Cau Giay', 'ward' => 'Dich Vong', 'street' => 'Xuan Thuy', 'latitude' => 21.0362, 'longitude' => 105.7906, 'rent_base' => 11000000],
-        ['city' => 'Ha Noi', 'district' => 'Dong Da', 'ward' => 'Kham Thien', 'street' => 'Kham Thien', 'latitude' => 21.0150, 'longitude' => 105.8270, 'rent_base' => 9000000],
-        ['city' => 'Hai Phong', 'district' => 'Ngo Quyen', 'ward' => 'May To', 'street' => 'Le Hong Phong', 'latitude' => 20.8561, 'longitude' => 106.6822, 'rent_base' => 7000000],
-        ['city' => 'Ha Long', 'district' => 'Bai Chay', 'ward' => 'Bai Chay', 'street' => 'Ha Long', 'latitude' => 20.9560, 'longitude' => 107.0440, 'rent_base' => 8000000],
-        ['city' => 'Hue', 'district' => 'Phu Hoi', 'ward' => 'Phu Hoi', 'street' => 'Chu Van An', 'latitude' => 16.4637, 'longitude' => 107.5909, 'rent_base' => 6000000],
-        ['city' => 'Hue', 'district' => 'Thuan Hoa', 'ward' => 'Thuan Hoa', 'street' => 'Nguyen Hue', 'latitude' => 16.4760, 'longitude' => 107.5480, 'rent_base' => 5500000],
-        ['city' => 'Da Nang', 'district' => 'Hai Chau', 'ward' => 'Hai Chau I', 'street' => 'Bach Dang', 'latitude' => 16.0678, 'longitude' => 108.2208, 'rent_base' => 8000000],
-        ['city' => 'Da Nang', 'district' => 'Son Tra', 'ward' => 'Phuoc My', 'street' => 'Vo Nguyen Giap', 'latitude' => 16.0830, 'longitude' => 108.2460, 'rent_base' => 10000000],
-        ['city' => 'Da Nang', 'district' => 'Lien Chieu', 'ward' => 'Hoa Khanh Bac', 'street' => 'Nguyen Luong Bang', 'latitude' => 16.0740, 'longitude' => 108.1500, 'rent_base' => 4500000],
-        ['city' => 'Da Nang', 'district' => 'Ngu Hanh Son', 'ward' => 'Hoa Hai', 'street' => 'Truong Sa', 'latitude' => 15.9950, 'longitude' => 108.2650, 'rent_base' => 9000000],
-        ['city' => 'Hoi An', 'district' => 'Minh An', 'ward' => 'Minh An', 'street' => 'Nguyen Thai Hoc', 'latitude' => 15.8771, 'longitude' => 108.3260, 'rent_base' => 8500000],
-        ['city' => 'Hoi An', 'district' => 'Cam An', 'ward' => 'Cam An', 'street' => 'Cua Dai', 'latitude' => 15.8890, 'longitude' => 108.3530, 'rent_base' => 7500000],
-        ['city' => 'Quang Ngai', 'district' => 'Quang Ngai', 'ward' => 'Tran Phu', 'street' => 'Hung Vuong', 'latitude' => 15.1214, 'longitude' => 108.8044, 'rent_base' => 4000000],
-        ['city' => 'Quy Nhon', 'district' => 'Quy Nhon', 'ward' => 'Nguyen Van Cu', 'street' => 'Xuan Dieu', 'latitude' => 13.7820, 'longitude' => 109.2190, 'rent_base' => 5500000],
-        ['city' => 'Nha Trang', 'district' => 'Loc Tho', 'ward' => 'Loc Tho', 'street' => 'Tran Phu', 'latitude' => 12.2388, 'longitude' => 109.1967, 'rent_base' => 9000000],
-        ['city' => 'Nha Trang', 'district' => 'Vinh Hoa', 'ward' => 'Vinh Hoa', 'street' => 'Pham Van Dong', 'latitude' => 12.2700, 'longitude' => 109.1980, 'rent_base' => 7000000],
-        ['city' => 'Da Lat', 'district' => 'Da Lat', 'ward' => 'Ward 1', 'street' => 'Tran Phu', 'latitude' => 11.9404, 'longitude' => 108.4583, 'rent_base' => 8000000],
-        ['city' => 'Phan Thiet', 'district' => 'Phan Thiet', 'ward' => 'Duc Thang', 'street' => 'Nguyen Tat Thanh', 'latitude' => 10.9289, 'longitude' => 108.1021, 'rent_base' => 6000000],
-        ['city' => 'Vung Tau', 'district' => 'Vung Tau', 'ward' => 'Ward 1', 'street' => 'Thuy Van', 'latitude' => 10.3460, 'longitude' => 107.0843, 'rent_base' => 10000000],
-        ['city' => 'Ho Chi Minh City', 'district' => 'District 1', 'ward' => 'Ben Nghe', 'street' => 'Nguyen Hue', 'latitude' => 10.7769, 'longitude' => 106.7009, 'rent_base' => 18000000],
-        ['city' => 'Ho Chi Minh City', 'district' => 'District 3', 'ward' => 'Vo Thi Sau', 'street' => 'Vo Van Tan', 'latitude' => 10.7840, 'longitude' => 106.6840, 'rent_base' => 14000000],
-        ['city' => 'Ho Chi Minh City', 'district' => 'Thu Duc', 'ward' => 'Linh Trung', 'street' => 'Hoang Dieu 2', 'latitude' => 10.8500, 'longitude' => 106.7700, 'rent_base' => 9000000],
-        ['city' => 'Ho Chi Minh City', 'district' => 'District 7', 'ward' => 'Tan Phong', 'street' => 'Nguyen Van Linh', 'latitude' => 10.7290, 'longitude' => 106.7220, 'rent_base' => 16000000],
-        ['city' => 'Can Tho', 'district' => 'Ninh Kieu', 'ward' => 'An Hoi', 'street' => 'Hai Ba Trung', 'latitude' => 10.0340, 'longitude' => 105.7880, 'rent_base' => 5000000],
-    ];
+    private function removeStaleBaselineMedia(array $keepIds): void
+    {
+        DB::table('property_media')
+            ->whereIn('property_id', self::propertyIds())
+            ->whereNotIn('id', $keepIds)
+            ->where(function (Builder $query): void {
+                $query->whereRaw("id::text like '40000000-0000-4000-8000-%'")
+                    ->orWhereRaw("id::text like '41000000-0000-4000-8000-%'");
+            })
+            ->delete();
+    }
+
+    private function report(int $mediaRows): void
+    {
+        $propertyIds = self::propertyIds();
+        $uniquePaths = (int) DB::table('property_media')
+            ->whereIn('property_id', $propertyIds)
+            ->selectRaw('count(distinct storage_path) as aggregate')
+            ->value('aggregate');
+
+        $this->command?->info(sprintf(
+            'Seeded %d Da Nang properties, %d units, %d published listings, %d media rows, and %d unique storage paths under %s.',
+            count($propertyIds),
+            count(self::unitIds()),
+            count(self::listingIds()),
+            $mediaRows,
+            $uniquePaths,
+            SharedStorageRetention::SEED_PREFIX,
+        ));
+    }
+
+    /**
+     * @return list<array{osmId: string, name: ?string, latitude: string, longitude: string, district: ?string, addressLine: ?string}>
+     */
+    private static function places(): array
+    {
+        if (self::$places !== null) {
+            return self::$places;
+        }
+
+        $path = database_path('seeders/da-nang-places.json');
+        $source = is_file($path) ? file_get_contents($path) : false;
+        $decoded = is_string($source) ? json_decode($source, true) : null;
+
+        if (! is_array($decoded) || $decoded === []) {
+            throw new RuntimeException('da-nang-places.json is missing or does not contain a place array.');
+        }
+
+        self::$places = array_values($decoded);
+
+        return self::$places;
+    }
 
     /**
      * @return array{
@@ -453,7 +465,7 @@ class BaselineSeeder extends Seeder
      *     property_type: string,
      *     rental_arrangement: string,
      *     address_line: string,
-     *     ward: string,
+     *     ward: ?string,
      *     district: string,
      *     city: string,
      *     description: string,
@@ -462,7 +474,7 @@ class BaselineSeeder extends Seeder
      *     pets: string,
      *     smoking: string,
      *     rules: array<int, string>,
-     *     shared_amenities: array<string, bool>,
+     *     shared_amenities: array<string, array{enabled: bool}>,
      *     unit_label: string,
      *     unit_kind: string,
      *     unit_description: string,
@@ -471,7 +483,7 @@ class BaselineSeeder extends Seeder
      *     bedrooms: int,
      *     bathrooms: int,
      *     bathroom_arrangement: string,
-     *     unit_amenities: array<string, bool>,
+     *     unit_amenities: array<string, array{enabled: bool}>,
      *     rent: int,
      *     deposit: int,
      *     minimum_rental_months: int,
@@ -480,13 +492,24 @@ class BaselineSeeder extends Seeder
      */
     private static function place(int $number): array
     {
-        $areas = self::AREAS;
-        $index = $number - 1;
-        $area = $areas[$index % count($areas)];
-        $slot = intdiv($index, count($areas));
-        $houseNumber = 12 + (($number * 17) % 160);
-        $latitude = $area['latitude'] + ($slot * 0.018) + ((($number % 3) - 1) * 0.007);
-        $longitude = $area['longitude'] + ($slot * 0.021) + ((($number % 4) - 1) * 0.008);
+        $places = self::places();
+        $raw = $places[$number - 1] ?? null;
+
+        if (! is_array($raw)) {
+            throw new RuntimeException("Da Nang place {$number} is not available.");
+        }
+
+        $latitude = (string) $raw['latitude'];
+        $longitude = (string) $raw['longitude'];
+        $district = self::districtFor((float) $latitude, (float) $longitude, $raw['district'] ?? null);
+        $address = trim((string) ($raw['addressLine'] ?? ''));
+        $recordedName = trim((string) ($raw['name'] ?? ''));
+
+        if ($address === '') {
+            $address = $latitude.', '.$longitude;
+        }
+
+        $name = $recordedName !== '' ? $recordedName : $address;
         $propertyType = ['HOUSE', 'APARTMENT', 'APARTMENT_BUILDING'][$number % 3];
         $whole = $number % 2 === 0;
         $unitKind = match ($propertyType) {
@@ -506,46 +529,99 @@ class BaselineSeeder extends Seeder
             'APARTMENT' => 48 + ($number % 25),
             default => 80 + ($number % 40),
         };
-        $rent = $area['rent_base'] + ($slot * 700000) + (($number % 5) * 250000);
-        $label = match ($unitKind) {
-            'HOUSE' => 'Whole house',
-            'ROOM' => 'Room '.chr(65 + ($number % 4)),
-            'STUDIO' => 'Studio '.(($number % 12) + 1),
-            default => 'Flat '.(($number % 20) + 101),
+        $rentBase = match ($district) {
+            'Sơn Trà', 'Hải Châu' => 8000000,
+            'Thanh Khê' => 6500000,
+            'Ngũ Hành Sơn' => 9000000,
+            default => 5000000,
         };
-        $name = "{$houseNumber} {$area['street']}, {$area['district']}";
+        $rent = $rentBase + (($number % 5) * 250000);
+        $label = match ($unitKind) {
+            'HOUSE' => 'Nguyên căn',
+            'ROOM' => 'Phòng '.chr(65 + ($number % 4)),
+            'STUDIO' => 'Studio '.(($number % 12) + 1),
+            default => 'Căn '.(($number % 20) + 101),
+        };
 
         return [
             'name' => $name,
-            'listing_title' => "{$label} on {$area['street']}, {$area['city']}",
-            'listing_description' => "A {$unitKind} rental at {$houseNumber} {$area['street']}, {$area['ward']}, {$area['city']}.",
+            'listing_title' => "{$label} tại {$name}",
+            'listing_description' => "Cho thuê {$label} tại {$address}, {$district}, Đà Nẵng. Dữ liệu demo, không phải nhà đang rao thật.",
             'property_type' => $propertyType,
             'rental_arrangement' => $whole ? 'WHOLE_SPACE' : 'SEPARATE_UNITS',
-            'address_line' => "{$houseNumber} {$area['street']}",
-            'ward' => $area['ward'],
-            'district' => $area['district'],
-            'city' => $area['city'],
-            'description' => "Rental property in {$area['ward']}, {$area['district']}, {$area['city']}.",
-            'latitude' => number_format($latitude, 7, '.', ''),
-            'longitude' => number_format($longitude, 7, '.', ''),
-            'pets' => ['NOT_ALLOWED', 'WITH_APPROVAL', 'ALLOWED'][$number % 3],
+            'address_line' => $address,
+            'ward' => null,
+            'district' => $district,
+            'city' => 'Đà Nẵng',
+            'description' => "Nhà cho thuê demo tại {$district}, Đà Nẵng. Tọa độ lấy từ dữ liệu mở, không đại diện cho một tin đăng thật.",
+            'latitude' => $latitude,
+            'longitude' => $longitude,
+            'pets' => ['NOT_ALLOWED', 'ASK_OWNER', 'ALLOWED'][$number % 3],
             'smoking' => $number % 4 === 0 ? 'OUTDOOR_ONLY' : 'NOT_ALLOWED',
-            'rules' => ['Quiet hours after 22:00'],
-            'shared_amenities' => ['wifi' => true, 'parking' => $number % 2 === 0],
+            'rules' => ['Giữ yên tĩnh sau 22:00'],
+            'shared_amenities' => [
+                'wifi' => ['enabled' => true],
+                'parking' => ['enabled' => $number % 2 === 0],
+                'elevator' => ['enabled' => $propertyType === 'APARTMENT_BUILDING'],
+                'laundry' => ['enabled' => $number % 3 === 0],
+            ],
             'unit_label' => $label,
             'unit_kind' => $unitKind,
-            'unit_description' => "{$label} with {$bedrooms} bedroom(s) at {$name}.",
+            'unit_description' => "{$label} tại {$name}, {$district}.",
             'floor' => (string) (1 + ($number % 15)),
             'area_m2' => $areaM2,
             'bedrooms' => $bedrooms,
             'bathrooms' => $bedrooms === 0 ? 1 : min($bedrooms, 2),
             'bathroom_arrangement' => $unitKind === 'ROOM' ? 'SHARED' : 'PRIVATE',
-            'unit_amenities' => ['air_conditioning' => true, 'washing_machine' => $areaM2 >= 40],
+            'unit_amenities' => [
+                'air_conditioning' => ['enabled' => true],
+                'washing_machine' => ['enabled' => $areaM2 >= 40],
+                'kitchen' => ['enabled' => $unitKind !== 'ROOM'],
+            ],
             'rent' => $rent,
             'deposit' => $rent * ($number % 2 === 0 ? 2 : 1),
             'minimum_rental_months' => [3, 6, 12][$number % 3],
             'max_occupants' => max(1, $bedrooms === 0 ? 2 : $bedrooms + 1),
         ];
+    }
+
+    /**
+     * OpenStreetMap often omits the district. The fallback only covers this Da Nang extract.
+     */
+    private static function districtFor(float $latitude, float $longitude, mixed $recorded): string
+    {
+        if (is_string($recorded) && trim($recorded) !== '') {
+            return trim($recorded);
+        }
+
+        if ($longitude >= 108.230 || ($latitude >= 16.075 && $longitude >= 108.210)) {
+            return 'Sơn Trà';
+        }
+
+        if ($longitude < 108.175) {
+            return 'Liên Chiểu';
+        }
+
+        if ($latitude < 16.040 && $longitude < 108.205) {
+            return 'Cẩm Lệ';
+        }
+
+        if ($latitude < 16.030) {
+            return 'Ngũ Hành Sơn';
+        }
+
+        if ($longitude < 108.200) {
+            return 'Thanh Khê';
+        }
+
+        return 'Hải Châu';
+    }
+
+    private static function ownerId(int $number): string
+    {
+        $ownerNumbers = [2, 3, 4, 5, 6];
+
+        return self::id('10000000', $ownerNumbers[($number - 1) % count($ownerNumbers)]);
     }
 
     private static function id(string $prefix, int $number): string

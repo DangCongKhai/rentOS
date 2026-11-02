@@ -8,8 +8,8 @@ Requirements: FR19 FR20 FR21 FR40 FR77
 Public discovery. Trigger is the named user action or due system evaluation.
 
 ## Main flow
-1. Read location (address/ward/district/city), text and full date filters; trim/collapse whitespace and preserve Vietnamese text; label no-date default.
-2. Find units meeting combined filters on the same unit and no blocking overlap.
+1. Read location (address, ward, and city), text, and an optional move-in date. Trim and collapse whitespace and preserve Vietnamese text. With no move-in date, keep a held listing and label the units free today.
+2. Find units that meet the combined filters on the same unit. When a move-in date is set, that unit must have no blocking overlap for the implied stay.
 3. Compute eligible count/rent range from same unit set.
 4. Display shared/private amenities separately and safe DTOs; preserve location/date/filter/page URL state and independent reset.
 5. TanStack Query caches this browser’s reads; Laravel separately invalidates any shared public cache after edits/publication/suspension. Recheck current visibility before returning public data; a cached result is never allocation authority.

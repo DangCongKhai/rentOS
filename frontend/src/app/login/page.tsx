@@ -6,7 +6,7 @@ export default function SignInPage() {
   return (
     <GuestGuard>
       <AuthShell
-        eyebrow="TÀI KHOẢN RENTOS"
+        eyebrow=""
         title="Đăng nhập"
         description="Tiếp tục hành trình của bạn cùng rentOS."
         marketingPanel
