@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { ApiError, getCurrentUser, resendVerification, updatePassword, updateProfile, type CurrentUser } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
@@ -9,6 +9,7 @@ import { FieldError, FormMessage } from "./auth-shell";
 
 export function ProfilePanel() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { refreshUser, signOut: authSignOut } = useAuth();
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [loadError, setLoadError] = useState("");
@@ -22,9 +23,16 @@ export function ProfilePanel() {
   const [resendBusy, setResendBusy] = useState(false);
   const [resendMessage, setResendMessage] = useState("");
   const [resendError, setResendError] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+  const isVerifiedFromUrl = searchParams?.get("verified") === "1";
+  const showVerifiedBanner = isVerifiedFromUrl && !bannerDismissed;
   const [passwordFieldErrors, setPasswordFieldErrors] = useState<Record<string, string[]>>({});
 
   useEffect(() => {
+    if (isVerifiedFromUrl) {
+      void refreshUser();
+    }
+
     getCurrentUser().then(setUser).catch((error) => {
       if (error instanceof ApiError && error.status === 401) {
         router.replace("/login");
@@ -32,7 +40,7 @@ export function ProfilePanel() {
         setLoadError("Không thể tải hồ sơ. Vui lòng tải lại trang để thử lại.");
       }
     });
-  }, [router]);
+  }, [router, isVerifiedFromUrl, refreshUser]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -119,9 +127,27 @@ export function ProfilePanel() {
   if (!user) return <p className="text-center py-12 text-slate-500">Đang tải hồ sơ…</p>;
 
   return (
-    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-      {/* Profile Settings Card */}
-      <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
+    <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8 space-y-6">
+      {showVerifiedBanner && (
+        <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm leading-relaxed flex items-center justify-between gap-3 shadow-sm">
+          <div className="flex items-center gap-2.5 font-medium">
+            <span aria-hidden="true" className="w-6 h-6 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xs font-bold shrink-0">✓</span>
+            <span>Email của bạn đã được xác minh thành công! Bạn có thể sử dụng đầy đủ các tính năng trên rentOS.</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setBannerDismissed(true)}
+            className="text-emerald-700 hover:text-emerald-900 text-xs font-semibold px-2.5 py-1 rounded-md hover:bg-emerald-100 transition-colors"
+            aria-label="Đóng thông báo"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        {/* Profile Settings Card */}
+        <section className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm">
         <div className="mb-6">
           <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400">Thông tin tài khoản</span>
           <h2 className="text-xl font-bold text-slate-900 mt-1 mb-1">Hồ sơ của bạn</h2>
@@ -300,6 +326,7 @@ export function ProfilePanel() {
           </div>
         </div>
       </section>
+      </div>
     </div>
   );
 }

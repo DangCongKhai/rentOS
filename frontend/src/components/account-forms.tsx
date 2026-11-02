@@ -264,7 +264,7 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
               <span>Ghi nhớ đăng nhập</span>
             </label>
             <Link
-              href="/login"
+              href="/forgot-password"
               className="text-[#3368a0] hover:text-[#285584] font-medium hover:underline transition-colors"
             >
               Quên mật khẩu?

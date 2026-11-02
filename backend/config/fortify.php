@@ -77,10 +77,11 @@ return [
     'home' => env('FRONTEND_URL', 'http://localhost:3000'),
 
     'redirects' => [
-        'email-verification' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/confirm-email',
+        'email-verification' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/profile?verified=1',
         'login' => env('FRONTEND_URL', 'http://localhost:3000'),
         'register' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/confirm-email',
         'logout' => env('FRONTEND_URL', 'http://localhost:3000'),
+        'password-reset' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/login?reset=1',
     ],
 
     /*
@@ -171,6 +172,7 @@ return [
 
     'features' => [
         Features::registration(),
+        Features::resetPasswords(),
         Features::emailVerification(),
         Features::updatePasswords(),
     ],

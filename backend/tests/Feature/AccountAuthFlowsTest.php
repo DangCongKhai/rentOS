@@ -3,7 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\User;
-use Illuminate\Auth\Notifications\ResetPassword;
+use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,7 +11,9 @@ use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Support\Str;
 use Tests\Support\EnforcingCsrfMiddleware;
 use Tests\TestCase;
 
@@ -277,7 +279,7 @@ class AccountAuthFlowsTest extends TestCase
         $this->assertNull($other->fresh()->email_verified_at);
     }
 
-    public function test_resend_is_throttled_and_password_reset_requests_are_supported(): void
+    public function test_resend_verification_is_throttled(): void
     {
         Notification::fake();
         $user = User::factory()->unverified()->create();
@@ -286,10 +288,6 @@ class AccountAuthFlowsTest extends TestCase
         }
         $this->postJson('/email/verification-notification')->assertTooManyRequests();
         Notification::assertSentToTimes($user, VerifyEmail::class, 6);
-        $this->postJson('/logout')->assertNoContent();
-        $this->postJson('/forgot-password', ['email' => $user->email])->assertAccepted();
-        Notification::assertSentTo($user, ResetPassword::class);
-        $this->postJson('/reset-password', [])->assertUnprocessable();
     }
 
     public function test_profile_ignores_empty_prohibited_fields_and_preserves_identity(): void
@@ -401,5 +399,155 @@ class AccountAuthFlowsTest extends TestCase
         ]);
         $this->get($url)->assertRedirect(rtrim(config('fortify.home'), '/').'/login');
         $this->assertNull($user->fresh()->email_verified_at);
+    }
+
+    public function test_forgot_password_sends_reset_link_when_user_exists_and_fails_with_422_when_user_does_not_exist(): void
+    {
+        Notification::fake();
+        $user = User::factory()->create(['email' => 'valid.member@example.test']);
+
+        $response = $this->postJson('/forgot-password', ['email' => 'valid.member@example.test']);
+        $response->assertOk();
+        $response->assertJson(['message' => 'Hướng dẫn đặt lại mật khẩu đã được gửi đến hộp thư của bạn.']);
+        Notification::assertSentTo($user, ResetPasswordNotification::class);
+
+        Notification::fake();
+        $responseMissing = $this->postJson('/forgot-password', ['email' => 'missing@example.test']);
+        $responseMissing->assertStatus(422);
+        $responseMissing->assertJsonValidationErrors('email');
+        $this->assertSame('Email này không tồn tại.', $responseMissing->json('errors.email.0'));
+        Notification::assertNothingSent();
+    }
+
+    public function test_reset_password_with_valid_token_revokes_sessions_and_tokens_and_requires_relogin(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'reset.user@example.test',
+            'password' => Hash::make('Old-password-123'),
+            'remember_token' => Str::random(60),
+        ]);
+        $oldRememberToken = $user->remember_token;
+
+        $user->createToken('cli-token', ['account:read'], now()->addHour());
+        $this->assertDatabaseCount('personal_access_tokens', 1);
+
+        DB::table('sessions')->insert([
+            'id' => 'dummy-session-123',
+            'user_id' => $user->id,
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'PHPUnit',
+            'payload' => 'dummy-payload',
+            'last_activity' => now()->timestamp,
+        ]);
+        $this->assertDatabaseHas('sessions', ['id' => 'dummy-session-123']);
+
+        $token = Password::createToken($user);
+
+        $response = $this->postJson('/reset-password', [
+            'token' => $token,
+            'email' => 'reset.user@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'New-Secure-Password-999',
+        ]);
+
+        $response->assertOk();
+        $user->refresh();
+
+        $this->assertTrue(Hash::check('New-Secure-Password-999', $user->password));
+        $this->assertNotSame($oldRememberToken, $user->remember_token);
+        $this->assertDatabaseMissing('sessions', ['id' => 'dummy-session-123']);
+        $this->assertDatabaseCount('personal_access_tokens', 0);
+        $this->assertGuest('web');
+    }
+
+    public function test_reset_password_preserves_email_verification_and_account_status(): void
+    {
+        $verifiedAt = now()->subDays(5);
+        $user = User::factory()->create([
+            'email' => 'verified@example.test',
+            'email_verified_at' => $verifiedAt,
+            'account_status' => 'ACTIVE',
+        ]);
+        $token = Password::createToken($user);
+
+        $this->postJson('/reset-password', [
+            'token' => $token,
+            'email' => 'verified@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'New-Secure-Password-999',
+        ])->assertOk();
+
+        $user->refresh();
+        $this->assertSame($verifiedAt->timestamp, $user->email_verified_at?->timestamp);
+        $this->assertSame('ACTIVE', $user->account_status);
+    }
+
+    public function test_reset_password_fails_with_invalid_or_expired_or_already_used_token(): void
+    {
+        $user = User::factory()->create([
+            'email' => 'expired@example.test',
+            'password' => Hash::make('Initial-password-123'),
+        ]);
+
+        // 1. Invalid token
+        $this->postJson('/reset-password', [
+            'token' => 'invalid-token-xyz',
+            'email' => 'expired@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'New-Secure-Password-999',
+        ])->assertStatus(422)->assertJsonValidationErrors('email');
+
+        // 2. Expired token (travel past 60 min expiration)
+        $token = Password::createToken($user);
+        $this->travel(65)->minutes();
+
+        $this->postJson('/reset-password', [
+            'token' => $token,
+            'email' => 'expired@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'New-Secure-Password-999',
+        ])->assertStatus(422)->assertJsonValidationErrors('email');
+
+        $this->travelBack();
+
+        // 3. Already used token cannot be reused
+        $freshToken = Password::createToken($user);
+        $this->postJson('/reset-password', [
+            'token' => $freshToken,
+            'email' => 'expired@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'New-Secure-Password-999',
+        ])->assertOk();
+
+        $this->postJson('/reset-password', [
+            'token' => $freshToken,
+            'email' => 'expired@example.test',
+            'password' => 'Another-Password-888',
+            'password_confirmation' => 'Another-Password-888',
+        ])->assertStatus(422)->assertJsonValidationErrors('email');
+
+        $this->assertTrue(Hash::check('New-Secure-Password-999', $user->fresh()->password));
+    }
+
+    public function test_reset_password_requires_valid_complexity_and_matching_confirmation(): void
+    {
+        $user = User::factory()->create(['email' => 'rules@example.test']);
+        $token = Password::createToken($user);
+
+        // Mismatched confirmation
+        $this->postJson('/reset-password', [
+            'token' => $token,
+            'email' => 'rules@example.test',
+            'password' => 'New-Secure-Password-999',
+            'password_confirmation' => 'Different-Password-000',
+        ])->assertStatus(422)->assertJsonValidationErrors('password');
+
+        // Password too short (< 8 chars)
+        $this->postJson('/reset-password', [
+            'token' => $token,
+            'email' => 'rules@example.test',
+            'password' => 'short1',
+            'password_confirmation' => 'short1',
+        ])->assertStatus(422)->assertJsonValidationErrors('password');
     }
 }
