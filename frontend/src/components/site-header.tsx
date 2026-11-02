@@ -3,8 +3,20 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+
+function NavLink({ href, active, children }: { href: string; active: boolean; children: string }) {
+  return (
+    <Link
+      href={href}
+      className={`inline-flex min-h-[44px] items-center whitespace-nowrap text-[15px] leading-[22.5px] transition-colors hover:text-[#8FBCD0] ${active ? "font-bold text-[#8FBCD0]" : "font-medium text-[#E4E9F0]"}`}
+      aria-current={active ? "page" : undefined}
+    >
+      {children}
+    </Link>
+  );
+}
 
 export function SiteHeader() {
   const router = useRouter();
@@ -12,6 +24,18 @@ export function SiteHeader() {
   const { user, status, signOut } = useAuth();
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
+  const [scrolled, setScrolled] = useState(false);
+  const onHome = pathname === "/";
+
+  useEffect(() => {
+    if (!onHome) return;
+    const update = () => setScrolled(window.scrollY > 12);
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    return () => window.removeEventListener("scroll", update);
+  }, [onHome]);
+
+  const transparent = onHome && !scrolled;
 
   const initials =
     user?.name
@@ -36,7 +60,7 @@ export function SiteHeader() {
   }
 
   return (
-    <header className="sticky top-0 z-50 flex items-center justify-between gap-3 sm:gap-6 min-h-[75px] h-[75px] px-4 sm:px-6 lg:px-10 bg-[#091216] text-[#E4E9F0] border-b border-white/10 shadow-sm">
+    <header className={`z-50 flex h-[75px] min-h-[75px] items-center justify-between gap-3 px-4 text-[#E4E9F0] transition-colors sm:gap-6 sm:px-6 lg:px-10 ${onHome ? "fixed inset-x-0 top-0" : "sticky top-0"} ${transparent ? "border-b border-transparent bg-transparent shadow-none" : "border-b border-white/10 bg-[#091216] shadow-sm"}`}>
       <Link href="/" className="inline-flex items-center min-h-[44px] shrink-0" aria-label="rentOS - trang chủ">
         <Image
           src="/images/rentos-logo.png"
@@ -48,24 +72,25 @@ export function SiteHeader() {
         />
       </Link>
       <nav className="flex items-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-1" aria-label="Điều hướng chính">
+        <NavLink href="/listings" active={pathname.startsWith("/listings")}>Tìm nhà cho bạn</NavLink>
+        <NavLink href="/guide" active={pathname.startsWith("/guide")}>Hướng dẫn</NavLink>
         <Link
-          href="/"
-          className="text-[15px] font-bold text-[#8FBCD0] hover:text-[#FFFFFF] transition-colors whitespace-nowrap"
+          href="/#cau-hoi"
+          className="text-[15px] font-medium leading-[22.5px] text-[#E4E9F0] hover:text-[#8FBCD0] transition-colors whitespace-nowrap min-h-[44px] inline-flex items-center"
+          onClick={(event) => {
+            if (pathname !== "/") return;
+            const section = document.getElementById("cau-hoi");
+            if (!section) return;
+            event.preventDefault();
+            const top = section.getBoundingClientRect().top + window.scrollY - 91;
+            window.scrollTo({ top, behavior: "smooth" });
+            window.history.replaceState(null, "", "/#cau-hoi");
+          }}
         >
-          Tìm nhà cho bạn
+          FAQ
         </Link>
-        <Link
-          href="/tenant"
-          className="text-[15px] font-medium text-[#E4E9F0] hover:text-[#8FBCD0] transition-colors whitespace-nowrap"
-        >
-          Cổng Cư Dân
-        </Link>
-        <Link
-          href="/owner"
-          className="text-[15px] font-medium text-[#E4E9F0] hover:text-[#8FBCD0] transition-colors whitespace-nowrap"
-        >
-          Cổng Chủ Nhà
-        </Link>
+        <NavLink href="/tenant" active={pathname.startsWith("/tenant")}>Cổng cư dân</NavLink>
+        <NavLink href="/owner" active={pathname.startsWith("/owner")}>Cổng chủ nhà</NavLink>
       </nav>
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         {/* Language Indicator */}

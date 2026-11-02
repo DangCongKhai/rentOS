@@ -25,7 +25,7 @@
         <env name="CACHE_STORE" value="array"/>
         <env name="DB_CONNECTION" value="pgsql" force="false"/>
         <env name="DB_HOST" value="127.0.0.1" force="false"/>
-        <env name="DB_PORT" value="5432" force="false"/>
+        <env name="DB_PORT" value="54322" force="false"/>
         <env name="DB_DATABASE" value="rentos_test" force="false"/>
         <env name="DB_USERNAME" value="postgres" force="false"/>
         <env name="DB_PASSWORD" value="postgres" force="false"/>
@@ -38,5 +38,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="SUPABASE_URL" value="https://example.supabase.co" force="true"/>
+        <env name="SUPABASE_STORAGE_BUCKET" value="property-media" force="true"/>
     </php>
 </phpunit>

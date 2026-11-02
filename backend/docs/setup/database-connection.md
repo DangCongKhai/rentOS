@@ -96,7 +96,7 @@ php artisan migrate
 php artisan migrate:status
 ```
 
-After migrations, use the [two-part media fixture guide](media-fixtures.md): Part A upserts the stable database rows, and Part B uploads the exact committed images to the configured private Supabase Storage bucket. The baseline seeder blocks production and never deletes arbitrary existing data.
+After migrations, use the [two-part media fixture guide](media-fixtures.md): Part A upserts the stable database rows, and Part B uploads the exact committed images to the configured public Supabase Storage bucket. The baseline seeder blocks production and never deletes arbitrary existing data.
 
 For disposable local/test databases, a schema-only full rebuild is allowed only after confirming isolation:
 

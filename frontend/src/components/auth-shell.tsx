@@ -45,6 +45,7 @@ export function AuthShell({
               alt="Không gian sống rentOS"
               fill
               priority
+              sizes="(min-width: 768px) 450px, 100vw"
               className="object-cover object-center"
             />
             {/* Gradient Overlay for Readability */}
@@ -74,9 +75,11 @@ export function AuthShell({
           </aside>
         )}
         <div className={`p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white ${marketingPanel ? "flex-1 md:w-[508px]" : "flex-1"}`}>
-          <span className="block text-slate-400 text-[11px] font-bold tracking-wider uppercase mb-1.5">
-            {eyebrow}
-          </span>
+          {eyebrow ? (
+            <span className="block text-slate-400 text-[11px] font-bold tracking-wider uppercase mb-1.5">
+              {eyebrow}
+            </span>
+          ) : null}
           <h1 id="auth-title" className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
             {title}
           </h1>

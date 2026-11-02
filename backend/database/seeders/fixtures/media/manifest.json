@@ -1,0 +1,1572 @@
+{
+  "sets": [
+    {
+      "id": "studio-01",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-01/exterior.webp",
+          "storage_path": "seed/studios/studio-01/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary apartment building exterior with concrete facade and glass balconies.",
+            "creator": "Photo by Brett Sayles on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/building-with-balconies-11631278/"
+          }
+        },
+        {
+          "file": "library/studios/studio-01/bedroom.webp",
+          "storage_path": "seed/studios/studio-01/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Stylish modern bedroom featuring a chevron pillow and sleek minimalist design.",
+            "creator": "Photo by La Miko on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/folded-towels-on-bed-3754698/"
+          }
+        },
+        {
+          "file": "library/studios/studio-01/kitchen.webp",
+          "storage_path": "seed/studios/studio-01/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Warm sunlight illuminates a small kitchen in a Budapest apartment, capturing a cozy atmosphere.",
+            "creator": "Photo by Simon Ly on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/kitchen-interior-10886638/"
+          }
+        },
+        {
+          "file": "library/studios/studio-01/bathroom.webp",
+          "storage_path": "seed/studios/studio-01/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Stylish and contemporary bathroom featuring a modern sink, mirror, and minimal design elements.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/toilet-and-sink-in-modern-light-bathroom-6890406/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-02",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-02/exterior.webp",
+          "storage_path": "seed/studios/studio-02/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary urban apartment building featuring glass balconies and geometric design, captured under a clear blue sky.",
+            "creator": "Photo by Rosy Fields on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-urban-architecture-with-glass-balconies-39214892/"
+          }
+        },
+        {
+          "file": "library/studios/studio-02/bedroom.webp",
+          "storage_path": "seed/studios/studio-02/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Stylish open plan studio apartment with modern furniture and wooden accents.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-bedroom-and-kitchen-interior-with-furniture-at-home-7045996/"
+          }
+        },
+        {
+          "file": "library/studios/studio-02/kitchen.webp",
+          "storage_path": "seed/studios/studio-02/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Stylish minimalist kitchen interior with wooden cabinets and sleek appliances.",
+            "creator": "Photo by Hakim  Santoso on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/gray-top-mount-refrigerator-beside-brown-wooden-kitchen-cabinet-5556177/"
+          }
+        },
+        {
+          "file": "library/studios/studio-02/bathroom.webp",
+          "storage_path": "seed/studios/studio-02/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Bright bathroom featuring wooden cabinets and white towels for a clean, modern look.",
+            "creator": "Photo by Peter  Vang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-bathroom-interior-with-minimalist-design-36816992/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-03",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-03/exterior.webp",
+          "storage_path": "seed/studios/studio-03/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Stylish urban apartment buildings with balconies set against a clear blue sky, showcasing modern architecture.",
+            "creator": "Photo by Robin Osolinski on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-urban-building-architecture-against-blue-sky-37301680/"
+          }
+        },
+        {
+          "file": "library/studios/studio-03/bedroom.webp",
+          "storage_path": "seed/studios/studio-03/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A cozy modern interior featuring a comfortable seating area, plants, and stylish accessories.",
+            "creator": "Photo by Lisa Anna on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/room-in-house-19846366/"
+          }
+        },
+        {
+          "file": "library/studios/studio-03/kitchen.webp",
+          "storage_path": "seed/studios/studio-03/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Bright and clean minimalist kitchen with white cabinetry and natural light.",
+            "creator": "Photo by Mateusz Pielech on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-minimalist-white-kitchen-interior-29252561/"
+          }
+        },
+        {
+          "file": "library/studios/studio-03/bathroom.webp",
+          "storage_path": "seed/studios/studio-03/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "A contemporary minimalist bathroom with elegant fixtures and lighting.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-of-modern-bathroom-with-ceramic-sink-and-toilet-bowl-7031719/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-04",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-04/exterior.webp",
+          "storage_path": "seed/studios/studio-04/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "High-rise residential building with balconies and multiple windows in an urban setting.",
+            "creator": "Photo by Berdan Tudor on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/old-apartment-building-facade-14846410/"
+          }
+        },
+        {
+          "file": "library/studios/studio-04/bedroom.webp",
+          "storage_path": "seed/studios/studio-04/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Stylish open-plan apartment featuring a wooden partition, cozy bed, and modern kitchen.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/kitchen-and-bedroom-interior-in-modern-house-7045991/"
+          }
+        },
+        {
+          "file": "library/studios/studio-04/kitchen.webp",
+          "storage_path": "seed/studios/studio-04/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Contemporary small kitchen featuring stainless steel appliances and open shelving.",
+            "creator": "Photo by Lisa Anna on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/kitchen-with-white-cabinets-and-silver-appliances-19846388/"
+          }
+        },
+        {
+          "file": "library/studios/studio-04/bathroom.webp",
+          "storage_path": "seed/studios/studio-04/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Explore a contemporary bathroom featuring luxury fittings and a scenic window view.",
+            "creator": "Photo by Ahmet ÇÖTÜR on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/a-bathroom-with-a-large-window-and-a-sink-27626183/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-05",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-05/exterior.webp",
+          "storage_path": "seed/studios/studio-05/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary apartment building exterior with yellow and grey panels under a clear blue sky.",
+            "creator": "Photo by Mia Vargas on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/apartment-building-against-blue-sky-9308434/"
+          }
+        },
+        {
+          "file": "library/studios/studio-05/bedroom.webp",
+          "storage_path": "seed/studios/studio-05/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A stylish bedroom with modern decor, featuring a cozy bed, sofa, and lush indoor plants.",
+            "creator": "Photo by Rachel Claire on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/cozy-bedroom-with-minimalist-furniture-and-blue-and-gray-walls-4857765/"
+          }
+        },
+        {
+          "file": "library/studios/studio-05/kitchen.webp",
+          "storage_path": "seed/studios/studio-05/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Stylish modern kitchen interior in black with tile backsplash and greenery accent.",
+            "creator": "Photo by Fernanda Neitzel on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-black-kitchen-with-tile-backsplash-36662633/"
+          }
+        },
+        {
+          "file": "library/studios/studio-05/bathroom.webp",
+          "storage_path": "seed/studios/studio-05/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "A stylish and organized bathroom interior in a Boston apartment with contemporary fixtures.",
+            "creator": "Photo by Chris Palladino on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-bathroom-in-a-boston-apartment-38661230/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-06",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-06/exterior.webp",
+          "storage_path": "seed/studios/studio-06/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "A stylish, multi-story luxury apartment building with a contemporary facade against a clear sky.",
+            "creator": "Photo by Nino  Sanger on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/facade-of-white-apartment-building-under-white-sky-14998334/"
+          }
+        },
+        {
+          "file": "library/studios/studio-06/bedroom.webp",
+          "storage_path": "seed/studios/studio-06/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A simple minimalist bedroom with a grey bedspread, armchair, and modern decor.",
+            "creator": "Photo by Peter  Vang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/cozy-minimalist-bedroom-with-grey-accents-35618218/"
+          }
+        },
+        {
+          "file": "library/studios/studio-06/kitchen.webp",
+          "storage_path": "seed/studios/studio-06/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Bright indoor laundry setup with hanging towels and cooking pots on a stove.",
+            "creator": "Photo by Nothing Ahead on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/laundry-with-containers-on-washer-under-towel-on-hanger-7538287/"
+          }
+        },
+        {
+          "file": "library/studios/studio-06/bathroom.webp",
+          "storage_path": "seed/studios/studio-06/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Modern bathroom vanity featuring a stylish faucet, natural decor, and a mirrored reflection for a serene ambiance.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/mirror-over-sink-in-bathroom-16501294/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-07",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-07/exterior.webp",
+          "storage_path": "seed/studios/studio-07/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Detailed view of a red brick apartment building with terraces and greenery.",
+            "creator": "Photo by ha ha on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/buildings-with-terraces-16345410/"
+          }
+        },
+        {
+          "file": "library/studios/studio-07/bedroom.webp",
+          "storage_path": "seed/studios/studio-07/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Contemporary bedroom with unmade bed and elegant furnishings in a bright, serene space.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bedroom-interior-with-unmade-bed-near-glass-door-and-window-6444971/"
+          }
+        },
+        {
+          "file": "library/studios/studio-07/kitchen.webp",
+          "storage_path": "seed/studios/studio-07/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Sleek white kitchen interior featuring black tiles, a stove, and a vibrant potted plant.",
+            "creator": "Photo by Lisa Anna on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/furniture-in-kitchen-19857267/"
+          }
+        },
+        {
+          "file": "library/studios/studio-07/bathroom.webp",
+          "storage_path": "seed/studios/studio-07/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Bright and spacious apartment hallway leading to a bathroom and a room.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/corridor-in-house-18041813/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "studio-08",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "STUDIO"
+      ],
+      "images": [
+        {
+          "file": "library/studios/studio-08/exterior.webp",
+          "storage_path": "seed/studios/studio-08/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary apartment buildings in Berlin with elegant white facades and glass balconies.",
+            "creator": "Photo by Lennard on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/apartments-with-balconies-18153132/"
+          }
+        },
+        {
+          "file": "library/studios/studio-08/bedroom.webp",
+          "storage_path": "seed/studios/studio-08/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Bright and cozy open-plan studio apartment with modern decor and natural lighting.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-flat-with-cozy-bed-and-loft-style-lamp-6782426/"
+          }
+        },
+        {
+          "file": "library/studios/studio-08/kitchen.webp",
+          "storage_path": "seed/studios/studio-08/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "A bright and contemporary small kitchen with white cabinets and open window.",
+            "creator": "Photo by Lisa Anna on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/small-white-kitchen-with-window-19857231/"
+          }
+        },
+        {
+          "file": "library/studios/studio-08/bathroom.webp",
+          "storage_path": "seed/studios/studio-08/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Sleek and contemporary bathroom featuring marble walls, glass shower, and stylish fixtures.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/spacious-bathroom-with-minimalist-design-and-shower-cabin-7534282/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-01",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-01/exterior.webp",
+          "storage_path": "seed/apartments/apartment-01/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Low-angle view of a modern apartment complex in Bangkok with diverse facade colors.",
+            "creator": "Photo by wutthichai charoenburi on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/low-angle-shot-of-an-apartment-block-in-city-19826723/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-01/living.webp",
+          "storage_path": "seed/apartments/apartment-01/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Sunlit room with brick walls, sofa, and desk by large window, showcasing a peaceful setting.",
+            "creator": "Photo by Nadin Sh on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/cozy-brick-walled-living-room-with-large-window-33537442/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-01/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-01/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "A sleek modern kitchen with wooden cabinets, metal chairs, and stylish lighting fixtures.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/stylish-kitchen-with-wooden-table-7195739/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-01/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-01/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A cozy, minimalist bed with stone wall accent in a modern interior setting.",
+            "creator": "Photo by Pușcaș Adryan on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/a-white-and-gray-bed-on-double-deck-bed-12913382/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-01/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-01/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Spacious modern bathroom with a Jacuzzi, floral tile decor, and wooden vanity.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-bathtub-and-sink-in-spacious-bathtub-at-home-6957081/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-02",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-02/exterior.webp",
+          "storage_path": "seed/apartments/apartment-02/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary urban residential building with geometric architecture and reflections on water.",
+            "creator": "Photo by Brett Sayles on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-multistage-building-near-water-7009248/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-02/living.webp",
+          "storage_path": "seed/apartments/apartment-02/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Bright living room featuring modern decor with sofa, TV, and abstract art.",
+            "creator": "Photo by Moussa Idrissi on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bright-living-room-interior-with-a-tv-set-19239905/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-02/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-02/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Cozy retro kitchen with blue tiles and white cabinets, evoking nostalgic vibes.",
+            "creator": "Photo by Van Anh Nguyen on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/retro-kitchen-interior-with-blue-tile-29353199/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-02/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-02/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A sleek and stylish minimalist bedroom featuring elegant decor and modern design elements.",
+            "creator": "Photo by Bilal Mansuri on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-design-of-elegant-bedroom-13722887/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-02/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-02/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "A contemporary bathroom with mosaic tiles, washbasin, and washing machine. Sleek and clean design.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/restroom-interior-with-toilet-and-washing-machine-near-sink-6899357/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-03",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-03/exterior.webp",
+          "storage_path": "seed/apartments/apartment-03/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Low angle view of a geometric high-rise apartment building with a blue sky backdrop.",
+            "creator": "Photo by Brett Sayles on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/the-meridian-san-diego-luxury-condos-13070528/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-03/living.webp",
+          "storage_path": "seed/apartments/apartment-03/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Elegant modern living room with corner sofa and minimalist decor showcasing simplicity.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-living-room-design-with-corner-sofa-6920439/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-03/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-03/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "A bright kitchen with a round wooden dining table, white cabinets, and large window.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/a-wooden-table-and-chairs-near-the-kitchen-cabinets-14715829/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-03/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-03/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A peaceful minimalist bedroom featuring a floral quilt, modern decor, and soft lighting.",
+            "creator": "Photo by Lachlan  Ross on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/cozy-bed-with-colorful-pillow-and-coverlet-in-light-bedroom-6510421/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-03/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-03/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Elegant bathroom with marble tiles, large mirror, and modern fixtures.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-of-a-luxury-hotel-bathroom-with-glass-shower-cabin-8082195/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-04",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-04/exterior.webp",
+          "storage_path": "seed/apartments/apartment-04/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Expansive view of a modern skyscraper with glass balconies and windows, captured in daylight.",
+            "creator": "Photo by Kendall Hoopes on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/low-angle-shot-of-a-building-3071587/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-04/living.webp",
+          "storage_path": "seed/apartments/apartment-04/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Comfortable corner with armchair, wooden shelf, and lamp in a modern living room.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/armchair-and-standing-lamp-with-a-mirror-above-15409515/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-04/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-04/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Modern white kitchen with wooden floors and minimalistic design, featuring a cozy seating area.",
+            "creator": "Photo by Lisa Anna on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/empty-kitchen-interior-with-white-furniture-19899084/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-04/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-04/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A stylish modern bedroom featuring a cozy bed and glass-walled bathroom for a sleek design.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-of-modern-bedroom-with-bathroom-7060826/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-04/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-04/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "A contemporary bathroom featuring a sleek tub, stylish decor, and soft lighting.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bathroom-with-partition-and-shower-cabin-7031840/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-05",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-05/exterior.webp",
+          "storage_path": "seed/apartments/apartment-05/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Vertical shot of a modern apartment building with bold red panels and numerous balconies under clear blue sky.",
+            "creator": "Photo by Fatih Turan on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/columns-of-balconies-on-an-apartment-block-12314252/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-05/living.webp",
+          "storage_path": "seed/apartments/apartment-05/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Elegant and airy living room with modern furniture and natural light.",
+            "creator": "Photo by I'm Zion on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/sofa-in-a-spacious-living-room-9494898/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-05/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-05/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Spacious modern interior with open-plan kitchen and cozy living area, featuring stylish furnishings.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/contemporary-apartment-with-living-room-and-kitchen-7511693/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-05/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-05/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Spacious bedroom featuring modern furniture and neutral colors with natural light.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/spacious-bedroom-with-brown-soft-bed-6934170/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-05/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-05/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Spacious and stylish modern bathroom with sleek fixtures and contemporary design.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/stylish-bathroom-with-tiled-floor-and-walls-6903210/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-06",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-06/exterior.webp",
+          "storage_path": "seed/apartments/apartment-06/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary city apartment building with multiple balconies and glass windows.",
+            "creator": "Photo by Brett Sayles on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/brown-concrete-building-under-blue-sky-12993967/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-06/living.webp",
+          "storage_path": "seed/apartments/apartment-06/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "A stylish living room featuring a blue couch, wall-mounted TV, and elegant decor.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-design-of-room-7546648/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-06/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-06/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Stylish modern apartment with open plan layout, featuring kitchen, dining, and living areas.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-kitchen-with-built-in-appliances-in-spacious-apartment-7511695/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-06/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-06/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A stylish and minimalist bedroom design featuring elegant furnishings and ample space.",
+            "creator": "Photo by shaza jocarlos on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-minimalist-bedroom-with-elegant-decor-39017609/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-06/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-06/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Stylish bathroom with modern fixtures and vibrant red floral arrangement.",
+            "creator": "Photo by Real Estate Photo on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/elegant-modern-bathroom-with-red-floral-decor-30587968/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-07",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-07/exterior.webp",
+          "storage_path": "seed/apartments/apartment-07/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary apartment building with glass balconies under a clear blue sky.",
+            "creator": "Photo by Thomas Plets on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/brown-and-white-apartment-building-5403840/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-07/living.webp",
+          "storage_path": "seed/apartments/apartment-07/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Stylish living room featuring a navy sofa, indoor plants, and contemporary decor.",
+            "creator": "Photo by Huy Phan on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-living-room-with-cozy-navy-sofa-30386991/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-07/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-07/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "A modern kitchen counter with fruit, teapot, and glass carafes, well-lit by natural light.",
+            "creator": "Photo by Skylar Kang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/kitchen-counter-with-utensils-under-hanging-cupboard-6370035/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-07/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-07/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Elegant and cozy modern bedroom featuring chic decor, lamps, and a comfortable bed setup.",
+            "creator": "Photo by Shantae Shaffer on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/stylish-modern-bedroom-interior-with-cozy-bedding-29640156/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-07/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-07/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Bright and spacious modern bathroom with vibrant colors and a large potted plant.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/interior-of-modern-bathroom-with-colourful-walls-7045849/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "apartment-08",
+      "property_types": [
+        "APARTMENT",
+        "APARTMENT_BUILDING"
+      ],
+      "unit_kinds": [
+        "APARTMENT"
+      ],
+      "images": [
+        {
+          "file": "library/apartments/apartment-08/exterior.webp",
+          "storage_path": "seed/apartments/apartment-08/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Striking low-angle shot of a modern condominium with unique balcony design and clear blue sky.",
+            "creator": "Photo by Timur Saglambilek on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-concrete-building-under-sunny-blue-sky-87223/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-08/living.webp",
+          "storage_path": "seed/apartments/apartment-08/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Bright and airy contemporary living room with furniture and large windows overlooking a city view.",
+            "creator": "Photo by Zak Chapman on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/living-room-furniture-set-2030037/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-08/kitchen.webp",
+          "storage_path": "seed/apartments/apartment-08/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "A sleek, minimalist kitchen with wooden cabinets and stainless steel surfaces; perfect for contemporary homes.",
+            "creator": "Photo by Cup of  Couple on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/minimalist-kitchen-furniture-7303726/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-08/bedroom.webp",
+          "storage_path": "seed/apartments/apartment-08/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Cozy modern bedroom with green bedding and soft lighting. Ideal for contemporary design inspiration.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-bedroom-interior-design-8135505/"
+          }
+        },
+        {
+          "file": "library/apartments/apartment-08/bathroom.webp",
+          "storage_path": "seed/apartments/apartment-08/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Cozy bathroom featuring a vintage vanity set against an exposed brick wall, creating a rustic ambiance.",
+            "creator": "Photo by Alexander Mass on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/rustic-bathroom-with-exposed-brick-wall-29887333/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-01",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-01/exterior.webp",
+          "storage_path": "seed/houses/house-01/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Row of modern townhouses with spacious driveways and garage fronts under blue sky.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/houses-with-garages-10486073/"
+          }
+        },
+        {
+          "file": "library/houses/house-01/living.webp",
+          "storage_path": "seed/houses/house-01/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Bright, modern living room featuring hardwood floors and neutral decor.",
+            "creator": "Photo by Peter  Vang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/spacious-modern-living-room-with-hardwood-floors-35430055/"
+          }
+        },
+        {
+          "file": "library/houses/house-01/kitchen.webp",
+          "storage_path": "seed/houses/house-01/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Contemporary kitchen featuring wooden cabinets, stainless steel refrigerator, and modern appliances.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-kitchen-interior-4221389/"
+          }
+        },
+        {
+          "file": "library/houses/house-01/bedroom.webp",
+          "storage_path": "seed/houses/house-01/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Bright and stylish modern bedroom featuring a large glass door and minimalist decor.",
+            "creator": "Photo by Lachlan  Ross on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bedroom-interior-with-wooden-furniture-in-daylight-6510417/"
+          }
+        },
+        {
+          "file": "library/houses/house-01/bathroom.webp",
+          "storage_path": "seed/houses/house-01/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Bright and minimalist bathroom with a modern vanity and colorful shower curtain.",
+            "creator": "Photo by Get Lost Mike on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bathroom-interior-of-a-house-10258628/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-02",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-02/exterior.webp",
+          "storage_path": "seed/houses/house-02/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary two-story suburban home with a spacious driveway and lawn.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-and-gray-house-under-the-blue-sky-4832530/"
+          }
+        },
+        {
+          "file": "library/houses/house-02/living.webp",
+          "storage_path": "seed/houses/house-02/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Inviting living room featuring large windows, modern decor, and wooden flooring, perfect for relaxation.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-sofa-facing-window-3935315/"
+          }
+        },
+        {
+          "file": "library/houses/house-02/kitchen.webp",
+          "storage_path": "seed/houses/house-02/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Bright modern kitchen featuring stainless steel appliances and wooden flooring.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/gray-refrigerator-in-the-kitchen-4092029/"
+          }
+        },
+        {
+          "file": "library/houses/house-02/bedroom.webp",
+          "storage_path": "seed/houses/house-02/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A cozy bedroom with an open window view of a suburban backyard and blue sky.",
+            "creator": "Photo by Max Bernhardt on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/view-from-bedroom-into-old-house-yard-15260475/"
+          }
+        },
+        {
+          "file": "library/houses/house-02/bathroom.webp",
+          "storage_path": "seed/houses/house-02/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Bright and elegant contemporary bathroom featuring a bathtub, mirror, and shower with modern design elements.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-ceramic-sink-near-bathtub-3935347/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-03",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-03/exterior.webp",
+          "storage_path": "seed/houses/house-03/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary urban home facade with circular cutouts and stone siding, offering a unique architectural style.",
+            "creator": "Photo by Mr RightGames on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-urban-house-with-unique-design-elements-32666364/"
+          }
+        },
+        {
+          "file": "library/houses/house-03/living.webp",
+          "storage_path": "seed/houses/house-03/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Inviting living room with fireplace, large windows, and open door leading outside.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/fireplace-and-brown-wooden-floor-3990600/"
+          }
+        },
+        {
+          "file": "library/houses/house-03/kitchen.webp",
+          "storage_path": "seed/houses/house-03/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Charming kitchen sink area with utensils viewed through an open window.",
+            "creator": "Photo by Mylena Ike on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/cozy-kitchen-view-through-open-window-37371098/"
+          }
+        },
+        {
+          "file": "library/houses/house-03/bedroom.webp",
+          "storage_path": "seed/houses/house-03/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Spacious bedroom with elegant furniture and warm lighting, showcasing modern interior design.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-bed-near-wooden-cabinet-3935331/"
+          }
+        },
+        {
+          "file": "library/houses/house-03/bathroom.webp",
+          "storage_path": "seed/houses/house-03/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Spacious contemporary bathroom with dual sinks and a shower panel.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-ceramic-sink-near-washroom-3935352/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-04",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-04/exterior.webp",
+          "storage_path": "seed/houses/house-04/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Charming brick house with gable roof surrounded by lush greenery under a clear blue sky.",
+            "creator": "Photo by Wolf  Art on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/modern-mansion-facade-26595553/"
+          }
+        },
+        {
+          "file": "library/houses/house-04/living.webp",
+          "storage_path": "seed/houses/house-04/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Open and bright living room with hardwood floors and natural light.",
+            "creator": "Photo by Peter  Vang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/spacious-modern-living-room-with-hardwood-floors-35493888/"
+          }
+        },
+        {
+          "file": "library/houses/house-04/kitchen.webp",
+          "storage_path": "seed/houses/house-04/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Spacious modern kitchen with wood cabinets, sleek countertops, and stainless steel appliances.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/wooden-kitchen-cabinets-and-sink-4119836/"
+          }
+        },
+        {
+          "file": "library/houses/house-04/bedroom.webp",
+          "storage_path": "seed/houses/house-04/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "A vintage English bedroom featuring a four-poster bed and ornate fireplace.",
+            "creator": "Photo by Michael D Beckwith on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/historic-english-bedroom-with-vintage-decor-37884161/"
+          }
+        },
+        {
+          "file": "library/houses/house-04/bathroom.webp",
+          "storage_path": "seed/houses/house-04/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Spacious contemporary bathroom featuring a luxurious bathtub, shower, and adjacent walk-in closet.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-bathtub-near-white-framed-glass-window-3990591/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-05",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-05/exterior.webp",
+          "storage_path": "seed/houses/house-05/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary suburban house with a wide driveway and landscaped front yard.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/driveway-and-house-10827225/"
+          }
+        },
+        {
+          "file": "library/houses/house-05/living.webp",
+          "storage_path": "seed/houses/house-05/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Bright empty room with wooden floors and large windows, ideal for real estate listings.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-an-empty-room-3935327/"
+          }
+        },
+        {
+          "file": "library/houses/house-05/kitchen.webp",
+          "storage_path": "seed/houses/house-05/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Spacious kitchen interior featuring wooden cabinets, marble countertop, and modern appliances.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/brown-wooden-kitchen-cabinets-3990594/"
+          }
+        },
+        {
+          "file": "library/houses/house-05/bedroom.webp",
+          "storage_path": "seed/houses/house-05/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Warm and inviting bedroom featuring a wooden bed, ceiling fan, and cozy decor.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-bed-linen-on-bed-3935353/"
+          }
+        },
+        {
+          "file": "library/houses/house-05/bathroom.webp",
+          "storage_path": "seed/houses/house-05/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Spacious bathroom with elegant glass shower and white bathtub featuring arched window for natural light.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/white-ceramic-bathtub-near-white-framed-glass-window-3990586/"
+          }
+        }
+      ]
+    },
+    {
+      "id": "house-06",
+      "property_types": [
+        "HOUSE"
+      ],
+      "unit_kinds": [
+        "HOUSE",
+        "ROOM"
+      ],
+      "images": [
+        {
+          "file": "library/houses/house-06/exterior.webp",
+          "storage_path": "seed/houses/house-06/exterior.webp",
+          "level": "property",
+          "caption": "Mặt ngoài",
+          "credit": {
+            "title": "Contemporary residential building with a sleek black and white exterior and large windows.",
+            "creator": "Photo by Ushindi Namegabe on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/facade-of-house-15743368/"
+          }
+        },
+        {
+          "file": "library/houses/house-06/living.webp",
+          "storage_path": "seed/houses/house-06/living.webp",
+          "level": "unit",
+          "caption": "Phòng khách",
+          "credit": {
+            "title": "Modern living room featuring a stylish gray sofa, chandelier, and wall-mounted TV with ample copy space.",
+            "creator": "Photo by Max Vakhtbovych on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/television-against-sofa-in-modern-living-room-6980724/"
+          }
+        },
+        {
+          "file": "library/houses/house-06/kitchen.webp",
+          "storage_path": "seed/houses/house-06/kitchen.webp",
+          "level": "unit",
+          "caption": "Bếp",
+          "credit": {
+            "title": "Sleek contemporary kitchen with white cabinets and wooden flooring.",
+            "creator": "Photo by Curtis Adams on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/photo-of-white-kitchen-counter-4682126/"
+          }
+        },
+        {
+          "file": "library/houses/house-06/bedroom.webp",
+          "storage_path": "seed/houses/house-06/bedroom.webp",
+          "level": "unit",
+          "caption": "Phòng ngủ",
+          "credit": {
+            "title": "Sunlit bedroom in Pretoria featuring a comfortable bed, chandelier, and vanity table.",
+            "creator": "Photo by Alexander F Ungerer on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/bed-and-vanity-mirror-in-bedroom-20600312/"
+          }
+        },
+        {
+          "file": "library/houses/house-06/bathroom.webp",
+          "storage_path": "seed/houses/house-06/bathroom.webp",
+          "level": "unit",
+          "caption": "Nhà vệ sinh",
+          "credit": {
+            "title": "Clean and simple bathroom interior with shower and vanity sink.",
+            "creator": "Photo by Peter  Vang on Pexels",
+            "license": "Pexels License",
+            "source": "https://www.pexels.com/photo/minimalist-bathroom-with-shower-and-vanity-35430081/"
+          }
+        }
+      ]
+    }
+  ],
+  "shared": [
+    {
+      "amenity": "parking",
+      "file": "library/shared/parking-01.webp",
+      "storage_path": "seed/shared/parking-01.webp",
+      "level": "property",
+      "caption": "Chỗ để xe",
+      "credit": {
+        "title": "Drone shot of an urban parking lot and surrounding roads at daytime.",
+        "creator": "Photo by Viktoria B. on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/aerial-view-of-cars-in-the-parking-lots-5231181/"
+      }
+    },
+    {
+      "amenity": "laundry",
+      "file": "library/shared/laundry-01.webp",
+      "storage_path": "seed/shared/laundry-01.webp",
+      "level": "property",
+      "caption": "Khu giặt",
+      "credit": {
+        "title": "Cozy laundry room with wooden cabinets, washer, and dryer setup.",
+        "creator": "Photo by hi room on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/interior-design-of-kitchen-17181948/"
+      }
+    },
+    {
+      "amenity": "parking",
+      "file": "library/shared/parking-02.webp",
+      "storage_path": "seed/shared/parking-02.webp",
+      "level": "property",
+      "caption": "Chỗ để xe",
+      "credit": {
+        "title": "People gathering around cars in a spacious parking lot under a clear sky.",
+        "creator": "Photo by Wendy Wei on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/gathering-on-car-park-9578109/"
+      }
+    },
+    {
+      "amenity": "laundry",
+      "file": "library/shared/laundry-02.webp",
+      "storage_path": "seed/shared/laundry-02.webp",
+      "level": "property",
+      "caption": "Khu giặt",
+      "credit": {
+        "title": "Two commercial laundry machines in a sunlit room with blinds casting shadows on surfaces.",
+        "creator": "Photo by Tyler Williams on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/washing-machines-in-room-near-window-15477394/"
+      }
+    },
+    {
+      "amenity": "parking",
+      "file": "library/shared/parking-03.webp",
+      "storage_path": "seed/shared/parking-03.webp",
+      "level": "property",
+      "caption": "Chỗ để xe",
+      "credit": {
+        "title": "Aerial drone shot of urban parking lot filled with parked cars, showcasing urban infrastructure.",
+        "creator": "Photo by RDNE Stock project on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/aerial-view-of-cars-parked-on-parking-lot-8783550/"
+      }
+    },
+    {
+      "amenity": "laundry",
+      "file": "library/shared/laundry-03.webp",
+      "storage_path": "seed/shared/laundry-03.webp",
+      "level": "property",
+      "caption": "Khu giặt",
+      "credit": {
+        "title": "Interior view of a modern laundromat with multiple washing machines lined up.",
+        "creator": "Photo by Mathias Reding on Pexels",
+        "license": "Pexels License",
+        "source": "https://www.pexels.com/photo/washing-machines-inside-a-laundry-business-9669475/"
+      }
+    }
+  ]
+}

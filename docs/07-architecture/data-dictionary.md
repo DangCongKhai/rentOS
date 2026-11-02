@@ -30,7 +30,7 @@ One `users` row is the account. Domain foreign keys point at `users.id`. Supabas
 | rental_arrangement | text |  | No |  | WHOLE_SPACE or SEPARATE_UNITS |
 | address_line | text |  | Yes |  | Street and building address; may be null in incomplete draft, required at listing submission/publication |
 | ward | text |  | Yes |  | Optional local ward |
-| district | text |  | Yes |  | Searchable district or area; may be null in incomplete draft, required at listing submission/publication |
+| district | text |  | Yes |  | Locality text kept on the property. Public search does not query this column. May be null in an incomplete draft |
 | city | text |  | Yes |  | City; may be null in incomplete draft, required at listing submission/publication |
 | description | text |  | Yes |  | Shared property description; may be null in incomplete draft, required at listing submission/publication |
 | shared_amenities | jsonb |  | No | {"schema_version":1,"standard":{},"custom":[]} | Shared property facilities. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}},custom:[text]}. Standard keys/scopes from Laravel catalog; canonical labels from catalog, no owner_label. Custom text NFC/trim/whitespace-normalized and deduplicated locally using case folding; never auto-promoted to standard search keys. Absent key means not advertised. |

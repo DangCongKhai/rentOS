@@ -20,3 +20,10 @@ Thumbs.db
 # Planning prompts and implementation plans
 planning/issues/RNT-03-implementation-plan.md
 planning/issues/RNT-03-review-agent-prompt.md
+
+# Ignore local supabase folder for development
+supabase/
+
+
+# Ignore /.next/
+/.next/

@@ -529,8 +529,8 @@ All 343 cases are specifications. Unit/component/API/PostgreSQL integration test
 ### FR19-AC02
 
 - Type: Boundary
-- Trigger/input: Unit booked July onward and search requests April-June
-- Expected: Return if operational/marketing conditions and minimum term are met.
+- Trigger/input: A unit is held from 1 July. The visitor enters move-in 1 April, and that unit’s minimum rental months make the stay end on 1 July.
+- Expected: Return the listing when the operational and marketing conditions are met. The visitor does not enter an end date, and a missing end date is not a validation error.
 - Evidence status: Not executed
 
 ### FR19-AC03
@@ -550,8 +550,8 @@ All 343 cases are specifications. Unit/component/API/PostgreSQL integration test
 ### FR19-AC05
 
 - Type: Positive
-- Trigger/input: Search a stored district/ward/address with whitespace/case variations
-- Expected: Only matching public listings appear; all selected unit/date filters still apply. A matching district with no full-interval unit is excluded.
+- Trigger/input: Search a stored address, ward, or city with whitespace and case variations
+- Expected: Only matching public listings appear. Selected unit filters and a move-in date still apply. When a move-in date is set, a matching place with no unit free for the implied stay is excluded. With no move-in date, a held listing can remain, labeled by the units that are free today.
 - Evidence status: Not executed
 
 ### FR19-AC06
@@ -575,8 +575,8 @@ All 343 cases are specifications. Unit/component/API/PostgreSQL integration test
 ### FR20-AC02
 
 - Type: Validation
-- Trigger/input: Missing one boundary, reversed dates or period below unit minimum
-- Expected: Return clear validation/empty qualification as applicable.
+- Trigger/input: An invalid move-in date, or a valid move-in whose implied stay overlaps a blocking tenancy
+- Expected: An invalid date returns a validation error. A valid move-in whose implied stay is fully blocked omits the listing. A missing end date is not an error, because search has no end date.
 - Evidence status: Not executed
 
 ### FR20-AC03
@@ -600,8 +600,8 @@ All 343 cases are specifications. Unit/component/API/PostgreSQL integration test
 ### FR21-AC01
 
 - Type: Positive
-- Trigger/input: Open published listing for date range
-- Expected: Show qualifying unit cards and effective policies; dates visible.
+- Trigger/input: Open a published listing that still has at least one available unit, including a held unit
+- Expected: Show the available unit and keep the held unit visible with its held label. Detail does not reapply the search move-in date. Do not show agreement documents or another prospect’s contact details. Saving the enquiry belongs to FR25, not this case.
 - Evidence status: Not executed
 
 ### FR21-AC02

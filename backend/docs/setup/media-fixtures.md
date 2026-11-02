@@ -5,8 +5,8 @@ The baseline is a development aid, not production data. Use this flow only when 
 ## Prerequisites
 
 1. Complete the [database bootstrap and migrations](database-connection.md).
-2. Create a **private** Supabase Storage bucket. The default bucket name is `property-media`.
-3. Obtain the project URL and service-role key from the server-side Supabase project settings.
+2. Create a **public** Supabase Storage bucket named `property-media`. Listing pages are public, so the browser loads each photo directly. A private bucket would reject those URLs.
+3. Obtain the project URL and service-role key from the server-side Supabase project settings. The key is used only to upload. It is never placed in an image URL.
 4. Confirm the database and bucket are isolated development or staging resources.
 
 The service-role key bypasses Storage access controls. Keep it in the backend environment only. Never commit it, log it, send it to a browser, or expose it through a `NEXT_PUBLIC_*` variable.
@@ -35,32 +35,30 @@ php artisan migrate
 php artisan db:seed --class='Database\Seeders\BaselineSeeder' --no-interaction
 ```
 
-The seeder upserts only its stable UUID rows and retains unrelated data. It creates verified admin, owner, and tenant users; trigger-backed profiles; two properties and units; a draft listing; a complete approved/published listing; two `property_media` rows; and one favourite. It does not seed `audit_logs`, `idempotency_records`, or `notification_outbox`.
+The seeder reads `database/seeders/da-nang-places.json` and upserts one published property, unit, and listing per place, up to 300. The current file contains 200 places, all in Đà Nẵng. It also writes `property_media` rows that share paths under the reserved `seed/` prefix. Those rows store the object path, not a URL. The listing API turns each path into `{SUPABASE_URL}/storage/v1/object/public/{bucket}/{path}`. The seeder does not upload the files and it does not delete unrelated rows.
+
+Rerunning updates those stable UUID rows. Media IDs in the seeder's own UUID prefixes that are no longer part of the library are removed. A media row someone added by hand, with a normal UUID, is left in place.
 
 Development-only sign-in credentials are documented in the [seeder README](../../database/seeders/README.md).
 
-## Part B: upload the Storage objects
+## Part B: upload the shared library once
 
-After Part A succeeds, upload the committed bytes:
+After the library files exist locally, upload each missing object:
 
 ```bash
 php artisan fixtures:media-upload
 ```
 
-The command validates all files and matching database rows before the first request. It then sends authenticated server-side uploads with `x-upsert: true`; rerunning replaces the same object paths rather than creating duplicates. It never prints the service-role key.
+The command reads `database/seeders/fixtures/media/manifest.json`, checks the public bucket, and uploads only objects that are not already there. A second run skips existing objects. Pass `--overwrite` to replace them. Replacing one object changes every listing that points at it. The command never prints the service-role key and never uploads a path outside `seed/`.
 
-Fixture mapping:
+Part A and Part B can run in either order. Database rows store object paths, not public URLs.
 
-- `published-property-gallery-01.png` → `properties/20000000-0000-4000-8000-000000000001/gallery-01.png`
-- `published-property-unit-01.png` → `properties/20000000-0000-4000-8000-000000000001/unit-01.png`
+## Reserved prefix and deletion
 
-Hashes, licensing, and source details are in the [fixture README](../../database/seeders/fixtures/media/README.md).
+`storage_path` is not an ownership key. Many `property_media` rows may share one object. Deleting one row must not delete a file that another live row still uses.
 
-## Reruns, cleanup, and 404 responses
+Objects under `seed/` are the shared demo library. Ordinary media removal must not delete them. `App\Domain\Media\SharedStorageRetention` encodes that rule: a physical delete is allowed only for a non-seed path that has no remaining row with `purged_at` still null. The application does not yet expose a media-deletion endpoint; new deletion code has to call this check before removing a Storage object.
 
-- Part A is idempotent: stable IDs and operation IDs are retained, baseline fields are restored, and no arbitrary existing rows are deleted.
-- Part B is an idempotent upsert at the two exact bucket paths.
-- Neither part deletes Storage objects. To remove the fixture completely, delete only the two mapped objects from the development bucket and remove only the documented baseline rows in foreign-key order, or rebuild a confirmed disposable database. Do not use broad cleanup commands against shared data.
-- A `property_media.storage_path` is metadata, not proof that an object exists. If Part A ran without Part B, an application or signed-URL request can return `404 Object not found` even though the database row exists. Run Part B and verify the configured private bucket and project URL.
+## Counts
 
-The staging allowance is intended for controlled demo fixture setup. Production remains prohibited even when credentials are present.
+The seeder prints property, unit, listing, media-row, and unique-path totals. Expect about 200 properties and roughly 100 library objects, with several media rows per object.

@@ -13,3 +13,5 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 Test feature behavior: what the user can do and what the screen shows for success, empty, and error results.
 
 Do not add tests just to prove the app shell, providers, or tooling are configured. Add a test when a feature has behavior worth protecting.
+
+Raster photos use `next/image` from `next/image`. A `fill` image includes a `sizes` value that matches its layout. A raw `<img>` is only for a small SVG, and that line keeps an explicit `eslint-disable-next-line @next/next/no-img-element`.
