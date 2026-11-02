@@ -3,14 +3,19 @@
 namespace App\Providers;
 
 use App\Actions\Fortify\CreateNewUser;
+use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
+use App\Http\Responses\PasswordResetLinkRequestResponse;
 use App\Models\User;
+use Illuminate\Auth\Notifications\ResetPassword;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
+use Laravel\Fortify\Contracts\FailedPasswordResetLinkRequestResponse;
+use Laravel\Fortify\Contracts\SuccessfulPasswordResetLinkRequestResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -20,7 +25,8 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(SuccessfulPasswordResetLinkRequestResponse::class, PasswordResetLinkRequestResponse::class);
+        $this->app->singleton(FailedPasswordResetLinkRequestResponse::class, PasswordResetLinkRequestResponse::class);
     }
 
     /**
@@ -30,6 +36,11 @@ class FortifyServiceProvider extends ServiceProvider
     {
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
+        Fortify::resetUserPasswordsUsing(ResetUserPassword::class);
+
+        ResetPassword::createUrlUsing(function (User $user, string $token): string {
+            return rtrim((string) config('fortify.home'), '/').'/reset-password?token='.$token.'&email='.urlencode($user->getEmailForPasswordReset());
+        });
 
         Fortify::authenticateUsing(function (Request $request): ?User {
             $email = mb_strtolower(trim((string) $request->input('email')));
@@ -47,5 +58,11 @@ class FortifyServiceProvider extends ServiceProvider
             return Limit::perMinute(5)->by($throttleKey);
         });
 
+        RateLimiter::for('forgot-password', function (Request $request): Limit {
+            $email = $request->input('email');
+            $throttleKey = Str::transliterate(mb_strtolower(is_string($email) ? trim($email) : '').'|'.$request->ip());
+
+            return Limit::perMinute(5)->by($throttleKey);
+        });
     }
 }

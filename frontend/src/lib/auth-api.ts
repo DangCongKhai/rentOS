@@ -102,7 +102,7 @@ async function executeFetch(path: string, method: string, headers: Headers, init
   });
 }
 
-async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -190,6 +190,25 @@ export async function updatePassword(input: {
 
 export async function resendVerification(): Promise<void> {
   await request<void>("/email/verification-notification", { method: "POST", body: "{}" });
+}
+
+export async function forgotPassword(input: { email: string }): Promise<{ message: string }> {
+  return request<{ message: string }>("/forgot-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+export async function resetPassword(input: {
+  token: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+}): Promise<{ message: string }> {
+  return request<{ message: string }>("/reset-password", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function getTenantTenancies(): Promise<TenantTenancy[]> {
