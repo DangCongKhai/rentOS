@@ -40,6 +40,8 @@ class PublicUnitResource extends JsonResource
             'held_start' => $availability['held_start'],
             'held_end' => $availability['held_end'],
             'pets' => $this->resource->getAttribute('effective_pets'),
+            'smoking' => $this->resource->getAttribute('effective_smoking'),
+            'rules' => $this->resource->getAttribute('effective_rules'),
             'amenities' => $this->resource->getAttribute('public_amenities'),
             'custom_amenities' => $this->resource->getAttribute('public_custom_amenities'),
             'photos' => $photos,

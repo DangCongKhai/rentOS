@@ -7,6 +7,8 @@ return [
         'login',
         'logout',
         'register',
+        'forgot-password',
+        'reset-password',
         'email/*',
         'user/password',
     ],

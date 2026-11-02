@@ -54,7 +54,6 @@ final class PublicListingFixture
             'rental_arrangement' => $overrides['rental_arrangement'] ?? 'SEPARATE_UNITS',
             'address_line' => $overrides['address_line'] ?? '12 Nguyễn Văn Linh',
             'ward' => $overrides['ward'] ?? 'Hải Châu',
-            'district' => $overrides['district'] ?? 'Hải Châu',
             'city' => $overrides['city'] ?? 'Đà Nẵng',
             'description' => $overrides['description'] ?? 'Nhà cho thuê đầy đủ nội thất gần trung tâm.',
             'shared_amenities' => json_encode($sharedAmenities, JSON_THROW_ON_ERROR),

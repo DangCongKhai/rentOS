@@ -10,6 +10,8 @@
 # Generated build files
 /frontend/dist/
 /backend/storage/*.key
+/supabase/.branches/
+/supabase/.temp/
 
 # Local editor and operating system files
 .vscode/
@@ -23,7 +25,6 @@ planning/issues/RNT-03-review-agent-prompt.md
 
 # Ignore local supabase folder for development
 supabase/
-
 
 # Ignore /.next/
 /.next/

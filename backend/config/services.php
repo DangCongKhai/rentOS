@@ -44,6 +44,16 @@ return [
             'connect_timeout' => 5,
             'timeout' => 30,
         ],
+        'max_file_size_kilobytes' => (int) env('SUPABASE_STORAGE_MAX_FILE_SIZE_KILOBYTES', 10240),
+        'max_media_per_property' => (int) env('SUPABASE_STORAGE_MAX_MEDIA_PER_PROPERTY', 20),
+    ],
+
+    'owner' => [
+        'require_verified_email' => (bool) env('OWNER_REQUIRE_VERIFIED_EMAIL', true),
+    ],
+
+    'tinhthanhpho' => [
+        'url' => env('TINHTHANHPHO_API_URL', 'https://www.tinhthanhpho.com/api/v1'),
     ],
 
 ];
