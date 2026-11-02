@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { ApiError, getCurrentUser, resendVerification } from "@/lib/auth-api";
 import { FormMessage } from "./auth-shell";
 
 export function VerificationPanel() {
+  const searchParams = useSearchParams();
+  const isVerifiedFromUrl = searchParams.get("verified") === "1";
+
   const [email, setEmail] = useState("");
   const [verified, setVerified] = useState(false);
   const [message, setMessage] = useState("");
@@ -45,15 +49,21 @@ export function VerificationPanel() {
     }
   }
 
+  const isEmailVerified = verified || isVerifiedFromUrl;
+
   return (
     <div className="flex flex-col items-start gap-4">
-      {verified ? (
+      {isEmailVerified ? (
         <>
           <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold" aria-hidden="true">
             ✓
           </div>
           <h2 className="text-xl font-bold text-slate-900">Email đã được xác minh</h2>
-          <p className="text-sm text-slate-600 leading-relaxed">Bạn có thể tiếp tục sử dụng các tính năng của rentOS.</p>
+          <p className="text-sm text-slate-600 leading-relaxed">
+            {isVerifiedFromUrl
+              ? "Chúc mừng! Địa chỉ email của bạn đã được xác minh thành công. Bạn có thể tiếp tục sử dụng tất cả các tính năng của rentOS."
+              : "Bạn có thể tiếp tục sử dụng các tính năng của rentOS."}
+          </p>
           <Link
             className="inline-flex items-center justify-center min-h-[44px] px-5 py-2.5 rounded-lg bg-[#3368a0] hover:bg-[#285584] text-white text-sm font-semibold shadow-sm transition-colors mt-2"
             href="/profile"

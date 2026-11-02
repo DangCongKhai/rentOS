@@ -23,29 +23,31 @@ class TelescopeServiceProvider extends TelescopeApplicationServiceProvider
         $isLocal = $this->app->environment('local');
 
         Telescope::filter(function (IncomingEntry $entry) use ($isLocal) {
-            if ($entry->type === EntryType::MAIL) {
-                return false;
-            }
+            if (! $isLocal) {
+                if ($entry->type === EntryType::MAIL) {
+                    return false;
+                }
 
-            if ($entry->type === EntryType::REQUEST && preg_match(
-                '#^/(login|logout|register|email/|user/|api/v1/me(?:\?|$))#',
-                (string) ($entry->content['uri'] ?? ''),
-            ) === 1) {
-                return false;
-            }
+                if ($entry->type === EntryType::REQUEST && preg_match(
+                    '#^/(login|logout|register|email/|user/|api/v1/me(?:\?|$))#',
+                    (string) ($entry->content['uri'] ?? ''),
+                ) === 1) {
+                    return false;
+                }
 
-            if ($entry->type === EntryType::QUERY && preg_match(
-                '/\b(users|sessions|personal_access_tokens|password_reset_tokens)\b/i',
-                (string) ($entry->content['sql'] ?? ''),
-            ) === 1) {
-                return false;
-            }
+                if ($entry->type === EntryType::QUERY && preg_match(
+                    '/\b(users|sessions|personal_access_tokens|password_reset_tokens)\b/i',
+                    (string) ($entry->content['sql'] ?? ''),
+                ) === 1) {
+                    return false;
+                }
 
-            if ($entry->type === EntryType::MODEL && preg_match(
-                '/^(App\\\\Models\\\\User|Laravel\\\\Sanctum\\\\PersonalAccessToken):/',
-                (string) ($entry->content['model'] ?? ''),
-            ) === 1) {
-                return false;
+                if ($entry->type === EntryType::MODEL && preg_match(
+                    '/^(App\\\\Models\\\\User|Laravel\\\\Sanctum\\\\PersonalAccessToken):/',
+                    (string) ($entry->content['model'] ?? ''),
+                ) === 1) {
+                    return false;
+                }
             }
 
             return $isLocal ||
