@@ -31,6 +31,7 @@ class AdminListingReviewsConcurrencyTest extends TestCase
             ['admin' => $rejecter, 'path' => $path.'/reject', 'payload' => ['expected_snapshot' => $snapshot, 'client_operation_id' => (string) Str::uuid(), 'reason' => 'Thông tin cần chỉnh sửa']],
         ]);
 
+        $this->assertSame([$approver->id, $rejecter->id], array_column($results, 'actor_id'));
         $statuses = array_column($results, 'status');
         sort($statuses);
         $this->assertSame([200, 409], $statuses);
@@ -57,6 +58,7 @@ class AdminListingReviewsConcurrencyTest extends TestCase
 
         $results = $this->runConcurrentReviewRequests([$request, $request]);
 
+        $this->assertSame([$admin->id, $admin->id], array_column($results, 'actor_id'));
         $this->assertSame([200, 200], array_column($results, 'status'));
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'APPROVED', 'publication_status' => 'DRAFT']);
         $this->assertDatabaseCount('audit_logs', 1);
@@ -66,7 +68,7 @@ class AdminListingReviewsConcurrencyTest extends TestCase
 
     /**
      * @param  array<int, array{admin: User, path: string, payload: array<string, mixed>}>  $requests
-     * @return array<int, array{status: int, error?: string}>
+     * @return array<int, array{status: int, actor_id?: string, error?: string}>
      */
     private function runConcurrentReviewRequests(array $requests): array
     {
@@ -94,8 +96,10 @@ class AdminListingReviewsConcurrencyTest extends TestCase
                 stream_set_timeout($socket, 20);
                 fread($socket, 1);
                 try {
+                    /** Forked workers inherit the snapshot request's cached Sanctum user. */
+                    $this->app['auth']->forgetGuards();
                     $response = $this->actingAs($request['admin'], 'web')->postJson($request['path'], $request['payload']);
-                    $result = ['status' => $response->getStatusCode()];
+                    $result = ['status' => $response->getStatusCode(), 'actor_id' => $this->app['auth']->guard('web')->id()];
                 } catch (\Throwable $failure) {
                     $result = ['status' => 0, 'error' => $failure::class.': '.$failure->getMessage()];
                 }
