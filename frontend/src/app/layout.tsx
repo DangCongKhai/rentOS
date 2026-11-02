@@ -14,13 +14,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="vi">
       <body className="min-h-screen flex flex-col bg-surface-app text-primary antialiased">
         <AuthProvider>
-          <Suspense fallback={null}>
-            <SiteHeader />
+          <Suspense
+            fallback={
+              <div
+                className="flex flex-1 items-center justify-center p-6 text-secondary"
+                role="status"
+              >
+                Đang tải trang…
+              </div>
+            }
+          >
+            <SiteFrame>{children}</SiteFrame>
           </Suspense>
-          <main className="flex-1 min-h-[calc(100vh-160px)] flex flex-col">
-            {children}
-          </main>
-          <SiteFooter />
         </AuthProvider>
       </body>
     </html>
