@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
-import { clearLocation, parseListingSearchParams, toListingSearchParams, type ListingSearchState } from "./listing-search-params";
+import { debounce } from "@/lib/debounce";
+import { clearLocation, displayDateToIso, isoToDisplayDate, parseListingSearchParams, toListingSearchParams, type ListingSearchState } from "./listing-search-params";
 import type { AmenityCatalogItem } from "./listings-api";
 
 const unitKinds = [
@@ -39,6 +40,31 @@ export function ListingFilters({
   const router = useRouter();
   const state = parseListingSearchParams(new URLSearchParams(query));
   const [panel, setPanel] = useState<BarPanel | null>(null);
+  const [locationInput, setLocationInput] = useState(state.location);
+  const stateRef = useRef(state);
+  const routerRef = useRef(router);
+  const submittedLocation = useRef(state.location);
+  stateRef.current = state;
+  routerRef.current = router;
+
+  const debouncedLocation = useMemo(
+    () => debounce((location: string) => {
+      submittedLocation.current = location;
+      const params = toListingSearchParams({ ...stateRef.current, location, page: 1 });
+      const text = params.toString();
+      routerRef.current.replace(text ? `/listings?${text}` : "/listings");
+    }, 300),
+    [],
+  );
+
+  useEffect(() => () => debouncedLocation.cancel(), [debouncedLocation]);
+
+  useEffect(() => {
+    if (state.location === submittedLocation.current) return;
+    submittedLocation.current = state.location;
+    setLocationInput(state.location);
+    debouncedLocation.cancel();
+  }, [state.location, debouncedLocation]);
 
   function visit(next: ListingSearchState) {
     const params = toListingSearchParams({ ...next, page: 1 });
@@ -60,17 +86,24 @@ export function ListingFilters({
           <label htmlFor="listing-location" className="sr-only">Địa điểm</label>
           <input
             id="listing-location"
-            value={state.location}
-            onChange={(event) => visit({ ...state, location: event.target.value })}
+            value={locationInput}
+            onChange={(event) => {
+              const location = event.target.value;
+              setLocationInput(location);
+              debouncedLocation(location);
+            }}
             placeholder="Sơn Trà, Đà Nẵng"
             className="h-11 w-full rounded-full border border-[#e1e7ed] bg-white pr-10 pl-4 text-sm"
           />
-          {state.location ? (
+          {locationInput ? (
             <button
               type="button"
               aria-label="Xóa địa điểm"
               className="absolute top-1/2 right-1.5 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-lg text-[#5b6676]"
               onClick={() => {
+                debouncedLocation.cancel();
+                submittedLocation.current = "";
+                setLocationInput("");
                 const next = clearLocation(new URLSearchParams(query));
                 const text = next.toString();
                 router.replace(text ? `/listings?${text}` : "/listings");
@@ -368,6 +401,17 @@ function FilterDialog({
   onApply: (next: ListingSearchState) => void;
 }) {
   const [draft, setDraft] = useState(state);
+  const [moveInText, setMoveInText] = useState(() => isoToDisplayDate(state.moveInDate));
+
+  function changeMoveIn(text: string) {
+    setMoveInText(text);
+    if (text.trim() === "") {
+      setDraft((current) => ({ ...current, moveInDate: "" }));
+      return;
+    }
+    const iso = displayDateToIso(text);
+    if (iso) setDraft((current) => ({ ...current, moveInDate: iso }));
+  }
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -407,7 +451,16 @@ function FilterDialog({
         <div className="mt-6 grid gap-5">
           <label className="grid gap-2 text-sm font-semibold">
             Ngày nhận phòng
-            <input type="date" value={draft.moveInDate} onChange={(event) => setDraft({ ...draft, moveInDate: event.target.value })} className="min-h-12 rounded-xl border border-[#e1e7ed] px-3 font-normal" />
+            <input
+              type="text"
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder="dd/mm/yyyy"
+              maxLength={10}
+              value={moveInText}
+              onChange={(event) => changeMoveIn(event.target.value)}
+              className="min-h-12 rounded-xl border border-[#e1e7ed] px-3 font-normal"
+            />
           </label>
           <fieldset className="grid gap-2">
             <legend className="text-sm font-semibold">Chính sách</legend>
@@ -437,7 +490,10 @@ function FilterDialog({
           <button
             type="button"
             className="text-sm font-semibold text-[#3368a0]"
-            onClick={() => setDraft({ ...draft, moveInDate: "", pets: "", amenities: [] })}
+            onClick={() => {
+              setMoveInText("");
+              setDraft({ ...draft, moveInDate: "", pets: "", amenities: [] });
+            }}
           >
             Xóa bộ lọc
           </button>

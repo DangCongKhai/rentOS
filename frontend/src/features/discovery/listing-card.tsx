@@ -96,7 +96,7 @@ export function ListingCardView({ listing, href }: { listing: ListingCard; href:
             >
               <Chevron direction="right" />
             </button>
-            <span className="pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/75 px-2.5 py-1 text-xs font-medium text-white">
+            <span className="z-3 pointer-events-none absolute bottom-3 right-3 rounded-full bg-black/75 px-2.5 py-1 text-xs font-medium text-white">
               {index + 1}/{urls.length}
             </span>
           </>
