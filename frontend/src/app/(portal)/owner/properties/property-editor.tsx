@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -10,6 +10,7 @@ import {
   useState,
   type FormEvent,
 } from "react";
+import { toast } from "sonner";
 import {
   ApiError,
   archiveOwnerProperty,
@@ -1030,23 +1031,52 @@ function PropertyPhotos({
   onError: (caught: unknown) => void;
   onNotice: (value: string | null) => void;
 }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const units = property.units.filter((unit) => !unit.archived_at);
   const separate =
     property.rental_arrangement === "SEPARATE_UNITS" && units.length > 0;
-  const [scope, setScope] = useState<"property" | "unit">("property");
-  const [activeUnitId, setActiveUnitId] = useState(units[0]?.id ?? "");
+  
+  // Read initial scope and unitId from URL parameters
+  const initialScope = searchParams.get("photoScope") as "property" | "unit" | null;
+  const initialUnitId = searchParams.get("unitId");
+  
+  const [scope, setScope] = useState<"property" | "unit">(
+    initialScope && (initialScope === "property" || initialScope === "unit")
+      ? initialScope
+      : "property"
+  );
+  const [activeUnitId, setActiveUnitId] = useState(
+    initialUnitId && units.some(u => u.id === initialUnitId)
+      ? initialUnitId
+      : units[0]?.id ?? ""
+  );
   const [pending, setPending] = useState<File[]>([]);
-  const [pendingUrls, setPendingUrls] = useState<string[]>([]);
   const [listingFlags, setListingFlags] = useState<Record<string, boolean>>({});
 
-  // Clean up blob URLs when component unmounts or pending changes
-  useEffect(() => {
-    const urls = pending.map((file) => URL.createObjectURL(file));
-    setPendingUrls(urls);
-    return () => {
-      urls.forEach((url) => URL.revokeObjectURL(url));
-    };
+  // Create blob URLs from pending files (computed during render, not in effect)
+  const pendingUrls = useMemo(() => {
+    return pending.map((file) => URL.createObjectURL(file));
   }, [pending]);
+
+  // Update URL parameters when scope or activeUnitId changes
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("photoScope", scope);
+    if (scope === "unit" && activeUnitId) {
+      params.set("unitId", activeUnitId);
+    } else {
+      params.delete("unitId");
+    }
+    router.replace(`?${params.toString()}`, { scroll: false });
+  }, [scope, activeUnitId, router, searchParams]);
+
+  // Clean up blob URLs when they change or component unmounts
+  useEffect(() => {
+    return () => {
+      pendingUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [pendingUrls]);
   function listed(item: OwnerPropertyMedia) {
     return listingFlags[item.id] ?? item.is_selected_for_listing;
   }
@@ -1094,16 +1124,10 @@ function PropertyPhotos({
       ) ||
       media.length + pending.length > 20
     ) {
-      onError(
-        new ApiError(
-          422,
-          "Chọn ảnh JPG, PNG hoặc WEBP, mỗi ảnh không quá 8 MB; tổng tối đa 20 ảnh.",
-        ),
-      );
+      toast.error("Chọn ảnh JPG, PNG hoặc WEBP, mỗi ảnh không quá 8 MB; tổng tối đa 20 ảnh.");
       return;
     }
     setBusy(true);
-    onNotice(null);
     try {
       let current = property;
       for (const file of pending) {
@@ -1117,9 +1141,10 @@ function PropertyPhotos({
       }
       setPending([]);
       await onReload();
-      onNotice("Ảnh đã được tải lên.");
+      toast.success("Ảnh đã được tải lên.");
     } catch (caught) {
       onError(caught);
+      toast.error("Không thể tải ảnh lên. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }
@@ -1133,9 +1158,10 @@ function PropertyPhotos({
         media_ids: selectedByUnit[activeUnitId] ?? [],
       });
       await onReload();
-      onNotice("Đã lưu lựa chọn ảnh dùng chung.");
+      toast.success("Đã lưu lựa chọn ảnh dùng chung.");
     } catch (caught) {
       onError(caught);
+      toast.error("Không thể lưu lựa chọn. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }
@@ -1156,9 +1182,10 @@ function PropertyPhotos({
       if (scope === "property") await updateOwnerGallery(property.id, payload);
       else await updateOwnerUnitGallery(property.id, activeUnitId, payload);
       await onReload();
-      onNotice("Thứ tự và lựa chọn hiển thị đã được lưu.");
+      toast.success("Thứ tự và lựa chọn hiển thị đã được lưu.");
     } catch (caught) {
       onError(caught);
+      toast.error("Không thể lưu thay đổi. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }
@@ -1178,9 +1205,10 @@ function PropertyPhotos({
         photo.revision,
       );
       await onReload();
-      onNotice("Ảnh đã được gỡ khỏi thư viện.");
+      toast.success("Ảnh đã được gỡ khỏi thư viện.");
     } catch (caught) {
       onError(caught);
+      toast.error("Không thể gỡ ảnh. Vui lòng thử lại.");
     } finally {
       setBusy(false);
     }

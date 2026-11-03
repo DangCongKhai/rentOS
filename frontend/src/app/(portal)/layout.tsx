@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { Toaster } from "sonner";
 import { PortalSidebar } from "@/components/portal-sidebar";
 
 export default function PortalLayout({
@@ -14,6 +15,7 @@ export default function PortalLayout({
       <main className="flex-1 min-w-0 flex flex-col p-4 sm:p-6 lg:p-8">
         {children}
       </main>
+      <Toaster position="top-right" richColors />
     </div>
   );
 }
