@@ -68,7 +68,7 @@ return new class extends Migration
                             key,
                             CASE
                                 WHEN jsonb_typeof(value) = 'object'
-                                    AND value ? 'enabled'
+                                    AND jsonb_exists(value, 'enabled')
                                     AND value - 'enabled' = '{}'::jsonb
                                     AND jsonb_typeof(value->'enabled') = 'boolean'
                                     THEN value->'enabled'
@@ -86,7 +86,7 @@ return new class extends Migration
                     SELECT 1
                     FROM jsonb_each({$column}->'standard') AS amenity(key, value)
                     WHERE jsonb_typeof(value) = 'object'
-                        AND value ? 'enabled'
+                        AND jsonb_exists(value, 'enabled')
                         AND value - 'enabled' = '{}'::jsonb
                         AND jsonb_typeof(value->'enabled') = 'boolean'
                 )

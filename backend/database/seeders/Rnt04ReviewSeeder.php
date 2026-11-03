@@ -46,7 +46,7 @@ class Rnt04ReviewSeeder extends Seeder
                 DB::table('properties')->insert([
                     'id' => $propertyId, 'owner_id' => $ownerId, 'client_operation_id' => $propertyId,
                     'name' => $propertyName, 'property_type' => 'APARTMENT_BUILDING', 'rental_arrangement' => 'SEPARATE_UNITS',
-                    'address_line' => ($number * 12).' Võ Nguyên Giáp', 'ward' => 'Phước Mỹ', 'district' => 'Sơn Trà', 'city' => 'Đà Nẵng',
+                    'address_line' => ($number * 12).' Võ Nguyên Giáp', 'ward' => 'Phước Mỹ', 'city' => 'Đà Nẵng',
                     'description' => 'Nhà cho thuê dài hạn, đầy đủ nội thất cơ bản và có khu giặt chung.',
                     'shared_amenities' => json_encode(['schema_version' => 1, 'standard' => (object) [], 'custom' => ['Giặt chung', 'Bãi xe có mái che', 'Camera an ninh']], JSON_THROW_ON_ERROR),
                     'policies' => json_encode(['schema_version' => 1, 'pets' => 'NOT_ALLOWED', 'smoking' => 'NOT_ALLOWED', 'shared_rules' => ['Yên tĩnh sau 22:00']], JSON_THROW_ON_ERROR),
