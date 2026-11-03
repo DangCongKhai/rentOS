@@ -2,8 +2,10 @@
 
 namespace App\Models;
 
+use Database\Factories\ListingFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -12,10 +14,14 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 /** @property-read Property $property */
 class Listing extends Model
 {
-    use HasUuids;
+    /** @use HasFactory<ListingFactory> */
+    use HasFactory, HasUuids;
 
     protected $table = 'listings';
 
+    /**
+     * @return array<string, string>
+     */
     protected $fillable = [
         'property_id',
         'client_operation_id',

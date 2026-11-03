@@ -1,9 +1,7 @@
 import type { Metadata } from "next";
-import type { ReactNode } from "react";
-import { Suspense } from "react";
+import { Suspense, type ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth-context";
-import { SiteHeader } from "@/components/site-header";
-import { SiteFooter } from "@/components/site-footer";
+import { SiteFrame } from "@/components/site-frame";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -16,13 +14,18 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="vi">
       <body className="min-h-screen flex flex-col bg-surface-app text-primary antialiased">
         <AuthProvider>
-          <Suspense fallback={null}>
-            <SiteHeader />
+          <Suspense
+            fallback={
+              <div
+                className="flex flex-1 items-center justify-center p-6 text-secondary"
+                role="status"
+              >
+                Đang tải trang…
+              </div>
+            }
+          >
+            <SiteFrame>{children}</SiteFrame>
           </Suspense>
-          <main className="flex-1 min-h-[calc(100vh-160px)] flex flex-col">
-            {children}
-          </main>
-          <SiteFooter />
         </AuthProvider>
       </body>
     </html>

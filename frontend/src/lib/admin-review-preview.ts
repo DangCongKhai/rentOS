@@ -1,0 +1,53 @@
+import type { ReviewQueueItem } from "./admin-review-queue";
+
+// Only design fixtures; no private admin data or backend authorization is used.
+export const reviewQueuePreview: ReviewQueueItem[] = [
+  {
+    id: "listing-1",
+    title: "Studio full nội thất gần biển Mỹ Khê",
+    owner: "Linh",
+    property: "Studio gần biển Mỹ Khê",
+    units: 5,
+    photos: 12,
+    submittedAt: "2026-10-18T16:20:00+07:00",
+    waiting: "1 ngày 6 giờ",
+    status: "PENDING",
+    initialApprovedAt: null,
+  },
+  {
+    id: "listing-2",
+    title: "Phòng trọ khép kín gần ĐH Bách khoa",
+    owner: "Hòa",
+    property: "Nhà trọ Hòa Khánh Bắc",
+    units: 4,
+    photos: 9,
+    submittedAt: "2026-10-19T04:20:00+07:00",
+    waiting: "18 giờ",
+    status: "PENDING",
+    initialApprovedAt: null,
+  },
+  {
+    id: "listing-3",
+    title: "Căn hộ 2 phòng ngủ gần biển Mỹ An",
+    owner: "Quân",
+    property: "Căn hộ Mỹ An",
+    units: 1,
+    photos: 7,
+    submittedAt: "2026-10-19T09:20:00+07:00",
+    waiting: "13 giờ",
+    status: "PENDING",
+    initialApprovedAt: null,
+  },
+  {
+    id: "listing-4",
+    title: "Studio yên tĩnh gần công viên 29/3",
+    owner: "Thảo",
+    property: "Nhà phố Chính Gián",
+    units: 2,
+    photos: 6,
+    submittedAt: "2026-10-19T19:20:00+07:00",
+    waiting: "3 giờ",
+    status: "PENDING",
+    initialApprovedAt: null,
+  },
+];
