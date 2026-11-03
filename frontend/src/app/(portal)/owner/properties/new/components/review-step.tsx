@@ -3,8 +3,23 @@
 import type { AmenityCatalogEntry } from "@/lib/auth-api";
 import type { RoomDraft } from "./shared/types";
 
+export type ReviewStepFormData = {
+  name: string;
+  propertyType: string;
+  description: string;
+  city: string;
+  ward: string;
+  addressLine: string;
+  pets: string;
+  smoking: string;
+  sharedRules: string;
+  rent: string;
+  area_m2: string;
+  custom_amenities: string;
+};
+
 type ReviewStepProps = {
-  formRef: React.RefObject<HTMLFormElement | null>;
+  formData: ReviewStepFormData;
   rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
   rooms: RoomDraft[];
   sharedAmenityKeys: Set<string>;
@@ -12,35 +27,28 @@ type ReviewStepProps = {
   onNavigateToStep: (step: number) => void;
 };
 
-function read(form: HTMLFormElement | null, name: string): string {
-  if (!form) return "";
-  const value = form.elements.namedItem(name);
-  if (value instanceof HTMLInputElement || value instanceof HTMLTextAreaElement || value instanceof HTMLSelectElement) {
-    return value.value.trim();
-  }
-  return "";
-}
-
 export function ReviewStep({
-  formRef,
+  formData,
   rentalArrangement,
   rooms,
   sharedAmenityKeys,
   catalog,
   onNavigateToStep,
 }: ReviewStepProps) {
-  const form = formRef.current;
-  
-  // Extract form values
-  const name = read(form, "name");
-  const propertyType = read(form, "property_type");
-  const description = read(form, "description");
-  const city = read(form, "city");
-  const ward = read(form, "ward");
-  const addressLine = read(form, "address_line");
-  const pets = read(form, "pets");
-  const smoking = read(form, "smoking");
-  const sharedRules = read(form, "shared_rules");
+  const { 
+    name, 
+    propertyType, 
+    description, 
+    city, 
+    ward, 
+    addressLine, 
+    pets, 
+    smoking, 
+    sharedRules,
+    rent,
+    area_m2,
+    custom_amenities,
+  } = formData;
   
   // Validate recommended fields
   const warnings: Array<{ step: number; message: string }> = [];
@@ -57,12 +65,10 @@ export function ReviewStep({
   
   // Check rental arrangement details
   if (rentalArrangement === "WHOLE_SPACE") {
-    const rent = read(form, "rent");
-    const area = read(form, "area_m2");
     if (!rent) {
       warnings.push({ step: 1, message: "Bước 2: Thiếu giá thuê tháng" });
     }
-    if (!area) {
+    if (!area_m2) {
       warnings.push({ step: 1, message: "Bước 2: Thiếu diện tích" });
     }
   } else {
@@ -84,8 +90,8 @@ export function ReviewStep({
   
   // Check amenities
   const propertyAmenityCount = sharedAmenityKeys.size;
-  const customAmenities = read(form, "custom_amenities").split("\n").filter(Boolean).length;
-  if (propertyAmenityCount === 0 && customAmenities === 0) {
+  const customAmenitiesCount = custom_amenities.split("\n").filter(Boolean).length;
+  if (propertyAmenityCount === 0 && customAmenitiesCount === 0) {
     warnings.push({ step: 2, message: "Bước 3: Chưa chọn tiện ích nào" });
   }
   
@@ -219,8 +225,8 @@ export function ReviewStep({
               <div className="flex justify-between">
                 <span className="text-slate-600">Giá thuê:</span>
                 <span className="font-medium text-slate-900">
-                  {read(form, "rent") ? (
-                    `${Number(read(form, "rent")).toLocaleString()} ₫/tháng`
+                  {rent ? (
+                    `${Number(rent).toLocaleString()} ₫/tháng`
                   ) : (
                     <span className="text-amber-600">Chưa nhập</span>
                   )}
@@ -229,8 +235,8 @@ export function ReviewStep({
               <div className="flex justify-between">
                 <span className="text-slate-600">Diện tích:</span>
                 <span className="font-medium text-slate-900">
-                  {read(form, "area_m2") ? (
-                    `${read(form, "area_m2")} m²`
+                  {area_m2 ? (
+                    `${area_m2} m²`
                   ) : (
                     <span className="text-amber-600">Chưa nhập</span>
                   )}
@@ -289,8 +295,8 @@ export function ReviewStep({
           <div className="flex justify-between">
             <span className="text-slate-600">Tiện ích bất động sản:</span>
             <span className="font-medium text-slate-900">
-              {propertyAmenityCount > 0 || customAmenities > 0 ? (
-                `${propertyAmenityCount + customAmenities} tiện ích`
+              {propertyAmenityCount > 0 || customAmenitiesCount > 0 ? (
+                `${propertyAmenityCount + customAmenitiesCount} tiện ích`
               ) : (
                 <span className="text-amber-600">Chưa chọn</span>
               )}

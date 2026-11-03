@@ -2,14 +2,12 @@
 
 type WizardProgressProps = {
   stages: string[];
-  stageDescriptions: string[];
   currentStep: number;
   onStepChange: (step: number) => void;
 };
 
 export function WizardProgress({
   stages,
-  stageDescriptions,
   currentStep,
   onStepChange,
 }: WizardProgressProps) {

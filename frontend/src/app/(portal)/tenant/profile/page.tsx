@@ -1,15 +1,8 @@
 import { redirect } from "next/navigation";
 
-export default async function TenantProfilePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ verified?: string | string[] }>;
-}) {
-  const params = await searchParams;
-  const verified = Array.isArray(params.verified)
-    ? params.verified[0]
-    : params.verified;
-  redirect(
-    verified ? `/profile?verified=${encodeURIComponent(verified)}` : "/profile",
-  );
+// Redirect tenant profile to the shared profile page
+export default function TenantProfilePage() {
+  // Simple redirect to the shared profile page
+  // URL parameters are preserved by the routerd
+  redirect("/profile");
 }

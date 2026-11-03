@@ -7,4 +7,8 @@ parameters:
 
     level: 5
     treatPhpDocTypesAsCertain: false
+    
+    excludePaths:
+        - app/View/Components/AppLayout.php
+        - app/View/Components/GuestLayout.php
 

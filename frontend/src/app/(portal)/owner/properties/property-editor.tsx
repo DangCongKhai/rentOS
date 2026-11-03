@@ -15,7 +15,6 @@ import {
   ApiError,
   archiveOwnerProperty,
   archiveOwnerUnit,
-  createOwnerUnitBatch,
   getAmenityCatalog,
   getOwnerProperty,
   getOwnerPropertyMedia,
@@ -42,45 +41,10 @@ const secondaryButtonClass =
 
 type WorkspaceTab = "overview" | "units" | "photos";
 
-type RoomDraft = {
-  label: string;
-  customized: boolean;
-  unit_kind: string;
-  area_m2: string;
-  floor: string;
-  rent: string;
-  deposit: string;
-  minimum_rental_months: string;
-  max_occupants: string;
-  bedrooms: string;
-  bathrooms: string;
-  description: string;
-};
-
-function emptyRoom(label: string): RoomDraft {
-  return {
-    label,
-    customized: false,
-    unit_kind: "ROOM",
-    area_m2: "",
-    floor: "",
-    rent: "",
-    deposit: "",
-    minimum_rental_months: "3",
-    max_occupants: "1",
-    bedrooms: "0",
-    bathrooms: "1",
-    description: "",
-  };
-}
-
 function fieldValue(form: FormData, name: string): string {
   return String(form.get(name) ?? "").trim();
 }
 
-function numberText(value: string): number | null {
-  return value.trim() === "" ? null : Number(value);
-}
 
 function AmenityFields({
   catalog,
@@ -177,12 +141,6 @@ export function PropertyEditor({
   const [property, setProperty] = useState<OwnerPropertyDetail | null>(null);
   const [media, setMedia] = useState<OwnerPropertyMedia[]>([]);
   const [catalog, setCatalog] = useState<AmenityCatalogEntry[]>([]);
-  const [adding, setAdding] = useState(false);
-  const [unitCount, setUnitCount] = useState(1);
-  const [unitPrefix, setUnitPrefix] = useState("Phòng");
-  const [startNumber, setStartNumber] = useState(101);
-  const [rooms, setRooms] = useState<RoomDraft[]>([emptyRoom("Phòng 101")]);
-  const [activeRoom, setActiveRoom] = useState(0);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -233,7 +191,8 @@ export function PropertyEditor({
     return () => {
       active = false;
     };
-  }, [propertyId, router]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propertyId]);
 
   function reportError(caught: unknown) {
     if (caught instanceof ApiError) {
@@ -250,51 +209,6 @@ export function PropertyEditor({
       next === "overview"
         ? `/owner/properties/${propertyId}`
         : `/owner/properties/${propertyId}?tab=${next}`,
-    );
-  }
-
-  function updateRoomPlan(count: number, prefix: string, start: number) {
-    const nextCount = Math.min(Math.max(count, 1), 50);
-    setUnitCount(nextCount);
-    setUnitPrefix(prefix);
-    setStartNumber(start);
-    setRooms((current) =>
-      Array.from(
-        { length: nextCount },
-        (_, index) =>
-          current[index] ??
-          emptyRoom(`${prefix.trim() || "Phòng"} ${start + index}`),
-      ).map((room, index) =>
-        room.customized
-          ? room
-          : { ...room, label: `${prefix.trim() || "Phòng"} ${start + index}` },
-      ),
-    );
-    setActiveRoom((current) => Math.min(current, nextCount - 1));
-  }
-
-  function updateRoom(
-    index: number,
-    patch: Partial<RoomDraft>,
-    customized = true,
-  ) {
-    setRooms((current) =>
-      current.map((room, roomIndex) =>
-        roomIndex === index
-          ? { ...room, ...patch, customized: customized || room.customized }
-          : room,
-      ),
-    );
-  }
-
-  function applyRoomToEmpty(index: number) {
-    const source = rooms[index];
-    if (!source) return;
-    setRooms((current) =>
-      current.map((room, roomIndex) => {
-        if (roomIndex === index || room.customized) return room;
-        return { ...source, label: room.label, customized: false };
-      }),
     );
   }
 
@@ -350,51 +264,6 @@ export function PropertyEditor({
       router.push("/owner/properties");
     } catch (caught) {
       reportError(caught);
-      setBusy(false);
-    }
-  }
-
-  async function saveNewRooms(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!property) return;
-    const labels = rooms.map((room) => room.label.trim());
-    if (
-      labels.some((label) => label === "") ||
-      new Set(labels.map((label) => label.toLocaleLowerCase())).size !==
-        labels.length
-    ) {
-      setError("Mỗi phòng cần một tên và các tên không được trùng nhau.");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await createOwnerUnitBatch(property.id, {
-        expected_content_revision: property.content_revision,
-        client_operation_id: crypto.randomUUID(),
-        units: rooms.map((room) => ({
-          client_operation_id: crypto.randomUUID(),
-          label: room.label.trim(),
-          unit_kind: room.unit_kind,
-          description: room.description.trim() || null,
-          floor: room.floor.trim() || null,
-          area_m2: numberText(room.area_m2),
-          bedrooms: numberText(room.bedrooms) ?? 0,
-          bathrooms: numberText(room.bathrooms) ?? 1,
-          bathroom_arrangement: "PRIVATE",
-          minimum_rental_months: numberText(room.minimum_rental_months) ?? 3,
-          advertised_monthly_rent: numberText(room.rent),
-          deposit: numberText(room.deposit),
-          max_occupants: numberText(room.max_occupants) ?? 1,
-          amenities: { schema_version: 1, standard: {}, custom: [] },
-        })),
-      });
-      setAdding(false);
-      setNotice(`Đã thêm ${rooms.length} phòng.`);
-      await loadProperty();
-    } catch (caught) {
-      reportError(caught);
-    } finally {
       setBusy(false);
     }
   }
@@ -648,16 +517,12 @@ export function PropertyEditor({
                   {units.length} căn
                 </span>
                 {separate && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setAdding(true);
-                      updateRoomPlan(1, "Phòng", 101);
-                    }}
+                  <Link
+                    href={`/owner/properties/${property.id}/units/new`}
                     className={buttonClass}
                   >
                     Thêm phòng
-                  </button>
+                  </Link>
                 )}
               </div>
             </div>
@@ -734,268 +599,6 @@ export function PropertyEditor({
               </div>
             )}
           </section>
-
-          {adding && (
-            <form onSubmit={saveNewRooms} className="space-y-5">
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-                <h2 className="text-lg font-semibold text-slate-900">
-                  Thêm phòng
-                </h2>
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <label className="text-sm font-medium text-slate-700">
-                    Số lượng
-                    <input
-                      type="number"
-                      min={1}
-                      max={50}
-                      value={unitCount}
-                      onChange={(event) =>
-                        updateRoomPlan(
-                          Number(event.target.value) || 1,
-                          unitPrefix,
-                          startNumber,
-                        )
-                      }
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Tiền tố
-                    <input
-                      value={unitPrefix}
-                      onChange={(event) =>
-                        updateRoomPlan(
-                          unitCount,
-                          event.target.value,
-                          startNumber,
-                        )
-                      }
-                      className={fieldClass}
-                    />
-                  </label>
-                  <label className="text-sm font-medium text-slate-700">
-                    Số bắt đầu
-                    <input
-                      type="number"
-                      value={startNumber}
-                      onChange={(event) =>
-                        updateRoomPlan(
-                          unitCount,
-                          unitPrefix,
-                          Number(event.target.value) || 1,
-                        )
-                      }
-                      className={fieldClass}
-                    />
-                  </label>
-                </div>
-              </section>
-              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <h2 className="text-lg font-semibold text-slate-900">
-                      Thông tin từng phòng
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Chọn một phòng để sửa. Nút bên dưới sao chép phòng đang
-                      xem sang các phòng chưa chỉnh.
-                    </p>
-                  </div>
-                  <span className="text-xs text-slate-500">
-                    {activeRoom + 1} / {rooms.length}
-                  </span>
-                </div>
-                <div
-                  role="tablist"
-                  aria-label="Phòng sẽ thêm"
-                  className="mt-4 flex gap-2 overflow-x-auto pb-2"
-                >
-                  {rooms.map((room, index) => (
-                    <button
-                      key={index}
-                      type="button"
-                      role="tab"
-                      aria-selected={activeRoom === index}
-                      onClick={() => setActiveRoom(index)}
-                      className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${activeRoom === index ? "border-[#3368a0] bg-[#3368a0] text-white" : "border-slate-200 bg-white text-slate-700"}`}
-                    >
-                      {room.label || `Phòng ${index + 1}`}
-                    </button>
-                  ))}
-                </div>
-                {rooms.map((room, index) => (
-                  <fieldset
-                    key={index}
-                    hidden={activeRoom !== index}
-                    className="mt-4 grid gap-4 sm:grid-cols-2"
-                  >
-                    <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                      Tên phòng
-                      <input
-                        value={room.label}
-                        onChange={(event) =>
-                          updateRoom(
-                            index,
-                            { label: event.target.value },
-                            false,
-                          )
-                        }
-                        required
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Loại phòng
-                      <select
-                        value={room.unit_kind}
-                        onChange={(event) =>
-                          updateRoom(index, { unit_kind: event.target.value })
-                        }
-                        className={fieldClass}
-                      >
-                        <option value="ROOM">Phòng</option>
-                        <option value="STUDIO">Studio</option>
-                        <option value="APARTMENT">Căn hộ</option>
-                        <option value="HOUSE">Nhà</option>
-                      </select>
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Diện tích (m²)
-                      <input
-                        type="number"
-                        min="0.1"
-                        step="0.01"
-                        value={room.area_m2}
-                        onChange={(event) =>
-                          updateRoom(index, { area_m2: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Tầng
-                      <input
-                        value={room.floor}
-                        onChange={(event) =>
-                          updateRoom(index, { floor: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Phòng ngủ
-                      <input
-                        type="number"
-                        min="0"
-                        value={room.bedrooms}
-                        onChange={(event) =>
-                          updateRoom(index, { bedrooms: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Phòng tắm
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        value={room.bathrooms}
-                        onChange={(event) =>
-                          updateRoom(index, { bathrooms: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Thời hạn thuê tối thiểu (tháng)
-                      <input
-                        type="number"
-                        min="3"
-                        value={room.minimum_rental_months}
-                        onChange={(event) =>
-                          updateRoom(index, {
-                            minimum_rental_months: event.target.value,
-                          })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Giá thuê tháng (VND)
-                      <input
-                        type="number"
-                        min="1"
-                        value={room.rent}
-                        onChange={(event) =>
-                          updateRoom(index, { rent: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Tiền đặt cọc (VND)
-                      <input
-                        type="number"
-                        min="0"
-                        value={room.deposit}
-                        onChange={(event) =>
-                          updateRoom(index, { deposit: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700">
-                      Số người tối đa
-                      <input
-                        type="number"
-                        min="1"
-                        value={room.max_occupants}
-                        onChange={(event) =>
-                          updateRoom(index, {
-                            max_occupants: event.target.value,
-                          })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <label className="text-sm font-medium text-slate-700 sm:col-span-2">
-                      Mô tả phòng
-                      <textarea
-                        rows={3}
-                        value={room.description}
-                        onChange={(event) =>
-                          updateRoom(index, { description: event.target.value })
-                        }
-                        className={fieldClass}
-                      />
-                    </label>
-                    <div className="sm:col-span-2">
-                      <button
-                        type="button"
-                        onClick={() => applyRoomToEmpty(index)}
-                        className={secondaryButtonClass}
-                      >
-                        Áp dụng cho các phòng chưa chỉnh riêng
-                      </button>
-                    </div>
-                  </fieldset>
-                ))}
-                <div className="mt-4 flex gap-2">
-                  <button type="submit" disabled={busy} className={buttonClass}>
-                    {busy ? "Đang lưu…" : "Lưu các phòng"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setAdding(false)}
-                    className={secondaryButtonClass}
-                  >
-                    Hủy
-                  </button>
-                </div>
-              </section>
-            </form>
-          )}
         </div>
       )}
 
@@ -1021,7 +624,6 @@ function PropertyPhotos({
   setBusy,
   onReload,
   onError,
-  onNotice,
 }: {
   property: OwnerPropertyDetail;
   media: OwnerPropertyMedia[];
@@ -1031,7 +633,6 @@ function PropertyPhotos({
   onError: (caught: unknown) => void;
   onNotice: (value: string | null) => void;
 }) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const units = property.units.filter((unit) => !unit.archived_at);
   const separate =
@@ -1061,15 +662,19 @@ function PropertyPhotos({
 
   // Update URL parameters when scope or activeUnitId changes
   useEffect(() => {
-    const params = new URLSearchParams(searchParams.toString());
+    const params = new URLSearchParams(window.location.search);
+    params.set("tab", "photos");
     params.set("photoScope", scope);
     if (scope === "unit" && activeUnitId) {
       params.set("unitId", activeUnitId);
     } else {
       params.delete("unitId");
     }
-    router.replace(`?${params.toString()}`, { scroll: false });
-  }, [scope, activeUnitId, router, searchParams]);
+    const newUrl = `${window.location.pathname}?${params.toString()}`;
+    if (window.location.search !== `?${params.toString()}`) {
+      window.history.replaceState({}, "", newUrl);
+    }
+  }, [scope, activeUnitId]);
 
   // Clean up blob URLs when they change or component unmounts
   useEffect(() => {

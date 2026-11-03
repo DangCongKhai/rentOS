@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
@@ -18,9 +19,35 @@ import { BasicInfoStep } from "./components/basic-info-step";
 import { RentalArrangementStep } from "./components/rental-arrangement-step";
 import { AmenitiesStep } from "./components/amenities-step";
 import { PoliciesStep } from "./components/policies-step";
-import { ReviewStep } from "./components/review-step";
+import { ReviewStep, type ReviewStepFormData } from "./components/review-step";
 import { emptyRoom, type RoomDraft } from "./components/shared/types";
 import { primaryButton, secondaryButton, shellClass } from "./components/shared/form-styles";
+
+function extractFormData(form: HTMLFormElement | null): ReviewStepFormData {
+  function read(name: string): string {
+    if (!form) return "";
+    const value = form.elements.namedItem(name);
+    if (value instanceof HTMLInputElement || value instanceof HTMLTextAreaElement || value instanceof HTMLSelectElement) {
+      return value.value.trim();
+    }
+    return "";
+  }
+
+  return {
+    name: read("name"),
+    propertyType: read("property_type"),
+    description: read("description"),
+    city: read("city"),
+    ward: read("ward"),
+    addressLine: read("address_line"),
+    pets: read("pets"),
+    smoking: read("smoking"),
+    sharedRules: read("shared_rules"),
+    rent: read("rent"),
+    area_m2: read("area_m2"),
+    custom_amenities: read("custom_amenities"),
+  };
+}
 
 const stages = [
   "Thông tin cơ bản",
@@ -133,6 +160,27 @@ export default function NewOwnerPropertyPage() {
     "property"
   );
   const [setupComplete, setSetupComplete] = useState(false);
+  const [reviewFormData, setReviewFormData] = useState<ReviewStepFormData>({
+    name: "",
+    propertyType: "",
+    description: "",
+    city: "",
+    ward: "",
+    addressLine: "",
+    pets: "",
+    smoking: "",
+    sharedRules: "",
+    rent: "",
+    area_m2: "",
+    custom_amenities: "",
+  });
+
+  // Extract form data when navigating to review step
+  useEffect(() => {
+    if (step === 4) {
+      setReviewFormData(extractFormData(formRef.current));
+    }
+  }, [step]);
 
   useEffect(() => {
     let active = true;
@@ -388,9 +436,9 @@ export default function NewOwnerPropertyPage() {
     <section className="mx-auto w-full max-w-6xl py-3 sm:py-5">
       <p className="text-sm text-slate-500">
         Không gian quản lý / Chủ nhà /{" "}
-        <a href="/owner/properties" className="text-[#3368a0] hover:underline">
+        <Link href="/owner/properties" className="text-[#3368a0] hover:underline">
           Bất động sản
-        </a>{" "}
+        </Link>{" "}
         / Tạo bất động sản
       </p>
       <div className="mt-3">
@@ -413,7 +461,6 @@ export default function NewOwnerPropertyPage() {
       >
         <WizardProgress
           stages={stages}
-          stageDescriptions={stageDescriptions}
           currentStep={step}
           onStepChange={handleStepChange}
         />
@@ -471,7 +518,7 @@ export default function NewOwnerPropertyPage() {
 
             <div hidden={step !== 4}>
               <ReviewStep
-                formRef={formRef}
+                formData={reviewFormData}
                 rentalArrangement={rentalArrangement}
                 rooms={rooms}
                 sharedAmenityKeys={sharedAmenityKeys}

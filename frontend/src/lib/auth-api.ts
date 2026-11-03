@@ -199,7 +199,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   }
 
   let response = await executeFetch(path, method, headers, init);
-
+  console.log("response: ", response);
   // Nếu gặp lỗi 419 (CSRF token mismatch), xin lại csrf-cookie một lần và thử lại đúng request đó 1 lần
   if (response.status === 419 && isWriteMethod) {
     await initializeCsrf();

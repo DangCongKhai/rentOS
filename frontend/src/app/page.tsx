@@ -122,7 +122,7 @@ export default function Home() {
     if (!section) return;
     const top = section.getBoundingClientRect().top + window.scrollY - 91;
     window.scrollTo({ top });
-  }, [listings]);
+  }, []);
 
   return (
     <div className="bg-[#f0f4f7]">

@@ -1,3 +1,5 @@
+export const searchInputDebounceMs = 300;
+
 export type Debounced<Args extends unknown[]> = ((...args: Args) => void) & {
   cancel: () => void;
   flush: () => void;

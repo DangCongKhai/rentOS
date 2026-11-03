@@ -125,7 +125,6 @@ export function SiteHeader() {
         )}
         {status === "authenticated" && user && (
           <div className="flex items-center gap-3">
-            {/* Notification Bell */}
             <button
               type="button"
               className="relative p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
