@@ -1,15 +1,11 @@
-import { Suspense } from "react";
-import { ProfilePanel } from "@/components/profile-panel";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Hồ sơ cá nhân - Cổng Cư Dân | rentOS",
-};
-
-export default function TenantProfilePage() {
-  return (
-    <Suspense fallback={<p className="text-center py-12 text-slate-500">Đang tải hồ sơ…</p>}>
-      <ProfilePanel />
-    </Suspense>
-  );
+export default async function TenantProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ verified?: string | string[] }>;
+}) {
+  const params = await searchParams;
+  const verified = Array.isArray(params.verified) ? params.verified[0] : params.verified;
+  redirect(verified ? `/profile?verified=${encodeURIComponent(verified)}` : "/profile");
 }
-

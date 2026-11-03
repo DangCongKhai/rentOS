@@ -3,6 +3,7 @@
 namespace App\Actions\Fortify;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
@@ -30,7 +31,9 @@ class UpdateUserPassword implements UpdatesUserPasswords
             'current_password.current_password' => __('The provided password does not match your current password.'),
         ])->validateWithBag('updatePassword');
 
-        DB::transaction(function () use ($user, $input): void {
+        $currentSessionId = session()->getId();
+
+        DB::transaction(function () use ($user, $input, $currentSessionId): void {
             $user = User::query()->lockForUpdate()->findOrFail($user->getKey());
             if (! Hash::check($input['current_password'], $user->password)) {
                 throw ValidationException::withMessages([
@@ -43,11 +46,22 @@ class UpdateUserPassword implements UpdatesUserPasswords
                 'remember_token' => Str::random(60),
             ])->save();
 
-            DB::table(config('session.table'))
-                ->where('user_id', $user->getAuthIdentifier())
-                ->delete();
+            $sessions = DB::table(config('session.table'))
+                ->where('user_id', $user->getAuthIdentifier());
+            if (is_string($currentSessionId) && $currentSessionId !== '') {
+                $sessions->where('id', '!=', $currentSessionId);
+            }
+            $sessions->delete();
 
             $user->tokens()->delete();
         });
+
+        $freshUser = $user->fresh();
+        if ($freshUser instanceof User) {
+            Auth::guard('web')->login($freshUser);
+            if (request()->hasSession()) {
+                request()->session()->regenerate();
+            }
+        }
     }
 }

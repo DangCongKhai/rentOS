@@ -91,7 +91,7 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
           password_confirmation: String(values.get("password_confirmation") ?? ""),
         });
         await refreshUser();
-        router.push("/tenant");
+        router.push("/profile");
         return;
       }
 
