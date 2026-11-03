@@ -33,20 +33,30 @@ describe("new owner property wizard", () => {
     render(<NewOwnerPropertyPage />);
 
     await user.click(screen.getByRole("button", { name: "Hình thức thuê" }));
-    await user.click(screen.getByRole("radio", { name: /Cho thuê từng căn\/phòng/ }));
+    await user.click(
+      screen.getByRole("radio", { name: /Cho thuê từng căn\/phòng/ }),
+    );
     await user.clear(screen.getByLabelText("Số lượng"));
     await user.type(screen.getByLabelText("Số lượng"), "2");
-    fireEvent.change(screen.getByLabelText("Tên căn 1"), { target: { value: "Phòng A" } });
+    fireEvent.change(screen.getByLabelText("Tên căn 1"), {
+      target: { value: "Phòng A" },
+    });
 
     expect(document.querySelector('input[name="new_0_rent"]')).not.toBeNull();
     expect(document.querySelector('input[name="new_1_rent"]')).not.toBeNull();
-    expect((screen.getByLabelText("Tên căn 1") as HTMLInputElement).value).toBe("Phòng A");
+    expect((screen.getByLabelText("Tên căn 1") as HTMLInputElement).value).toBe(
+      "Phòng A",
+    );
 
     await user.click(screen.getByRole("button", { name: "Tiện ích chung" }));
     await user.click(document.querySelector('input[name="amenity:wifi"]')!);
     await user.click(screen.getByRole("tab", { name: "Trong căn/phòng" }));
 
-    expect(document.querySelector('input[name="unit_amenity:wifi"]')).toBeNull();
-    expect(document.querySelector('input[name="unit_amenity:aircon"]')).not.toBeNull();
+    expect(
+      document.querySelector('input[name="unit_amenity:wifi"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector('input[name="unit_amenity:aircon"]'),
+    ).not.toBeNull();
   });
 });

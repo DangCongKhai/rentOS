@@ -19,10 +19,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Suspense fallback={null}>
             <SiteHeader />
           </Suspense>
-          <main className="flex-1 min-h-[calc(100vh-160px)] flex flex-col">
-            {children}
-          </main>
-          <SiteFooter />
+          <main className="flex-1 flex flex-col">{children}</main>
+          <Suspense fallback={null}>
+            <SiteFooter />
+          </Suspense>
         </AuthProvider>
       </body>
     </html>

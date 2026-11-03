@@ -420,14 +420,14 @@ export async function uploadOwnerMedia(propertyId: string, input: {
   expected_content_revision: number;
   unit_id?: string;
   caption?: string;
-}): Promise<OwnerPropertyMedia> {
+}): Promise<{ media: OwnerPropertyMedia; content_revision: number }> {
   const body = new FormData();
   body.set("photo", input.file);
   body.set("client_operation_id", input.client_operation_id);
   body.set("expected_content_revision", String(input.expected_content_revision));
   if (input.unit_id) body.set("unit_id", input.unit_id);
   if (input.caption) body.set("caption", input.caption);
-  return request<OwnerPropertyMedia>(`/api/v1/owner/properties/${propertyId}/media`, { method: "POST", body });
+  return request<{ media: OwnerPropertyMedia; content_revision: number }>(`/api/v1/owner/properties/${propertyId}/media`, { method: "POST", body });
 }
 
 export async function updateOwnerGallery(propertyId: string, input: {

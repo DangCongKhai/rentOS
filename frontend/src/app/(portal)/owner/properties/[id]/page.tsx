@@ -9,7 +9,13 @@ export default function OwnerPropertyPage({
   searchParams: Promise<{ tab?: string }>;
 }) {
   return (
-    <Suspense fallback={<p className="px-1 py-6 text-sm text-slate-500">Đang tải bất động sản…</p>}>
+    <Suspense
+      fallback={
+        <p className="px-1 py-6 text-sm text-slate-500">
+          Đang tải bất động sản…
+        </p>
+      }
+    >
       <OwnerPropertyLoader params={params} searchParams={searchParams} />
     </Suspense>
   );
