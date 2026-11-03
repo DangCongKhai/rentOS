@@ -1036,7 +1036,17 @@ function PropertyPhotos({
   const [scope, setScope] = useState<"property" | "unit">("property");
   const [activeUnitId, setActiveUnitId] = useState(units[0]?.id ?? "");
   const [pending, setPending] = useState<File[]>([]);
+  const [pendingUrls, setPendingUrls] = useState<string[]>([]);
   const [listingFlags, setListingFlags] = useState<Record<string, boolean>>({});
+
+  // Clean up blob URLs when component unmounts or pending changes
+  useEffect(() => {
+    const urls = pending.map((file) => URL.createObjectURL(file));
+    setPendingUrls(urls);
+    return () => {
+      urls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [pending]);
   function listed(item: OwnerPropertyMedia) {
     return listingFlags[item.id] ?? item.is_selected_for_listing;
   }
@@ -1227,37 +1237,100 @@ function PropertyPhotos({
             </select>
           </label>
         )}
-        <form
-          onSubmit={upload}
-          className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4"
-        >
-          <p className="text-sm text-slate-600">
-            JPG, PNG, WEBP · tối đa 8 MB mỗi ảnh · tối đa 20 ảnh
-          </p>
-          <label className={`${buttonClass} cursor-pointer`}>
-            {scope === "unit"
-              ? "Tải ảnh riêng lên căn này"
-              : "Tải ảnh dùng chung lên"}
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              multiple
-              className="sr-only"
-              disabled={busy}
-              onChange={(event) => {
-                setPending(Array.from(event.currentTarget.files ?? []));
-                event.currentTarget.value = "";
-              }}
-            />
-          </label>
+        <form onSubmit={upload} className="mt-4 space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
+            <p className="text-sm text-slate-600">
+              JPG, PNG, WEBP · tối đa 8 MB mỗi ảnh · tối đa 20 ảnh
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <label className={`${buttonClass} cursor-pointer`}>
+                {scope === "unit"
+                  ? "Chọn ảnh"
+                  : "Tải ảnh dùng chung lên"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  multiple
+                  className="sr-only"
+                  disabled={busy}
+                  onChange={(event) => {
+                    setPending(Array.from(event.currentTarget.files ?? []));
+                    event.currentTarget.value = "";
+                  }}
+                />
+              </label>
+              {pending.length > 0 && (
+                <button
+                  type="submit"
+                  disabled={busy}
+                  className={buttonClass}
+                >
+                  {busy ? "Đang tải…" : `Tải ${pending.length} ảnh`}
+                </button>
+              )}
+            </div>
+          </div>
+          
           {pending.length > 0 && (
-            <button
-              type="submit"
-              disabled={busy}
-              className={secondaryButtonClass}
-            >
-              {busy ? "Đang tải…" : `Tải ${pending.length} ảnh`}
-            </button>
+            <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Ảnh đã chọn ({pending.length})
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setPending([])}
+                  disabled={busy}
+                  className="text-sm font-medium text-rose-600 hover:text-rose-700 disabled:opacity-50"
+                >
+                  Xóa tất cả
+                </button>
+              </div>
+              <div className="max-h-96 overflow-y-auto">
+                <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                  {pending.map((file, index) => (
+                    <li
+                      key={`${file.name}-${file.size}-${index}`}
+                      className="group relative overflow-hidden rounded-xl border border-slate-200 bg-slate-50"
+                    >
+                      <div className="relative aspect-[4/3] bg-slate-100">
+                        {pendingUrls[index] && (
+                          <Image
+                            src={pendingUrls[index]}
+                            alt={file.name}
+                            fill
+                            unoptimized
+                            sizes="25vw"
+                            className="object-cover"
+                          />
+                        )}
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setPending((current) =>
+                              current.filter((_, i) => i !== index)
+                            )
+                          }
+                          disabled={busy}
+                          className="absolute right-2 top-2 flex size-8 items-center justify-center rounded-full bg-rose-600 text-white opacity-0 shadow-lg transition-opacity hover:bg-rose-700 group-hover:opacity-100 disabled:opacity-50"
+                          aria-label="Xóa ảnh"
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <div className="space-y-1 p-2">
+                        <p className="truncate text-xs font-medium text-slate-900">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           )}
         </form>
       </section>
