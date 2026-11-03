@@ -166,9 +166,13 @@ class OwnerPropertiesController extends Controller
             $attributes,
         );
 
-        return (new PropertyMediaResource($result['media']))
-            ->response()
-            ->setStatusCode($result['replayed'] ? 200 : 201);
+        return response()->json([
+            'data' => [
+                'media' => (new PropertyMediaResource($result['media']))->resolve($request),
+                'content_revision' => $result['content_revision'],
+            ],
+        ], $result['replayed'] ? 200 : 201)
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function indexMedia(Request $request, Property $property): JsonResponse
@@ -297,8 +301,10 @@ class OwnerPropertiesController extends Controller
         $serviceRoleKey = config('services.supabase.service_role_key');
         $bucket = config('services.supabase.storage.bucket');
 
-        if (! is_string($supabaseUrl) || ! is_string($serviceRoleKey) || ! is_string($bucket)
-            || $supabaseUrl === '' || $serviceRoleKey === '' || $bucket === '') {
+        if (
+            ! is_string($supabaseUrl) || ! is_string($serviceRoleKey) || ! is_string($bucket)
+            || $supabaseUrl === '' || $serviceRoleKey === '' || $bucket === ''
+        ) {
             return;
         }
 

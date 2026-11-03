@@ -260,8 +260,32 @@ class ListingLifecycleService
             ->whereNull('archived_at')
             ->get();
         $readyMarketed = $marketed->where('operational_status', 'READY');
+        $coveredUnitIds = [];
         if ($readyMarketed->isEmpty()) {
             $missing['units'] = 'Cần ít nhất một căn đang quảng cáo và ở trạng thái sẵn sàng.';
+        } else {
+            $readyIds = $readyMarketed->pluck('id')->all();
+            $ownPhotos = DB::table('property_media')
+                ->where('property_id', $property->id)
+                ->whereIn('unit_id', $readyIds)
+                ->where('is_selected_for_listing', true)
+                ->whereNull('deleted_at')
+                ->whereNull('purged_at')
+                ->select('unit_id');
+            $sharedPhotos = DB::table('unit_media')
+                ->join('property_media', 'property_media.id', '=', 'unit_media.media_id')
+                ->whereIn('unit_media.unit_id', $readyIds)
+                ->where('unit_media.is_selected_for_listing', true)
+                ->where('property_media.property_id', $property->id)
+                ->whereNull('property_media.unit_id')
+                ->where('property_media.is_selected_for_listing', true)
+                ->whereNull('property_media.deleted_at')
+                ->whereNull('property_media.purged_at')
+                ->select('unit_media.unit_id');
+            $coveredUnitIds = array_fill_keys(
+                $ownPhotos->union($sharedPhotos)->pluck('unit_id')->all(),
+                true,
+            );
         }
         foreach ($readyMarketed as $unit) {
             if (! is_string($unit->description) || trim($unit->description) === ''
@@ -271,25 +295,7 @@ class ListingLifecycleService
                 continue;
             }
 
-            $hasSelectedLivePhoto = DB::table('property_media')
-                ->where('property_id', $property->id)
-                ->where('unit_id', $unit->id)
-                ->where('is_selected_for_listing', true)
-                ->whereNull('deleted_at')
-                ->whereNull('purged_at')
-                ->exists()
-                || DB::table('unit_media')
-                    ->join('property_media', 'property_media.id', '=', 'unit_media.media_id')
-                    ->where('unit_media.unit_id', $unit->id)
-                    ->where('unit_media.is_selected_for_listing', true)
-                    ->where('property_media.property_id', $property->id)
-                    ->whereNull('property_media.unit_id')
-                    ->where('property_media.is_selected_for_listing', true)
-                    ->whereNull('property_media.deleted_at')
-                    ->whereNull('property_media.purged_at')
-                    ->exists();
-
-            if (! $hasSelectedLivePhoto) {
+            if (! isset($coveredUnitIds[$unit->id])) {
                 $missing["units.{$unit->id}.photos"] = 'Tải lên và chọn ít nhất một ảnh còn hiệu lực cho mỗi căn sẵn sàng được quảng cáo.';
             }
         }
