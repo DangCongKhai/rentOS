@@ -277,7 +277,17 @@ class ListingLifecycleService
                 ->where('is_selected_for_listing', true)
                 ->whereNull('deleted_at')
                 ->whereNull('purged_at')
-                ->exists();
+                ->exists()
+                || DB::table('unit_media')
+                    ->join('property_media', 'property_media.id', '=', 'unit_media.media_id')
+                    ->where('unit_media.unit_id', $unit->id)
+                    ->where('unit_media.is_selected_for_listing', true)
+                    ->where('property_media.property_id', $property->id)
+                    ->whereNull('property_media.unit_id')
+                    ->where('property_media.is_selected_for_listing', true)
+                    ->whereNull('property_media.deleted_at')
+                    ->whereNull('property_media.purged_at')
+                    ->exists();
 
             if (! $hasSelectedLivePhoto) {
                 $missing["units.{$unit->id}.photos"] = 'Tải lên và chọn ít nhất một ảnh còn hiệu lực cho mỗi căn sẵn sàng được quảng cáo.';

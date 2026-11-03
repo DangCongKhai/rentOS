@@ -11,6 +11,7 @@ use App\Http\Requests\StorePropertyMediaRequest;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\StoreUnitRequest;
 use App\Http\Requests\StoreUnitsBatchRequest;
+use App\Http\Requests\SyncUnitSharedMediaRequest;
 use App\Http\Requests\UpdatePropertyGalleryRequest;
 use App\Http\Requests\UpdatePropertyRequest;
 use App\Http\Requests\UpdateUnitGalleryRequest;
@@ -28,6 +29,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -184,6 +186,7 @@ class OwnerPropertiesController extends Controller
             ->orderBy('id')
             ->get();
 
+        $this->attachSharedAssignments($media);
         $this->attachPreviewUrls($media);
 
         return PropertyMediaResource::collection($media)
@@ -241,6 +244,42 @@ class OwnerPropertiesController extends Controller
         );
 
         return new PropertyMediaResource($result);
+    }
+
+    public function syncSharedMedia(
+        SyncUnitSharedMediaRequest $request,
+        Property $property,
+        Unit $unit,
+        PropertyWriteService $propertyWriter,
+    ): JsonResponse {
+        $result = $propertyWriter->syncUnitSharedMedia($request->user(), $property, $unit, $request->validated());
+
+        return response()->json(['data' => $result]);
+    }
+
+    /**
+     * @param  Collection<int, PropertyMedia>  $media
+     */
+    private function attachSharedAssignments(Collection $media): void
+    {
+        if ($media->isEmpty()) {
+            return;
+        }
+
+        $assignments = DB::table('unit_media')
+            ->whereIn('media_id', $media->modelKeys())
+            ->get(['media_id', 'unit_id'])
+            ->groupBy(fn (object $row): string => (string) $row->media_id);
+
+        foreach ($media as $photo) {
+            $photo->setAttribute(
+                'assigned_unit_ids',
+                collect($assignments->get((string) $photo->id, collect()))
+                    ->map(fn (object $row): string => (string) $row->unit_id)
+                    ->values()
+                    ->all(),
+            );
+        }
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Listing;
+use App\Support\ApproximateArea;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -37,6 +38,7 @@ class PublicListingDetailResource extends JsonResource
                 'shared_rules' => $property->policies['shared_rules'] ?? [],
                 'shared_amenities' => $this->resource->getAttribute('public_shared_amenities'),
                 'custom_amenities' => $this->resource->getAttribute('public_custom_amenities'),
+                'area' => ApproximateArea::from($property->latitude, $property->longitude),
             ],
             'owner' => [
                 'name' => $property->owner?->name,

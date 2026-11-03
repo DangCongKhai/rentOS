@@ -74,6 +74,7 @@ export type OwnerPropertyMedia = {
   mime_type: string;
   size_bytes: number;
   preview_url: string | null;
+  assigned_unit_ids?: string[];
 };
 
 export type OwnerListing = {
@@ -129,7 +130,7 @@ export type OwnerUnit = {
   archived_at: string | null;
 };
 
-export type AmenityCatalogEntry = { key: string; label: string; scopes: string[] };
+export type AmenityCatalogEntry = { key: string; label: string; label_vi?: string; scopes: string[] };
 
 function csrfToken(): string | null {
   if (typeof document === "undefined") return null;
@@ -317,6 +318,10 @@ export async function getOwnerPropertyMedia(propertyId: string): Promise<OwnerPr
   return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/media`);
 }
 
+export async function getOwnerListingById(listingId: string): Promise<OwnerListing> {
+  return request<OwnerListing>(`/api/v1/owner/listings/${listingId}`);
+}
+
 export async function getOwnerListing(propertyId: string): Promise<OwnerListing | null> {
   try {
     return await request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing`);
@@ -430,6 +435,15 @@ export async function updateOwnerGallery(propertyId: string, input: {
   items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
 }): Promise<OwnerPropertyMedia[]> {
   return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/gallery`, {
+    method: "PUT", body: JSON.stringify(input),
+  });
+}
+
+export async function saveOwnerUnitSharedMedia(propertyId: string, unitId: string, input: {
+  expected_content_revision: number;
+  media_ids: string[];
+}): Promise<{ content_revision: number }> {
+  return request<{ content_revision: number }>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/shared-media`, {
     method: "PUT", body: JSON.stringify(input),
   });
 }

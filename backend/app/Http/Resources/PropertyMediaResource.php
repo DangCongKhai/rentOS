@@ -33,6 +33,7 @@ class PropertyMediaResource extends JsonResource
             'mime_type' => $this->mime_type,
             'size_bytes' => $this->size_bytes,
             'preview_url' => $this->preview_url,
+            'assigned_unit_ids' => array_values($this->resource->getAttribute('assigned_unit_ids') ?? []),
             'created_at' => $this->created_at,
         ];
     }

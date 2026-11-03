@@ -45,6 +45,8 @@ Route::middleware('auth:sanctum')->prefix('v1')->group(function (): void {
     Route::put('/owner/properties/{property}/gallery', [OwnerPropertiesController::class, 'updateGallery'])->name('api.v1.owner.properties.gallery.update');
     Route::put('/owner/properties/{property}/units/{unit}/gallery', [OwnerPropertiesController::class, 'updateUnitGallery'])->name('api.v1.owner.properties.units.gallery.update');
     Route::delete('/owner/properties/{property}/media/{media}', [OwnerPropertiesController::class, 'archiveMedia'])->name('api.v1.owner.properties.media.archive');
+    Route::get('/owner/listings/{listing}', [OwnerListingsController::class, 'showOwned'])->name('api.v1.owner.listings.show');
+    Route::put('/owner/properties/{property}/units/{unit}/shared-media', [OwnerPropertiesController::class, 'syncSharedMedia'])->name('api.v1.owner.properties.units.shared-media');
     Route::get('/owner/properties/{property}/listing', [OwnerListingsController::class, 'show'])->name('api.v1.owner.properties.listing.show');
     Route::post('/owner/properties/{property}/listing', [OwnerListingsController::class, 'store'])->name('api.v1.owner.properties.listing.store');
     Route::patch('/owner/properties/{property}/listing', [OwnerListingsController::class, 'update'])->name('api.v1.owner.properties.listing.update');

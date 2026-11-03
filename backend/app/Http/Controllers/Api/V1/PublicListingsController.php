@@ -188,9 +188,16 @@ class PublicListingsController extends Controller
             ->get(['unit_id', 'blocked_start_date', 'blocked_end_date'])
             ->groupBy(fn (object $row): string => (string) $row->unit_id);
 
-        $media = $this->selectedMedia((string) $property->id)->groupBy(
+        $selected = $this->selectedMedia((string) $property->id);
+        $media = $selected->groupBy(
             fn (PropertyMedia $item): string => (string) $item->unit_id,
         );
+        $sharedById = $selected->whereNull('unit_id')->keyBy(fn (PropertyMedia $item): string => (string) $item->id);
+        $sharedAssignments = DB::table('unit_media')
+            ->whereIn('unit_id', $units->pluck('id'))
+            ->where('is_selected_for_listing', true)
+            ->get(['unit_id', 'media_id'])
+            ->groupBy(fn (object $row): string => (string) $row->unit_id);
 
         foreach ($units as $unit) {
             $unitBlocks = collect($blocks->get((string) $unit->id, collect()))
@@ -225,7 +232,12 @@ class PublicListingsController extends Controller
             ])));
             $unit->setAttribute('public_amenities', $this->amenityPayload(is_array($standard) ? $standard : []));
             $unit->setAttribute('public_custom_amenities', $amenities['custom'] ?? []);
-            $unit->setAttribute('public_photos', $this->mediaPayload($media->get((string) $unit->id, collect())));
+            $sharedPhotos = collect($sharedAssignments->get((string) $unit->id, collect()))
+                ->map(fn (object $row): ?PropertyMedia => $sharedById->get((string) $row->media_id))
+                ->filter();
+            $unit->setAttribute('public_photos', $this->mediaPayload(
+                $media->get((string) $unit->id, collect())->concat($sharedPhotos)->unique('id')->values(),
+            ));
         }
     }
 

@@ -146,7 +146,7 @@ export default function OwnerPortalPage() {
                   <div className="flex items-center gap-3">
                     <Link
                       className="inline-flex items-center justify-center min-h-[38px] px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold transition-colors"
-                      href="/"
+                      href={`/owner/properties/${property.id}`}
                     >
                       Quản lý phòng
                     </Link>
@@ -159,7 +159,7 @@ export default function OwnerPortalPage() {
           <div className="pt-2">
             <Link
               className="inline-flex items-center justify-center min-h-[42px] px-5 py-2 rounded-lg bg-[#3368a0] hover:bg-[#285584] text-white text-sm font-semibold shadow-sm transition-colors"
-              href="/"
+              href="/owner/properties"
             >
               Xem danh sách căn hộ
             </Link>
@@ -170,7 +170,7 @@ export default function OwnerPortalPage() {
           kicker="CHƯA CÓ BẤT ĐỘNG SẢN"
           title="Bạn chưa có bất động sản nào"
           description="Đăng tin cho thuê nhà hoặc căn hộ của bạn để tiếp cận hàng nghìn người thuê tiềm năng và quản lý hợp đồng chuyên nghiệp."
-          ctaHref="/"
+          ctaHref="/owner/properties/new"
           ctaText="Bắt đầu đăng tin"
         />
       )}

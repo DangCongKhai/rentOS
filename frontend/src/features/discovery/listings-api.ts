@@ -103,6 +103,7 @@ export type ListingDetail = {
     shared_rules: string[];
     shared_amenities: PublicAmenity[];
     custom_amenities: string[];
+    area?: { latitude: number; longitude: number; radius_meters: number } | null;
   };
   owner: {
     name: string | null;

@@ -1301,4 +1301,69 @@ class PropertyWriteService
 
         return $result;
     }
+
+    /**
+     * @param  array{expected_content_revision: int, media_ids: list<string>}  $attributes
+     * @return array{content_revision: int}
+     */
+    public function syncUnitSharedMedia(User $owner, Property $property, Unit $unit, array $attributes): array
+    {
+        return DB::transaction(function () use ($owner, $property, $unit, $attributes): array {
+            $property = Property::query()->whereKey($property->id)->lockForUpdate()->firstOrFail();
+            $owner = $this->lockActiveOwner($owner);
+            Gate::authorize('update', $property);
+            abort_if($property->archived_at !== null, 409);
+            abort_unless($property->content_revision === (int) $attributes['expected_content_revision'], 409);
+
+            $unit = Unit::query()->whereKey($unit->id)->where('property_id', $property->id)
+                ->whereNull('archived_at')->lockForUpdate()->firstOrFail();
+
+            /** @var list<string> $mediaIds */
+            $mediaIds = array_values($attributes['media_ids']);
+            $shared = PropertyMedia::query()
+                ->where('property_id', $property->id)
+                ->whereNull('unit_id')
+                ->whereNull('deleted_at')
+                ->whereNull('purged_at')
+                ->whereIn('id', $mediaIds)
+                ->pluck('id');
+
+            if ($shared->count() !== count($mediaIds)) {
+                throw ValidationException::withMessages([
+                    'media_ids' => 'Mỗi ảnh phải là ảnh dùng chung đang hoạt động của bất động sản này.',
+                ]);
+            }
+
+            $before = DB::table('unit_media')->where('unit_id', $unit->id)->orderBy('media_id')->pluck('media_id')->all();
+            DB::table('unit_media')->where('unit_id', $unit->id)->delete();
+            $now = now();
+            foreach ($mediaIds as $index => $mediaId) {
+                DB::table('unit_media')->insert([
+                    'unit_id' => $unit->id,
+                    'media_id' => $mediaId,
+                    'sort_order' => $index,
+                    'is_selected_for_listing' => true,
+                    'created_at' => $now,
+                ]);
+            }
+
+            $property->content_revision++;
+            $property->save();
+
+            $this->writeAudit(
+                actorId: $owner->id,
+                entityType: 'unit',
+                entityId: $unit->id,
+                action: 'unit.shared_media_updated',
+                before: ['media_ids' => $before],
+                after: [
+                    'media_ids' => $mediaIds,
+                    'property_content_revision' => $property->content_revision,
+                ],
+                correlationId: (string) Str::uuid(),
+            );
+
+            return ['content_revision' => $property->content_revision];
+        });
+    }
 }

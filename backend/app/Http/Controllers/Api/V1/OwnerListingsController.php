@@ -18,6 +18,16 @@ use Laravel\Sanctum\PersonalAccessToken;
 
 class OwnerListingsController extends Controller
 {
+    public function showOwned(Request $request, Listing $listing): ListingResource
+    {
+        $property = $listing->property;
+        abort_if($property === null, 404);
+        $this->authorizeOwner($request, $property);
+        abort_if($listing->archived_at !== null, 404);
+
+        return new ListingResource($listing->load('property'));
+    }
+
     public function show(Request $request, Property $property): ListingResource
     {
         $this->authorizeOwner($request, $property);

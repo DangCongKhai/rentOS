@@ -37,6 +37,38 @@ const selectStyle: CSSProperties = {
   backgroundImage: "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'%3E%3Cpath d='m6 8 4 4 4-4' stroke='%23475569' stroke-width='1.7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E\")",
   backgroundPosition: "right 0.875rem center",
 };
+type RoomDraft = {
+  label: string;
+  labelEdited: boolean;
+  customized: boolean;
+  unit_kind: string;
+  area_m2: string;
+  rent: string;
+  deposit: string;
+  minimum_rental_months: string;
+  max_occupants: string;
+  bedrooms: string;
+  bathrooms: string;
+  description: string;
+};
+
+function emptyRoom(label: string): RoomDraft {
+  return {
+    label,
+    labelEdited: false,
+    customized: false,
+    unit_kind: "ROOM",
+    area_m2: "",
+    rent: "",
+    deposit: "",
+    minimum_rental_months: "3",
+    max_occupants: "1",
+    bedrooms: "0",
+    bathrooms: "1",
+    description: "",
+  };
+}
+
 const primaryButton = "inline-flex min-h-11 items-center justify-center rounded-lg bg-[#3368a0] px-5 text-sm font-semibold text-white hover:bg-[#285584] disabled:cursor-not-allowed disabled:opacity-50";
 const secondaryButton = "inline-flex min-h-11 items-center justify-center rounded-lg border border-slate-300 bg-white px-5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50";
 
@@ -95,7 +127,7 @@ export default function NewOwnerPropertyPage() {
   const [unitCount, setUnitCount] = useState(1);
   const [unitPrefix, setUnitPrefix] = useState("Phòng");
   const [startNumber, setStartNumber] = useState(101);
-  const [unitLabels, setUnitLabels] = useState<string[]>(["Phòng 101"]);
+  const [rooms, setRooms] = useState<RoomDraft[]>([emptyRoom("Phòng 101")]);
   const [activeUnitIndex, setActiveUnitIndex] = useState(0);
   const [sharedAmenityKeys, setSharedAmenityKeys] = useState<Set<string>>(() => new Set());
   const [amenityScope, setAmenityScope] = useState<"property" | "unit">("property");
@@ -109,15 +141,35 @@ export default function NewOwnerPropertyPage() {
     return () => { active = false; };
   }, []);
 
+  const unitLabels = rooms.map((room) => room.label);
   const normalizedLabels = unitLabels.map((label) => label.trim().toLocaleLowerCase());
   const duplicateLabels = new Set(normalizedLabels.filter((label, index) => label && normalizedLabels.indexOf(label) !== index));
 
   function updateUnitDefaults(count: number, prefix: string, start: number) {
-    setUnitCount(count);
+    const nextCount = Math.min(Math.max(count, 1), 50);
+    setUnitCount(nextCount);
     setUnitPrefix(prefix);
     setStartNumber(start);
-    setUnitLabels(Array.from({ length: Math.min(Math.max(count, 1), 50) }, (_, index) => `${prefix.trim() || "Phòng"} ${start + index}`));
-    setActiveUnitIndex((current) => Math.min(current, Math.min(Math.max(count, 1), 50) - 1));
+    setRooms((current) => Array.from({ length: nextCount }, (_, index) => {
+      const generated = `${prefix.trim() || "Phòng"} ${start + index}`;
+      const existing = current[index];
+      if (!existing) return emptyRoom(generated);
+      return { ...existing, label: existing.labelEdited ? existing.label : generated };
+    }));
+    setActiveUnitIndex((current) => Math.min(current, nextCount - 1));
+  }
+
+  function updateRoom(index: number, patch: Partial<RoomDraft>, customized = true) {
+    setRooms((current) => current.map((room, roomIndex) => roomIndex === index ? { ...room, ...patch, customized: customized || room.customized } : room));
+  }
+
+  function applyRoomToEmpty(index: number) {
+    const source = rooms[index];
+    if (!source) return;
+    setRooms((current) => current.map((room, roomIndex) => {
+      if (roomIndex === index || room.customized) return room;
+      return { ...source, label: room.label, labelEdited: room.labelEdited, customized: false };
+    }));
   }
 
   function goNext(form: HTMLFormElement) {
@@ -187,24 +239,24 @@ export default function NewOwnerPropertyPage() {
         const rent = numberFromForm(form, "rent");
         const deposit = numberFromForm(form, "deposit");
         const minMonths = numberFromForm(form, "minimum_rental_months", 3) ?? 3;
-        const maxOccupants = numberFromForm(form, "max_occupants");
+        const maxOccupants = numberFromForm(form, "max_occupants", 1);
         if (rentalArrangement === "SEPARATE_UNITS") {
           await createOwnerUnitBatch(property.id, {
             expected_content_revision: property.content_revision,
             client_operation_id: crypto.randomUUID(),
-            units: unitLabels.map((label, index) => ({
+            units: rooms.map((room, index) => ({
               client_operation_id: crypto.randomUUID(),
-              label: read(form, `new_${index}_label`) || label.trim(),
-              unit_kind: read(form, `new_${index}_unit_kind`) || read(form, "unit_kind") || "ROOM",
-              description: read(form, `new_${index}_description`) || read(form, "unit_description") || null,
-              bedrooms: numberFromForm(form, `new_${index}_bedrooms`, numberFromForm(form, "bedrooms", 0)) ?? 0,
-              bathrooms: numberFromForm(form, `new_${index}_bathrooms`, numberFromForm(form, "bathrooms", 1)) ?? 1,
-              bathroom_arrangement: read(form, `new_${index}_bathroom_arrangement`) || read(form, "bathroom_arrangement") || "PRIVATE",
-              minimum_rental_months: numberFromForm(form, `new_${index}_minimum_rental_months`, minMonths) ?? minMonths,
-              advertised_monthly_rent: numberFromForm(form, `new_${index}_rent`, rent),
-              deposit: numberFromForm(form, `new_${index}_deposit`, deposit),
-              max_occupants: numberFromForm(form, `new_${index}_max_occupants`, maxOccupants),
-              area_m2: numberFromForm(form, `new_${index}_area_m2`, numberFromForm(form, "area_m2")),
+              label: room.label.trim(),
+              unit_kind: room.unit_kind || "ROOM",
+              description: room.description.trim() || null,
+              bedrooms: room.bedrooms === "" ? 0 : Number(room.bedrooms),
+              bathrooms: room.bathrooms === "" ? 1 : Number(room.bathrooms),
+              bathroom_arrangement: "PRIVATE",
+              minimum_rental_months: room.minimum_rental_months === "" ? minMonths : Number(room.minimum_rental_months),
+              advertised_monthly_rent: room.rent === "" ? null : Number(room.rent),
+              deposit: room.deposit === "" ? null : Number(room.deposit),
+              max_occupants: room.max_occupants === "" ? 1 : Number(room.max_occupants),
+              area_m2: room.area_m2 === "" ? null : Number(room.area_m2),
               amenities: unitAmenityDocumentFromForm(form, catalog, sharedAmenityKeys),
               policy_overrides: {
                 additional_rules: read(form, `new_${index}_additional_rules`).split("\n").map((rule) => rule.trim()).filter(Boolean)
@@ -220,7 +272,7 @@ export default function NewOwnerPropertyPage() {
               area_m2: numberFromForm(form, "area_m2"),
               bedrooms: numberFromForm(form, "bedrooms", 0) ?? 0,
               bathrooms: numberFromForm(form, "bathrooms", 1) ?? 1,
-              bathroom_arrangement: read(form, "bathroom_arrangement") || "PRIVATE",
+              bathroom_arrangement: "PRIVATE",
               advertised_monthly_rent: rent,
               deposit,
               minimum_rental_months: minMonths,
@@ -249,7 +301,7 @@ export default function NewOwnerPropertyPage() {
         property = await getOwnerProperty(property.id);
         setCreatedProperty(property);
       }
-      router.push("/owner/properties");
+      router.push(`/owner/properties/${property.id}`);
     } catch (caught) {
       if (caught instanceof ApiError) {
         setError(caught.message);
@@ -304,7 +356,20 @@ export default function NewOwnerPropertyPage() {
               <span><strong className="block text-sm text-slate-900">Cho thuê từng căn/phòng</strong><span className="mt-1 block text-sm text-slate-600">Tạo nhiều căn/phòng trong cùng bất động sản.</span></span>
             </label>
           </fieldset>
-          {rentalArrangement === "WHOLE_SPACE" ? <p className="rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-600">Hệ thống sẽ tạo một căn đại diện cho toàn bộ bất động sản.</p> : <>
+          {rentalArrangement === "WHOLE_SPACE" ? <section className="rounded-lg border border-slate-200 bg-white p-4">
+            <h3 className="text-sm font-semibold text-slate-800">Thông tin căn</h3>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+              <label className="text-sm font-medium text-slate-700">Giá thuê tháng (₫)<input name="rent" type="number" min={1} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Tiền đặt cọc (₫)<input name="deposit" type="number" min={0} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Thời hạn thuê tối thiểu (tháng)<input name="minimum_rental_months" type="number" min={3} defaultValue={3} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Số người tối đa<input name="max_occupants" type="number" min={1} defaultValue={1} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Loại căn<select name="unit_kind" className={selectClass} style={selectStyle}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label>
+              <label className="text-sm font-medium text-slate-700">Diện tích (m²)<input name="area_m2" type="number" min={0.1} step={0.1} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Phòng ngủ<input name="bedrooms" type="number" min={0} defaultValue={0} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700">Phòng tắm<input name="bathrooms" type="number" min={0} defaultValue={1} className={inputClass} /></label>
+              <label className="text-sm font-medium text-slate-700 sm:col-span-2">Mô tả<textarea name="unit_description" rows={2} className={textareaClass} /></label>
+            </div>
+          </section> : <>
             <section className="rounded-lg border border-slate-200 bg-white p-4">
               <h3 className="text-sm font-semibold text-slate-800">Danh sách căn/phòng</h3>
               <div className="mt-3 grid gap-3 sm:grid-cols-3">
@@ -312,31 +377,27 @@ export default function NewOwnerPropertyPage() {
                 <label className="text-sm font-medium text-slate-700">Tiền tố<input value={unitPrefix} onChange={(event) => updateUnitDefaults(unitCount, event.target.value, startNumber)} className={inputClass} /></label>
                 <label className="text-sm font-medium text-slate-700">Số bắt đầu<input type="number" value={startNumber} onChange={(event) => updateUnitDefaults(unitCount, unitPrefix, Number(event.target.value) || 1)} className={inputClass} /></label>
               </div>
-              <p className="mt-3 text-xs text-slate-500">Bạn có thể đổi tên và thêm thông tin riêng trong phần tùy chỉnh từng căn bên dưới.</p>
+              <p className="mt-3 text-xs text-slate-500">Chọn từng phòng bên dưới để nhập thông tin. Có thể sao chép phòng đang xem sang các phòng chưa chỉnh.</p>
+            </section>
+            <section className="rounded-lg border border-slate-200 bg-white p-4">
+              <div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-semibold text-slate-800">Tùy chỉnh từng căn</h3><p className="mt-1 text-xs text-slate-500">Thời hạn thuê tối thiểu là 3 tháng và số người tối đa là 1, trừ khi bạn đổi.</p></div><span className="shrink-0 text-xs text-slate-500">{activeUnitIndex + 1} / {rooms.length}</span></div>
+              <div role="tablist" aria-label="Chọn căn để tùy chỉnh" className="mt-3 flex gap-2 overflow-x-auto pb-2">{rooms.map((room, index) => <button key={index} type="button" role="tab" aria-selected={activeUnitIndex === index} onClick={() => setActiveUnitIndex(index)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${activeUnitIndex === index ? "border-[#3368a0] bg-[#3368a0] text-white" : "border-slate-200 bg-white text-slate-700"}`}>{room.label.trim() || `Căn ${index + 1}`}</button>)}</div>
+              {rooms.map((room, index) => <fieldset key={index} role="tabpanel" hidden={activeUnitIndex !== index} className="mt-3 grid gap-3 rounded-lg bg-slate-50 p-4 sm:grid-cols-2">
+                <legend className="sr-only">Tùy chỉnh {room.label || `căn ${index + 1}`}</legend>
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">Tên căn<input aria-label={`Tên căn ${index + 1}`} name={`new_${index}_label`} value={room.label} onChange={(event) => updateRoom(index, { label: event.target.value, labelEdited: true }, false)} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Loại căn<select name={`new_${index}_unit_kind`} value={room.unit_kind} onChange={(event) => updateRoom(index, { unit_kind: event.target.value })} className={selectClass} style={selectStyle}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label>
+                <label className="text-sm font-medium text-slate-700">Diện tích (m²)<input name={`new_${index}_area_m2`} type="number" min="0.1" step="0.1" value={room.area_m2} onChange={(event) => updateRoom(index, { area_m2: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Giá thuê tháng (₫)<input name={`new_${index}_rent`} type="number" min="1" value={room.rent} onChange={(event) => updateRoom(index, { rent: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Tiền đặt cọc (₫)<input name={`new_${index}_deposit`} type="number" min="0" value={room.deposit} onChange={(event) => updateRoom(index, { deposit: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Thời hạn thuê tối thiểu<input name={`new_${index}_minimum_rental_months`} type="number" min="3" value={room.minimum_rental_months} onChange={(event) => updateRoom(index, { minimum_rental_months: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Số người tối đa<input name={`new_${index}_max_occupants`} type="number" min="1" value={room.max_occupants} onChange={(event) => updateRoom(index, { max_occupants: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Phòng ngủ<input name={`new_${index}_bedrooms`} type="number" min="0" value={room.bedrooms} onChange={(event) => updateRoom(index, { bedrooms: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700">Phòng tắm<input name={`new_${index}_bathrooms`} type="number" min="0" value={room.bathrooms} onChange={(event) => updateRoom(index, { bathrooms: event.target.value })} className={inputClass} /></label>
+                <label className="text-sm font-medium text-slate-700 sm:col-span-2">Mô tả<textarea name={`new_${index}_description`} rows={2} value={room.description} onChange={(event) => updateRoom(index, { description: event.target.value })} className={textareaClass} /></label>
+                <div className="sm:col-span-2"><button type="button" onClick={() => applyRoomToEmpty(index)} className={secondaryButton}>Áp dụng cho các phòng chưa chỉnh riêng</button></div>
+              </fieldset>)}
             </section>
           </>}
-
-          <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div><h3 className="text-sm font-semibold text-slate-800">Giá thuê và thông tin mặc định</h3><p className="mt-1 text-xs text-slate-500">Nhập một lần cho toàn bộ căn/phòng. Có thể chọn căn ở dưới để ghi đè thông tin riêng.</p></div>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="text-sm font-medium text-slate-700">Giá thuê tháng (₫)<input name="rent" type="number" min={1} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Tiền đặt cọc (₫)<input name="deposit" type="number" min={0} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Thời hạn thuê tối thiểu (tháng)<input name="minimum_rental_months" type="number" min={3} defaultValue={3} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Số người tối đa<input name="max_occupants" type="number" min={1} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Loại căn<select name="unit_kind" className={selectClass} style={selectStyle}><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label>
-              <label className="text-sm font-medium text-slate-700">Diện tích (m²)<input name="area_m2" type="number" min={0.1} step={0.1} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Phòng ngủ<input name="bedrooms" type="number" min={0} defaultValue={0} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Phòng tắm<input name="bathrooms" type="number" min={0} defaultValue={1} className={inputClass} /></label>
-              <label className="text-sm font-medium text-slate-700">Cách dùng phòng tắm<select name="bathroom_arrangement" className={selectClass} style={selectStyle}><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label>
-              <label className="text-sm font-medium text-slate-700 sm:col-span-2">Mô tả mặc định<textarea name="unit_description" rows={2} className={textareaClass} /></label>
-            </div>
-          </section>
-
-          {rentalArrangement === "SEPARATE_UNITS" && <section className="rounded-lg border border-slate-200 bg-white p-4">
-            <div className="flex items-start justify-between gap-3"><div><h3 className="text-sm font-semibold text-slate-800">Tùy chỉnh từng căn</h3><p className="mt-1 text-xs text-slate-500">Để trống nếu căn này dùng thông tin mặc định.</p></div><span className="shrink-0 text-xs text-slate-500">{activeUnitIndex + 1} / {unitLabels.length}</span></div>
-            <div role="tablist" aria-label="Chọn căn để tùy chỉnh" className="mt-3 flex gap-2 overflow-x-auto pb-2">{unitLabels.map((label, index) => <button key={index} type="button" role="tab" aria-selected={activeUnitIndex === index} onClick={() => setActiveUnitIndex(index)} className={`shrink-0 rounded-full border px-3 py-1.5 text-sm ${activeUnitIndex === index ? "border-[#3368a0] bg-[#3368a0] text-white" : "border-slate-200 bg-white text-slate-700"}`}>{label.trim() || `Căn ${index + 1}`}</button>)}</div>
-            {unitLabels.map((label, index) => <fieldset key={index} role="tabpanel" hidden={activeUnitIndex !== index} className="mt-3 grid gap-3 rounded-lg bg-slate-50 p-4 sm:grid-cols-2"><legend className="sr-only">Tùy chỉnh {label || `căn ${index + 1}`}</legend><label className="text-sm font-medium text-slate-700 sm:col-span-2">Tên căn<input aria-label={`Tên căn ${index + 1}`} name={`new_${index}_label`} value={label} onChange={(event) => setUnitLabels((current) => current.map((item, itemIndex) => itemIndex === index ? event.target.value : item))} className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Loại căn<select name={`new_${index}_unit_kind`} defaultValue="" className={selectClass} style={selectStyle}><option value="">Dùng mặc định</option><option value="ROOM">Phòng</option><option value="STUDIO">Studio</option><option value="APARTMENT">Căn hộ</option><option value="HOUSE">Nhà</option></select></label><label className="text-sm font-medium text-slate-700">Diện tích (m²)<input name={`new_${index}_area_m2`} type="number" min="0.1" step="0.1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Giá thuê tháng (₫)<input name={`new_${index}_rent`} type="number" min="1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Tiền đặt cọc (₫)<input name={`new_${index}_deposit`} type="number" min="0" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Thời hạn thuê tối thiểu<input name={`new_${index}_minimum_rental_months`} type="number" min="3" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Số người tối đa<input name={`new_${index}_max_occupants`} type="number" min="1" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Phòng ngủ<input name={`new_${index}_bedrooms`} type="number" min="0" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Phòng tắm<input name={`new_${index}_bathrooms`} type="number" min="0" className={inputClass} /></label><label className="text-sm font-medium text-slate-700">Cách dùng phòng tắm<select name={`new_${index}_bathroom_arrangement`} defaultValue="" className={selectClass} style={selectStyle}><option value="">Dùng mặc định</option><option value="PRIVATE">Riêng</option><option value="SHARED">Dùng chung</option></select></label><label className="text-sm font-medium text-slate-700 sm:col-span-2">Mô tả riêng<textarea name={`new_${index}_description`} rows={2} className={textareaClass} /></label></fieldset>)}
-          </section>}
         </div>
 
         <div hidden={step !== 2} className="space-y-5">
@@ -358,7 +419,7 @@ export default function NewOwnerPropertyPage() {
           {selectedPhotos.length > 0 && <ul className="space-y-2" aria-label="Ảnh đã chọn">{selectedPhotos.map((file, index) => <li key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm"><span className="min-w-0 truncate text-slate-700">{file.name} <span className="text-xs text-slate-500">({index < uploadedCount ? "Đã tải" : `${(file.size / 1024 / 1024).toFixed(1)} MB`})</span></span>{index >= uploadedCount && <button type="button" onClick={() => setSelectedPhotos((current) => current.filter((_, itemIndex) => itemIndex !== index))} className="shrink-0 text-sm font-medium text-rose-700 hover:underline">Xóa</button>}</li>)}</ul>}
           <div className="rounded-lg bg-white p-4 text-sm text-slate-700"><strong>Kiểm tra trước khi lưu</strong><ul className="mt-2 list-disc space-y-1 pl-5"><li>Thông tin bất động sản và địa chỉ đã được nhập ở bước 1.</li><li>{rentalArrangement === "WHOLE_SPACE" ? "Một căn toàn bộ không gian sẽ được tạo tự động." : `${unitLabels.length} căn sẽ được tạo từ danh sách xem trước.`}</li><li>Giá và điều khoản mặc định đã được thiết lập ở bước 2.</li><li>Tiện ích và quy định được lưu theo đúng phạm vi.</li></ul></div>
         </div>
-        {error && <div role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}{createdProperty && <button type="button" onClick={() => router.push("/owner/properties")} className="ml-2 font-semibold underline">Mở bất động sản đã tạo</button>}</div>}
+        {error && <div role="alert" className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800">{error}{createdProperty && <button type="button" onClick={() => router.push(`/owner/properties/${createdProperty.id}`)} className="ml-2 font-semibold underline">Mở bất động sản đã tạo</button>}</div>}
         {status && <p role="status" className="mt-5 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900">{status}</p>}
         {Object.entries(fieldErrors).length > 0 && <ul role="alert" className="mt-3 list-disc rounded-xl border border-rose-200 bg-rose-50 px-8 py-3 text-sm text-rose-800">{Object.entries(fieldErrors).map(([field, messages]) => <li key={field}>{field}: {messages[0]}</li>)}</ul>}
         {uploadedCount > 0 && <p className="mt-3 text-sm text-slate-600" role="status">Đã tải {uploadedCount} ảnh.</p>}
@@ -368,7 +429,7 @@ export default function NewOwnerPropertyPage() {
           <button type="button" onClick={() => router.push("/owner/properties")} className={secondaryButton}>Hủy</button>
           <div className="flex flex-wrap gap-3">
             <button type="button" aria-label="Quay lại bước trước" title="Quay lại bước trước" disabled={step === 0} onClick={() => { setError(""); setStep((current) => Math.max(current - 1, 0)); }} className={`${secondaryButton} size-11 px-0 text-xl disabled:opacity-40`}><span aria-hidden="true">←</span></button>
-            {step < stages.length - 1 ? <button type="button" aria-label="Đến bước tiếp theo" title="Đến bước tiếp theo" onClick={(event) => { const form = event.currentTarget.form; if (form) goNext(form); }} className={`${primaryButton} size-11 px-0 text-xl`}><span aria-hidden="true">→</span></button> : setupComplete && createdProperty ? <button type="submit" disabled={saving} className={primaryButton}>{saving ? "Đang tải ảnh…" : "Tiếp tục tải ảnh"}</button> : createdProperty ? <button type="button" onClick={() => router.push("/owner/properties")} className={primaryButton}>Mở bất động sản đã tạo</button> : <button type="submit" disabled={saving} className={primaryButton}>{saving ? "Đang lưu…" : "Tạo bản nháp"}</button>}
+            {step < stages.length - 1 ? <button type="button" aria-label="Đến bước tiếp theo" title="Đến bước tiếp theo" onClick={(event) => { const form = event.currentTarget.form; if (form) goNext(form); }} className={`${primaryButton} size-11 px-0 text-xl`}><span aria-hidden="true">→</span></button> : setupComplete && createdProperty ? <button type="submit" disabled={saving} className={primaryButton}>{saving ? "Đang tải ảnh…" : "Tiếp tục tải ảnh"}</button> : createdProperty ? <button type="button" onClick={() => router.push(`/owner/properties/${createdProperty.id}`)} className={primaryButton}>Mở bất động sản đã tạo</button> : <button type="submit" disabled={saving} className={primaryButton}>{saving ? "Đang lưu…" : "Tạo bản nháp"}</button>}
           </div>
         </footer>
       </div>
