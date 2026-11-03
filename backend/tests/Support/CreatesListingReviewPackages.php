@@ -31,7 +31,7 @@ trait CreatesListingReviewPackages
         DB::table('properties')->insert([
             'id' => $propertyId, 'owner_id' => $owner->id, 'client_operation_id' => (string) Str::uuid(),
             'name' => 'Studio gần biển Mỹ Khê', 'property_type' => 'APARTMENT_BUILDING', 'rental_arrangement' => 'SEPARATE_UNITS',
-            'address_line' => '12 Võ Nguyên Giáp', 'ward' => 'Phước Mỹ', 'district' => 'Sơn Trà', 'city' => 'Đà Nẵng',
+            'address_line' => '12 Võ Nguyên Giáp', 'ward' => 'Phước Mỹ', 'city' => 'Đà Nẵng',
             'description' => 'Nhà cho thuê dài hạn gần biển.',
             'policies' => $this->reviewJson(['schema_version' => 1, 'pets' => 'NOT_ALLOWED', 'smoking' => 'NOT_ALLOWED', 'shared_rules' => ['Yên tĩnh sau 22:00']]),
         ]);

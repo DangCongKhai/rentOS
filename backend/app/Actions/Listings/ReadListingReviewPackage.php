@@ -32,7 +32,7 @@ class ReadListingReviewPackage
         $media = $allMedia->filter(fn (object $photo): bool => $photo->is_selected_for_listing && $photo->deleted_at === null && $photo->purged_at === null && ($photo->unit_id === null || in_array($photo->unit_id, $unitIds, true)))->sortBy([['sort_order', 'asc'], ['id', 'asc']])->values();
 
         $listingData = Arr::only((array) $listing, ['id', 'title', 'description', 'moderation_status', 'publication_status', 'submitted_at', 'submitted_revision', 'submitted_content_revision', 'approved_content_revision', 'reviewed_at', 'review_reason', 'cover_media_id']);
-        $propertyData = Arr::only((array) $property, ['id', 'name', 'property_type', 'rental_arrangement', 'address_line', 'ward', 'district', 'city', 'description', 'content_revision', 'shared_amenities', 'policies', 'latitude', 'longitude', 'archived_at']);
+        $propertyData = Arr::only((array) $property, ['id', 'name', 'property_type', 'rental_arrangement', 'address_line', 'ward', 'city', 'description', 'content_revision', 'shared_amenities', 'policies', 'latitude', 'longitude', 'archived_at']);
         foreach (['shared_amenities', 'policies'] as $field) {
             $propertyData[$field] = json_decode($propertyData[$field], true, flags: JSON_THROW_ON_ERROR);
         }
@@ -63,7 +63,7 @@ class ReadListingReviewPackage
 
     private function completeness(array $property, array $listing, array $units, array $media): array
     {
-        $address = collect(['address_line', 'district', 'city', 'description'])->every(fn (string $field): bool => filled($property[$field]));
+        $address = collect(['address_line', 'ward', 'city', 'description'])->every(fn (string $field): bool => filled($property[$field]));
         $cover = collect($media)->contains(fn (object $photo): bool => $photo->id === $listing['cover_media_id'] && $photo->unit_id === null);
         $unitTerms = count($units) > 0 && collect($units)->every(fn (array $unit): bool => $unit['operational_status'] === 'READY' && $unit['area_m2'] !== null && $unit['advertised_monthly_rent'] !== null && $unit['deposit'] !== null && $unit['minimum_rental_months'] !== null && $unit['max_occupants'] !== null && collect($media)->contains(fn (object $photo): bool => $photo->unit_id === $unit['id']));
         $policies = filled($property['policies']['pets'] ?? null) && filled($property['policies']['smoking'] ?? null);
