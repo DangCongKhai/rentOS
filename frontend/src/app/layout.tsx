@@ -26,10 +26,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           >
             <SiteFrame>{children}</SiteFrame>
           </Suspense>
-          <main className="flex-1 flex flex-col">{children}</main>
-          <Suspense fallback={null}>
-            <SiteFooter />
-          </Suspense>
         </AuthProvider>
       </body>
     </html>
