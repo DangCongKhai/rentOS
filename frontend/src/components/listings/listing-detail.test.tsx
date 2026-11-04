@@ -6,6 +6,13 @@ import { ListingDetailView } from "./listing-detail";
 
 const push = vi.fn();
 
+vi.mock("@/lib/reports-api", () => ({
+  submitListingReport: vi.fn().mockResolvedValue({
+    message: "Báo cáo đã được tiếp nhận.",
+    data: { id: "rep-1" },
+  }),
+}));
+
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
   useSearchParams: () => new URLSearchParams(),
@@ -127,10 +134,10 @@ describe("listing detail", () => {
     expect(within(dialog).getByRole("alert").textContent).toContain("Chọn lý do báo cáo.");
 
     await user.click(within(dialog).getByRole("radio", { name: /Sai lệch thông tin/ }));
-    await user.type(within(dialog).getByRole("textbox", { name: "Mô tả (bắt buộc)" }), "Ảnh không giống căn thật.");
+    await user.type(within(dialog).getByRole("textbox", { name: /Mô tả/ }), "Ảnh không giống căn thật.");
     await user.click(within(dialog).getByRole("button", { name: "Gửi báo cáo" }));
 
-    expect(within(dialog).getByRole("status").textContent).toContain("Chưa gửi báo cáo.");
+    expect(await within(dialog).findByText("Đã tiếp nhận báo cáo")).toBeDefined();
   });
 
   it("asks a guest to sign in before reporting", () => {

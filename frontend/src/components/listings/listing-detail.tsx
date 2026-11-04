@@ -204,7 +204,14 @@ export function ListingDetailView({
           </div>}
         </div>
       </div>
-      {reportOpen ? <ListingReportDialog listingTitle={listing.title} onClose={() => setReportOpen(false)} /> : null}
+      {reportOpen ? (
+        <ListingReportDialog
+          listingId={listing.id}
+          listingTitle={listing.title}
+          isSignedIn={isSignedIn}
+          onClose={() => setReportOpen(false)}
+        />
+      ) : null}
       {requestOpen ? (
         <RentalRequestDialog
           listing={listing}
