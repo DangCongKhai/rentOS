@@ -11,6 +11,7 @@ use App\Http\Requests\StorePropertyMediaRequest;
 use App\Http\Requests\StorePropertyRequest;
 use App\Http\Requests\StoreUnitRequest;
 use App\Http\Requests\StoreUnitsBatchRequest;
+use App\Http\Requests\SyncUnitSharedMediaRequest;
 use App\Http\Requests\UpdatePropertyGalleryRequest;
 use App\Http\Requests\UpdatePropertyRequest;
 use App\Http\Requests\UpdateUnitGalleryRequest;
@@ -28,6 +29,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -164,9 +166,13 @@ class OwnerPropertiesController extends Controller
             $attributes,
         );
 
-        return (new PropertyMediaResource($result['media']))
-            ->response()
-            ->setStatusCode($result['replayed'] ? 200 : 201);
+        return response()->json([
+            'data' => [
+                'media' => (new PropertyMediaResource($result['media']))->resolve($request),
+                'content_revision' => $result['content_revision'],
+            ],
+        ], $result['replayed'] ? 200 : 201)
+            ->header('Cache-Control', 'private, no-store');
     }
 
     public function indexMedia(Request $request, Property $property): JsonResponse
@@ -184,6 +190,7 @@ class OwnerPropertiesController extends Controller
             ->orderBy('id')
             ->get();
 
+        $this->attachSharedAssignments($media);
         $this->attachPreviewUrls($media);
 
         return PropertyMediaResource::collection($media)
@@ -243,6 +250,42 @@ class OwnerPropertiesController extends Controller
         return new PropertyMediaResource($result);
     }
 
+    public function syncSharedMedia(
+        SyncUnitSharedMediaRequest $request,
+        Property $property,
+        Unit $unit,
+        PropertyWriteService $propertyWriter,
+    ): JsonResponse {
+        $result = $propertyWriter->syncUnitSharedMedia($request->user(), $property, $unit, $request->validated());
+
+        return response()->json(['data' => $result]);
+    }
+
+    /**
+     * @param  Collection<int, PropertyMedia>  $media
+     */
+    private function attachSharedAssignments(Collection $media): void
+    {
+        if ($media->isEmpty()) {
+            return;
+        }
+
+        $assignments = DB::table('unit_media')
+            ->whereIn('media_id', $media->modelKeys())
+            ->get(['media_id', 'unit_id'])
+            ->groupBy(fn (object $row): string => (string) $row->media_id);
+
+        foreach ($media as $photo) {
+            $photo->setAttribute(
+                'assigned_unit_ids',
+                collect($assignments->get((string) $photo->id, collect()))
+                    ->map(fn (object $row): string => (string) $row->unit_id)
+                    ->values()
+                    ->all(),
+            );
+        }
+    }
+
     /**
      * Attach short-lived URLs for viewing objects in the private media bucket.
      *
@@ -258,8 +301,10 @@ class OwnerPropertiesController extends Controller
         $serviceRoleKey = config('services.supabase.service_role_key');
         $bucket = config('services.supabase.storage.bucket');
 
-        if (! is_string($supabaseUrl) || ! is_string($serviceRoleKey) || ! is_string($bucket)
-            || $supabaseUrl === '' || $serviceRoleKey === '' || $bucket === '') {
+        if (
+            ! is_string($supabaseUrl) || ! is_string($serviceRoleKey) || ! is_string($bucket)
+            || $supabaseUrl === '' || $serviceRoleKey === '' || $bucket === ''
+        ) {
             return;
         }
 

@@ -188,7 +188,8 @@ class PublicListingsController extends Controller
             ->get(['unit_id', 'blocked_start_date', 'blocked_end_date'])
             ->groupBy(fn (object $row): string => (string) $row->unit_id);
 
-        $media = $this->selectedMedia((string) $property->id)->groupBy(
+        $selected = $this->selectedMedia((string) $property->id);
+        $media = $selected->groupBy(
             fn (PropertyMedia $item): string => (string) $item->unit_id,
         );
 
@@ -225,7 +226,9 @@ class PublicListingsController extends Controller
             ])));
             $unit->setAttribute('public_amenities', $this->amenityPayload(is_array($standard) ? $standard : []));
             $unit->setAttribute('public_custom_amenities', $amenities['custom'] ?? []);
-            $unit->setAttribute('public_photos', $this->mediaPayload($media->get((string) $unit->id, collect())));
+            $unit->setAttribute('public_photos', $this->mediaPayload(
+                $media->get((string) $unit->id, collect())->unique('id')->values(),
+            ));
         }
     }
 

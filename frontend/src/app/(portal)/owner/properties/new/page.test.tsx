@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -6,6 +6,7 @@ const push = vi.fn();
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push, replace: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(),
 }));
 
 vi.mock("@/lib/auth-api", () => ({
@@ -25,6 +26,7 @@ import NewOwnerPropertyPage from "./page";
 
 describe("new owner property wizard", () => {
   beforeEach(() => {
+    cleanup();
     push.mockReset();
   });
 
@@ -33,20 +35,61 @@ describe("new owner property wizard", () => {
     render(<NewOwnerPropertyPage />);
 
     await user.click(screen.getByRole("button", { name: "Hình thức thuê" }));
-    await user.click(screen.getByRole("radio", { name: /Cho thuê từng căn\/phòng/ }));
+    await user.click(
+      screen.getByRole("radio", { name: /Cho thuê từng căn\/phòng/ }),
+    );
     await user.clear(screen.getByLabelText("Số lượng"));
     await user.type(screen.getByLabelText("Số lượng"), "2");
-    fireEvent.change(screen.getByLabelText("Tên căn 1"), { target: { value: "Phòng A" } });
+    fireEvent.change(screen.getByLabelText("Tên căn 1"), {
+      target: { value: "Phòng A" },
+    });
 
     expect(document.querySelector('input[name="new_0_rent"]')).not.toBeNull();
     expect(document.querySelector('input[name="new_1_rent"]')).not.toBeNull();
-    expect((screen.getByLabelText("Tên căn 1") as HTMLInputElement).value).toBe("Phòng A");
+    expect((screen.getByLabelText("Tên căn 1") as HTMLInputElement).value).toBe(
+      "Phòng A",
+    );
 
     await user.click(screen.getByRole("button", { name: "Tiện ích chung" }));
     await user.click(document.querySelector('input[name="amenity:wifi"]')!);
     await user.click(screen.getByRole("tab", { name: "Trong căn/phòng" }));
 
-    expect(document.querySelector('input[name="unit_amenity:wifi"]')).toBeNull();
-    expect(document.querySelector('input[name="unit_amenity:aircon"]')).not.toBeNull();
+    expect(
+      document.querySelector('input[name="unit_amenity:wifi"]'),
+    ).toBeNull();
+    expect(
+      document.querySelector('input[name="unit_amenity:aircon"]'),
+    ).not.toBeNull();
+  });
+
+  it("combines whole-space amenities into one list and does not frame rules as shared", async () => {
+    const user = userEvent.setup();
+    render(<NewOwnerPropertyPage />);
+
+    await user.click(screen.getByRole("button", { name: "Tiện ích" }));
+
+    expect(
+      screen.queryByRole("tab", { name: "Toàn bất động sản" }),
+    ).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Trong căn/phòng" })).toBeNull();
+    expect(
+      await screen.findByRole("checkbox", { name: /Wi-Fi/ }),
+    ).not.toBeNull();
+    expect(screen.getByRole("checkbox", { name: /Điều hòa/ })).not.toBeNull();
+
+    await user.click(screen.getByRole("button", { name: "Chọn tất cả" }));
+
+    expect(
+      (screen.getByRole("checkbox", { name: /Wi-Fi/ }) as HTMLInputElement).checked,
+    ).toBe(true);
+    expect(
+      (screen.getByRole("checkbox", { name: /Điều hòa/ }) as HTMLInputElement).checked,
+    ).toBe(true);
+    expect(screen.getByText("2 / 2 đã chọn")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: "Nội quy" }));
+
+    expect(screen.queryByText(/mọi căn/)).toBeNull();
+    expect(screen.queryByText(/Nội quy chung/)).toBeNull();
   });
 });

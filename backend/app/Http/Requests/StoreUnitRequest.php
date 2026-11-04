@@ -43,7 +43,7 @@ class StoreUnitRequest extends FormRequest
             'floor' => ['nullable', 'string', 'max:100'],
             'area_m2' => ['nullable', 'numeric', 'gt:0'],
             'bedrooms' => ['required', 'integer', 'min:0'],
-            'bathrooms' => ['required', 'numeric', 'min:0'],
+            'bathrooms' => ['required', 'integer', 'min:0'],
             'bathroom_arrangement' => ['required', Rule::in(['PRIVATE', 'SHARED'])],
             'advertised_monthly_rent' => ['nullable', 'integer', 'gt:0'],
             'deposit' => ['nullable', 'integer', 'min:0'],

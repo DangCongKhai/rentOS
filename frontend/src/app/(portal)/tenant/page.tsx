@@ -3,7 +3,11 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, getTenantTenancies, type TenantTenancy } from "@/lib/auth-api";
+import {
+  ApiError,
+  getTenantTenancies,
+  type TenantTenancy,
+} from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
 import { PortalEmptyState } from "@/components/portal-empty-state";
 
@@ -32,7 +36,9 @@ export default function TenantPortalPage() {
           router.replace("/login");
           return;
         }
-        setError("Không thể tải thông tin hợp đồng thuê. Vui lòng thử lại sau.");
+        setError(
+          "Không thể tải thông tin hợp đồng thuê. Vui lòng thử lại sau.",
+        );
         setLoading(false);
       }
     }
@@ -52,13 +58,24 @@ export default function TenantPortalPage() {
   return (
     <div className="max-w-5xl mx-auto w-full px-4 sm:px-6 py-8">
       <div className="mb-8">
-        <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">CỔNG CƯ DÂN</span>
-        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">Quản lý cuộc sống thuê nhà</h1>
-        <p className="text-sm text-slate-600">Theo dõi hợp đồng, thanh toán tiền phòng và gửi yêu cầu hỗ trợ dịch vụ tiện ích.</p>
+        <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-1">
+          CỔNG CƯ DÂN
+        </span>
+        <h1 className="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight mb-2">
+          Quản lý cuộc sống thuê nhà
+        </h1>
+        <p className="text-sm text-slate-600">
+          Theo dõi hợp đồng, thanh toán tiền phòng và gửi yêu cầu hỗ trợ dịch vụ
+          tiện ích.
+        </p>
       </div>
 
       {loading ? (
-        <div className="space-y-6 animate-pulse" aria-busy="true" aria-label="Đang tải thông tin cư dân">
+        <div
+          className="space-y-6 animate-pulse"
+          aria-busy="true"
+          aria-label="Đang tải thông tin cư dân"
+        >
           <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-3">
             <div className="h-5 w-32 bg-blue-100 rounded-full" />
             <div className="h-7 w-64 bg-slate-200 rounded-lg" />
@@ -87,9 +104,12 @@ export default function TenantPortalPage() {
             <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-blue-50 text-[#3368a0] mb-3">
               Cư dân chính thức
             </span>
-            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Hợp đồng thuê của bạn</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">
+              Hợp đồng thuê của bạn
+            </h2>
             <p className="text-sm text-slate-600">
-              Chào mừng bạn, <strong>{user?.name}</strong>. Dưới đây là danh sách các hợp đồng thuê nhà thực tế của bạn trên hệ thống rentOS.
+              Chào mừng bạn, <strong>{user?.name}</strong>. Dưới đây là danh
+              sách các hợp đồng thuê nhà thực tế của bạn trên hệ thống rentOS.
             </p>
             <div className="mt-4 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-slate-100 text-slate-700 text-xs font-medium">
               <span>Tổng số hợp đồng:</span>
@@ -101,12 +121,16 @@ export default function TenantPortalPage() {
             {tenancies.map((tenancy) => {
               const isActive = tenancy.status === "ACTIVE";
               const isConfirmed = tenancy.status === "CONFIRMED";
-              const statusLabel = isActive ? "Đang hoạt động" : isConfirmed ? "Đã xác nhận" : tenancy.status;
+              const statusLabel = isActive
+                ? "Đang hoạt động"
+                : isConfirmed
+                  ? "Đã xác nhận"
+                  : tenancy.status;
               const badgeClass = isActive
                 ? "bg-emerald-50 text-emerald-800 border-emerald-300"
                 : isConfirmed
-                ? "bg-blue-50 text-blue-800 border-blue-300"
-                : "bg-slate-100 text-slate-700 border-slate-300";
+                  ? "bg-blue-50 text-blue-800 border-blue-300"
+                  : "bg-slate-100 text-slate-700 border-slate-300";
 
               return (
                 <div
@@ -118,18 +142,24 @@ export default function TenantPortalPage() {
                       <h3 className="text-base font-bold text-slate-900">
                         Hợp đồng #{tenancy.id.slice(0, 8)}
                       </h3>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`}>
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold border ${badgeClass}`}
+                      >
                         {statusLabel}
                       </span>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-600">
                       <div>
                         <span className="text-slate-400">Ngày bắt đầu: </span>
-                        <span className="font-medium text-slate-700">{tenancy.confirmed_start_date ?? "Chưa ấn định"}</span>
+                        <span className="font-medium text-slate-700">
+                          {tenancy.confirmed_start_date ?? "Chưa ấn định"}
+                        </span>
                       </div>
                       <div>
                         <span className="text-slate-400">Ngày kết thúc: </span>
-                        <span className="font-medium text-slate-700">{tenancy.confirmed_end_date ?? "Không thời hạn"}</span>
+                        <span className="font-medium text-slate-700">
+                          {tenancy.confirmed_end_date ?? "Không thời hạn"}
+                        </span>
                       </div>
                     </div>
                   </div>

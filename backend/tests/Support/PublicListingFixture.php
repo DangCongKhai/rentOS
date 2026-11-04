@@ -59,6 +59,8 @@ final class PublicListingFixture
             'shared_amenities' => json_encode($sharedAmenities, JSON_THROW_ON_ERROR),
             'policies' => json_encode($policies, JSON_THROW_ON_ERROR),
             'content_revision' => 1,
+            'latitude' => $overrides['latitude'] ?? null,
+            'longitude' => $overrides['longitude'] ?? null,
             'archived_at' => $overrides['property_archived_at'] ?? null,
             'created_at' => $now,
             'updated_at' => $now,

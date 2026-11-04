@@ -65,7 +65,33 @@ class ReadListingReviewPackage
     {
         $address = collect(['address_line', 'ward', 'city', 'description'])->every(fn (string $field): bool => filled($property[$field]));
         $cover = collect($media)->contains(fn (object $photo): bool => $photo->id === $listing['cover_media_id'] && $photo->unit_id === null);
-        $unitTerms = count($units) > 0 && collect($units)->every(fn (array $unit): bool => $unit['operational_status'] === 'READY' && $unit['area_m2'] !== null && $unit['advertised_monthly_rent'] !== null && $unit['deposit'] !== null && $unit['minimum_rental_months'] !== null && $unit['max_occupants'] !== null && collect($media)->contains(fn (object $photo): bool => $photo->unit_id === $unit['id']));
+        $unitIds = collect($units)->pluck('id')->map(fn (mixed $id): string => (string) $id)->all();
+        $sharedUnitIds = $unitIds === [] ? [] : DB::table('unit_media')
+            ->join('property_media', 'property_media.id', '=', 'unit_media.media_id')
+            ->whereIn('unit_media.unit_id', $unitIds)
+            ->where('unit_media.is_selected_for_listing', true)
+            ->where('property_media.property_id', $property['id'])
+            ->whereNull('property_media.unit_id')
+            ->where('property_media.is_selected_for_listing', true)
+            ->whereNull('property_media.deleted_at')
+            ->whereNull('property_media.purged_at')
+            ->pluck('unit_media.unit_id')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
+        $wholeSpaceGallery = ($property['rental_arrangement'] ?? null) === 'WHOLE_SPACE'
+            && collect($media)->contains(fn (object $photo): bool => $photo->unit_id === null);
+        $unitTerms = count($units) > 0 && collect($units)->every(function (array $unit) use ($media, $sharedUnitIds, $wholeSpaceGallery): bool {
+            $hasDirectPhoto = collect($media)->contains(fn (object $photo): bool => $photo->unit_id === $unit['id']);
+            $hasSharedPhoto = in_array((string) $unit['id'], $sharedUnitIds, true);
+
+            return $unit['operational_status'] === 'READY'
+                && $unit['area_m2'] !== null
+                && $unit['advertised_monthly_rent'] !== null
+                && $unit['deposit'] !== null
+                && $unit['minimum_rental_months'] !== null
+                && $unit['max_occupants'] !== null
+                && ($hasDirectPhoto || $hasSharedPhoto || $wholeSpaceGallery);
+        });
         $policies = filled($property['policies']['pets'] ?? null) && filled($property['policies']['smoking'] ?? null);
 
         return ['address' => $address, 'shared_cover' => $cover, 'unit_photos_terms' => $unitTerms, 'policies' => $policies, 'complete' => $address && $cover && $unitTerms && $policies];

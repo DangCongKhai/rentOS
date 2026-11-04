@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import {
   ListingSearchValidationError,
   clearLocation,
+  displayDateToIso,
+  isoToDisplayDate,
   parseListingSearchParams,
   toListingSearchParams,
 } from "./listing-search-params";
@@ -52,5 +54,13 @@ describe("listing search params", () => {
 
   it("rejects an unparseable move-in date", () => {
     expect(() => parseListingSearchParams(new URLSearchParams("move_in_date=not-a-date"))).toThrow(ListingSearchValidationError);
+  });
+
+  it("converts a complete move-in date between dd/mm/yyyy and ISO", () => {
+    expect(displayDateToIso("02/05/2026")).toBe("2026-05-02");
+    expect(isoToDisplayDate("2026-05-02")).toBe("02/05/2026");
+    expect(displayDateToIso("02/05")).toBeNull();
+    expect(displayDateToIso("31/02/2026")).toBeNull();
+    expect(isoToDisplayDate("")).toBe("");
   });
 });

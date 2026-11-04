@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ApiError, login, registerAccount } from "@/lib/auth-api";
+import { ApiError, login, registerAccount, getCurrentUser } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
 import { GoogleAuthButton } from "./google-auth-button";
@@ -91,7 +91,7 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
           password_confirmation: String(values.get("password_confirmation") ?? ""),
         });
         await refreshUser();
-        router.push("/tenant");
+        router.push("/profile");
         return;
       }
 
@@ -100,7 +100,19 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
         password: String(values.get("password") ?? ""),
       });
       await refreshUser();
-      router.push("/tenant");
+      
+      // Check email verification status and redirect accordingly
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser.email_verified_at) {
+          router.push("/"); // Go to homepage if email is verified
+        } else {
+          router.push("/profile"); // Go to profile if email needs verification
+        }
+      } catch {
+        // Fallback to profile if check fails
+        router.push("/profile");
+      }
     } catch (error) {
       if (error instanceof ApiError) {
         // Map backend errors to friendly Vietnamese messages

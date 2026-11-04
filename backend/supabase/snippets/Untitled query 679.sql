@@ -4,7 +4,7 @@ insert into storage.buckets (
 values (
     'property-media',
     'property-media',
-    false,
+    true,
     10485760,
     array['image/jpeg', 'image/png', 'image/webp']
 )

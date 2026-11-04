@@ -125,8 +125,10 @@ file_size_limit = "50MiB"
 # allowed_mime_types = ["image/png", "image/jpeg"]
 # objects_path = "./images"
 
+# Listing pages load these photos with a public Storage URL. A private bucket
+# answers that path with "Bucket not found".
 [storage.buckets.property-media]
-public = false
+public = true
 file_size_limit = "10MiB"
 allowed_mime_types = ["image/jpeg", "image/png", "image/webp"]
 

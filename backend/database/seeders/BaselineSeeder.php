@@ -60,7 +60,7 @@ class BaselineSeeder extends Seeder
         10 => ['name' => 'Gia Han Truong', 'email' => 'tenant4@example.com', 'phone' => '+84981220463'],
     ];
 
-    /** @var list<array{osmId: string, name: ?string, latitude: string, longitude: string, district: ?string, addressLine: ?string}>|null */
+    /** @var list<array{osmId: string, name: ?string, latitude: string, longitude: string, addressLine: string, ward: string, city: string}>|null */
     private static ?array $places = null;
 
     public static function propertyCount(): int
@@ -435,7 +435,7 @@ class BaselineSeeder extends Seeder
     }
 
     /**
-     * @return list<array{osmId: string, name: ?string, latitude: string, longitude: string, district: ?string, addressLine: ?string}>
+     * @return list<array{osmId: string, name: ?string, latitude: string, longitude: string, addressLine: string, ward: string, city: string}>
      */
     private static function places(): array
     {
@@ -464,8 +464,7 @@ class BaselineSeeder extends Seeder
      *     property_type: string,
      *     rental_arrangement: string,
      *     address_line: string,
-     *     ward: ?string,
-     *     district: string,
+     *     ward: string,
      *     city: string,
      *     description: string,
      *     latitude: string,
@@ -500,8 +499,14 @@ class BaselineSeeder extends Seeder
 
         $latitude = (string) $raw['latitude'];
         $longitude = (string) $raw['longitude'];
-        $district = self::districtFor((float) $latitude, (float) $longitude, $raw['district'] ?? null);
-        $address = trim((string) ($raw['addressLine'] ?? ''));
+        $ward = trim((string) ($raw['ward'] ?? ''));
+        $city = trim((string) ($raw['city'] ?? ''));
+
+        if ($ward === '' || $city === '') {
+            throw new RuntimeException("Da Nang place {$number} is missing a ward or city.");
+        }
+
+        $address = self::streetAddress((string) ($raw['addressLine'] ?? ''), $ward, $city);
         $recordedName = trim((string) ($raw['name'] ?? ''));
 
         if ($address === '') {
@@ -528,10 +533,9 @@ class BaselineSeeder extends Seeder
             'APARTMENT' => 48 + ($number % 25),
             default => 80 + ($number % 40),
         };
-        $rentBase = match ($district) {
-            'Sơn Trà', 'Hải Châu' => 8000000,
-            'Thanh Khê' => 6500000,
-            'Ngũ Hành Sơn' => 9000000,
+        $rentBase = match ($ward) {
+            'Hải Châu', 'Hòa Cường', 'An Hải' => 8000000,
+            'Thanh Khê', 'An Khê' => 6500000,
             default => 5000000,
         };
         $rent = $rentBase + (($number % 5) * 250000);
@@ -545,13 +549,13 @@ class BaselineSeeder extends Seeder
         return [
             'name' => $name,
             'listing_title' => "{$label} tại {$name}",
-            'listing_description' => "Cho thuê {$label} tại {$address}, {$district}, Đà Nẵng. Dữ liệu demo, không phải nhà đang rao thật.",
+            'listing_description' => "Cho thuê {$label} tại {$address}, {$ward}, {$city}. Dữ liệu demo, không phải nhà đang rao thật.",
             'property_type' => $propertyType,
             'rental_arrangement' => $whole ? 'WHOLE_SPACE' : 'SEPARATE_UNITS',
             'address_line' => $address,
-            'ward' => null,
-            'city' => 'Đà Nẵng',
-            'description' => "Nhà cho thuê demo tại {$district}, Đà Nẵng. Tọa độ lấy từ dữ liệu mở, không đại diện cho một tin đăng thật.",
+            'ward' => $ward,
+            'city' => $city,
+            'description' => "Nhà cho thuê demo tại {$ward}, {$city}. Tọa độ lấy từ dữ liệu mở, không đại diện cho một tin đăng thật.",
             'latitude' => $latitude,
             'longitude' => $longitude,
             'pets' => ['NOT_ALLOWED', 'ASK_OWNER', 'ALLOWED'][$number % 3],
@@ -565,7 +569,7 @@ class BaselineSeeder extends Seeder
             ],
             'unit_label' => $label,
             'unit_kind' => $unitKind,
-            'unit_description' => "{$label} tại {$name}, {$district}.",
+            'unit_description' => "{$label} tại {$name}, {$ward}.",
             'floor' => (string) (1 + ($number % 15)),
             'area_m2' => $areaM2,
             'bedrooms' => $bedrooms,
@@ -584,35 +588,25 @@ class BaselineSeeder extends Seeder
     }
 
     /**
-     * OpenStreetMap often omits the district. The fallback only covers this Da Nang extract.
+     * The place file stores a display address that already includes the ward and city.
+     * The property row keeps those in their own columns, so the street is stored alone.
      */
-    private static function districtFor(float $latitude, float $longitude, mixed $recorded): string
+    private static function streetAddress(string $addressLine, string $ward, string $city): string
     {
-        if (is_string($recorded) && trim($recorded) !== '') {
-            return trim($recorded);
+        $addressLine = trim($addressLine);
+        $locality = trim("Phường {$ward}, {$city}");
+
+        if ($addressLine === $locality) {
+            return '';
         }
 
-        if ($longitude >= 108.230 || ($latitude >= 16.075 && $longitude >= 108.210)) {
-            return 'Sơn Trà';
+        $suffix = ', '.$locality;
+
+        if (str_ends_with($addressLine, $suffix)) {
+            return trim(substr($addressLine, 0, -strlen($suffix)));
         }
 
-        if ($longitude < 108.175) {
-            return 'Liên Chiểu';
-        }
-
-        if ($latitude < 16.040 && $longitude < 108.205) {
-            return 'Cẩm Lệ';
-        }
-
-        if ($latitude < 16.030) {
-            return 'Ngũ Hành Sơn';
-        }
-
-        if ($longitude < 108.200) {
-            return 'Thanh Khê';
-        }
-
-        return 'Hải Châu';
+        return $addressLine;
     }
 
     private static function ownerId(int $number): string

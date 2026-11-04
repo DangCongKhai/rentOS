@@ -25,7 +25,7 @@ export function AvailableUnits({
       <p className="rounded-xl bg-[#e8f3ff] px-4 py-3 text-sm text-[#1f3a5c]">
         Chọn một căn để xem chi tiết. Căn đang chọn sẽ được đưa vào yêu cầu thuê.
       </p>
-      <div className="overflow-hidden rounded-2xl border border-[#e1e7ed]">
+      <div className="overflow-x-auto rounded-2xl border border-[#e1e7ed]">
         <div className="hidden grid-cols-[minmax(0,1.6fr)_120px_160px_140px_28px] gap-3 bg-[#f7f8fa] px-4 py-3 text-sm font-semibold text-[#3368a0] md:grid">
           <span>Căn</span>
           <span>Diện tích</span>

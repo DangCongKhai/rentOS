@@ -1,15 +1,8 @@
-import { Suspense } from "react";
-import { ProfilePanel } from "@/components/profile-panel";
+import { redirect } from "next/navigation";
 
-export const metadata = {
-  title: "Hồ sơ cá nhân - Cổng Chủ Nhà | rentOS",
-};
-
+// Redirect owner profile to the shared profile page
 export default function OwnerProfilePage() {
-  return (
-    <Suspense fallback={<p className="text-center py-12 text-slate-500">Đang tải hồ sơ…</p>}>
-      <ProfilePanel />
-    </Suspense>
-  );
+  // Simple redirect to the shared profile page
+  // URL parameters are preserved by the router
+  redirect("/profile");
 }
-

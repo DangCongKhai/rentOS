@@ -4,7 +4,7 @@
 
 - 10 users: 1 admin, 5 owners, 4 tenants
 - one published property, unit, and listing for each place in Da Nang city
-- coordinates, names, and addresses come from that file; a missing district is estimated inside Đà Nẵng
+- coordinates, names, street addresses, wards, and city come from `da-nang-places.json`
 - property and unit galleries that reuse one shared image library under `seed/`
 
 It does not seed audit logs, idempotency records, or the notification outbox. It upserts its own UUID rows and does not delete unrelated data. It refuses to run in production.

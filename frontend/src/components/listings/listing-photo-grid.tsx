@@ -20,11 +20,11 @@ export function ListingPhotoGrid({ slides }: { slides: Slide[] }) {
   return (
     <>
       <div
-        className={`relative grid h-[240px] grid-rows-[minmax(0,1fr)] gap-2 overflow-hidden rounded-2xl sm:h-[320px] lg:h-[460px] ${side.length > 0 ? "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" : "grid-cols-1"}`}
+        className={`relative grid h-[240px] min-w-0 grid-rows-[minmax(0,1fr)] gap-2 overflow-hidden rounded-2xl sm:h-[320px] lg:h-[460px] ${side.length > 0 ? "grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]" : "grid-cols-1"}`}
       >
         <button
           type="button"
-          className="relative min-h-0 overflow-hidden"
+          className="relative h-full min-h-0 w-full min-w-0 overflow-hidden"
           onClick={() => setOpen(true)}
           aria-label={hero.label}
         >
@@ -38,13 +38,13 @@ export function ListingPhotoGrid({ slides }: { slides: Slide[] }) {
         </button>
         {side.length > 0 ? (
           <div
-            className={`grid h-full min-h-0 gap-2 ${side.length === 1 ? "grid-cols-1 grid-rows-1" : "grid-cols-2 grid-rows-2"}`}
+            className={`grid h-full min-h-0 min-w-0 gap-2 overflow-hidden ${side.length === 1 ? "grid-cols-1 grid-rows-1" : "grid-cols-2 grid-rows-2"}`}
           >
             {side.map((slide, index) => (
               <button
                 key={slide.key}
                 type="button"
-                className={`relative min-h-0 overflow-hidden ${sideCellSpan(side.length, index)}`}
+                className={`relative h-full min-h-0 w-full min-w-0 overflow-hidden ${sideCellSpan(side.length, index)}`}
                 aria-label={slide.label}
                 onClick={() => setOpen(true)}
               >

@@ -204,7 +204,7 @@ export const TENANT_PORTAL_CONFIG: PortalConfig = {
     {
       id: "tenant-profile",
       name: "Hồ sơ cá nhân",
-      href: "/tenant/profile",
+      href: "/profile",
       icon: ProfileIcon,
     },
   ],
@@ -272,7 +272,7 @@ export const OWNER_PORTAL_CONFIG: PortalConfig = {
     {
       id: "owner-profile",
       name: "Hồ sơ cá nhân",
-      href: "/owner/profile",
+      href: "/profile",
       icon: ProfileIcon,
     },
   ],

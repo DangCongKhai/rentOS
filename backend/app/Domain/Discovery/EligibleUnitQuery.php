@@ -3,6 +3,7 @@
 namespace App\Domain\Discovery;
 
 use App\Actions\OwnerProperties\AmenityCatalog;
+use App\Domain\Media\MarketedUnitPhotoQuery;
 use App\Models\Listing;
 use App\Models\Unit;
 use Carbon\CarbonImmutable;
@@ -82,16 +83,8 @@ final class EligibleUnitQuery
             ->whereNotNull('units.area_m2')
             ->whereNotNull('units.advertised_monthly_rent')
             ->whereNotNull('units.deposit')
-            ->whereNotNull('units.max_occupants')
-            ->whereExists(function (Builder|QueryBuilder $media): void {
-                $media->selectRaw('1')
-                    ->from('property_media')
-                    ->whereColumn('property_media.property_id', 'units.property_id')
-                    ->whereColumn('property_media.unit_id', 'units.id')
-                    ->where('property_media.is_selected_for_listing', true)
-                    ->whereNull('property_media.deleted_at')
-                    ->whereNull('property_media.purged_at');
-            });
+            ->whereNotNull('units.max_occupants');
+        MarketedUnitPhotoQuery::whereHasSelectedPhoto($unitQuery);
 
         if ($criteria->location !== null) {
             $needle = $criteria->location->value();

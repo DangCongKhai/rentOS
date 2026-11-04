@@ -183,7 +183,7 @@ class AccountAuthFlowsTest extends TestCase
         $this->actingAs($user)->getJson('/api/v1/me')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
-            ->assertJsonMissingPath('data.is_admin')
+            ->assertJsonPath('data.is_admin', false)
             ->assertJsonMissingPath('data.password');
 
         $this->actingAs($user)->patchJson('/api/v1/me', [
@@ -239,9 +239,9 @@ class AccountAuthFlowsTest extends TestCase
         $this->assertDatabaseMissing('personal_access_tokens', ['tokenable_id' => $user->id]);
         $this->assertDatabaseHas('personal_access_tokens', ['tokenable_id' => $otherUser->id]);
         $this->assertNotSame($rememberToken, $user->fresh()->remember_token);
-        $this->assertDatabaseMissing('sessions', ['user_id' => $user->id]);
+        $this->assertDatabaseMissing('sessions', ['id' => 'session-'.$user->id]);
         $this->assertDatabaseHas('sessions', ['user_id' => $otherUser->id]);
-        $this->assertGuest('web');
+        $this->assertAuthenticatedAs($user, 'web');
     }
 
     public function test_registration_rejects_non_string_identity_without_creating_users(): void
@@ -371,7 +371,7 @@ class AccountAuthFlowsTest extends TestCase
         $this->putJson('/user/password', $password)->assertOk();
         $this->assertTrue(Hash::check('New-password-456', $user->fresh()->password));
         $this->assertDatabaseCount('personal_access_tokens', 0);
-        $this->assertGuest('web');
+        $this->assertAuthenticatedAs($user, 'web');
     }
 
     public function test_stale_authenticated_password_cannot_overwrite_a_committed_change(): void

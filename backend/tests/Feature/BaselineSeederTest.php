@@ -34,9 +34,10 @@ class BaselineSeederTest extends TestCase
         $this->assertNotNull($property);
         $this->assertSame('Chung cư Hoàng Anh Gia Lai', $property->name);
         $this->assertSame('Hàm Nghi', $property->address_line);
-        $this->assertNull($property->ward);
+        $this->assertSame('Hòa Cường', $property->ward);
         $this->assertSame('Đà Nẵng', $property->city);
-        $this->assertStringContainsString('Hải Châu', $property->description);
+        $this->assertStringContainsString('Hòa Cường', $property->description);
+        $this->assertSame(0, DB::table('properties')->whereNull('ward')->orWhere('ward', '')->count());
         $this->assertEqualsWithDelta(16.062588, (float) $property->latitude, 0.0000001);
         $this->assertEqualsWithDelta(108.210201, (float) $property->longitude, 0.0000001);
         $amenities = json_decode((string) $property->shared_amenities, true);

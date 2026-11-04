@@ -38,6 +38,7 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <env name="NOMINATIM_ENABLED" value="false"/>
         <env name="SUPABASE_URL" value="https://example.supabase.co" force="true"/>
         <env name="SUPABASE_STORAGE_BUCKET" value="property-media" force="true"/>
     </php>

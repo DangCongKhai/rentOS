@@ -48,6 +48,23 @@ This project has domain-specific skills available in `**/skills/**`. You MUST ac
 
 - You must only create documentation files if explicitly requested by the user.
 
+=== ci suite requirements ===
+
+# Full CI Suite Requirements
+
+**MANDATORY**: Complete the full CI suite before claiming work is done. Zero tolerance for ANY errors.
+
+### Backend Checks (MUST ALL PASS):
+- `composer run lint` → no errors
+- `composer run typecheck` → exit code 0 (no PHPStan errors)
+- `composer run test` → all tests passing
+- `composer run build` → backend builds successfully
+
+### Combined with Frontend:
+Do NOT say "done", "fixed", or "complete" until BOTH frontend AND backend pass ALL checks.
+
+See `frontend/AGENTS.md` for frontend requirements.
+
 === boost rules ===
 
 # Laravel Boost

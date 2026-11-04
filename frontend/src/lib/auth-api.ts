@@ -20,6 +20,7 @@ export type CurrentUser = {
   email: string;
   email_verified_at: string | null;
   phone: string | null;
+  is_admin: boolean;
 };
 
 export type TenantTenancy = {
@@ -74,6 +75,7 @@ export type OwnerPropertyMedia = {
   mime_type: string;
   size_bytes: number;
   preview_url: string | null;
+  assigned_unit_ids?: string[];
 };
 
 export type OwnerListing = {
@@ -129,7 +131,7 @@ export type OwnerUnit = {
   archived_at: string | null;
 };
 
-export type AmenityCatalogEntry = { key: string; label: string; scopes: string[] };
+export type AmenityCatalogEntry = { key: string; label: string; label_vi?: string; scopes: string[] };
 
 export function csrfToken(): string | null {
   if (typeof document === "undefined") return null;
@@ -198,7 +200,7 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   }
 
   let response = await executeFetch(path, method, headers, init);
-
+  console.log("response: ", response);
   // Nếu gặp lỗi 419 (CSRF token mismatch), xin lại csrf-cookie một lần và thử lại đúng request đó 1 lần
   if (response.status === 419 && isWriteMethod) {
     await initializeCsrf();
@@ -317,6 +319,10 @@ export async function getOwnerPropertyMedia(propertyId: string): Promise<OwnerPr
   return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/media`);
 }
 
+export async function getOwnerListingById(listingId: string): Promise<OwnerListing> {
+  return request<OwnerListing>(`/api/v1/owner/listings/${listingId}`);
+}
+
 export async function getOwnerListing(propertyId: string): Promise<OwnerListing | null> {
   try {
     return await request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing`);
@@ -415,14 +421,14 @@ export async function uploadOwnerMedia(propertyId: string, input: {
   expected_content_revision: number;
   unit_id?: string;
   caption?: string;
-}): Promise<OwnerPropertyMedia> {
+}): Promise<{ media: OwnerPropertyMedia; content_revision: number }> {
   const body = new FormData();
   body.set("photo", input.file);
   body.set("client_operation_id", input.client_operation_id);
   body.set("expected_content_revision", String(input.expected_content_revision));
   if (input.unit_id) body.set("unit_id", input.unit_id);
   if (input.caption) body.set("caption", input.caption);
-  return request<OwnerPropertyMedia>(`/api/v1/owner/properties/${propertyId}/media`, { method: "POST", body });
+  return request<{ media: OwnerPropertyMedia; content_revision: number }>(`/api/v1/owner/properties/${propertyId}/media`, { method: "POST", body });
 }
 
 export async function updateOwnerGallery(propertyId: string, input: {
@@ -430,6 +436,15 @@ export async function updateOwnerGallery(propertyId: string, input: {
   items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
 }): Promise<OwnerPropertyMedia[]> {
   return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/gallery`, {
+    method: "PUT", body: JSON.stringify(input),
+  });
+}
+
+export async function saveOwnerUnitSharedMedia(propertyId: string, unitId: string, input: {
+  expected_content_revision: number;
+  media_ids: string[];
+}): Promise<{ content_revision: number }> {
+  return request<{ content_revision: number }>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/shared-media`, {
     method: "PUT", body: JSON.stringify(input),
   });
 }

@@ -31,6 +31,21 @@ function isIsoDate(value: string): boolean {
   return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
 }
 
+const DISPLAY_DATE = /^(\d{2})\/(\d{2})\/(\d{4})$/;
+
+export function isoToDisplayDate(value: string): string {
+  const match = ISO_DATE.exec(value);
+  if (!match || !isIsoDate(value)) return "";
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+export function displayDateToIso(value: string): string | null {
+  const match = DISPLAY_DATE.exec(value);
+  if (!match) return null;
+  const iso = `${match[3]}-${match[2]}-${match[1]}`;
+  return isIsoDate(iso) ? iso : null;
+}
+
 export function parseListingSearchParams(params: URLSearchParams): ListingSearchState {
   const moveInDate = params.get("move_in_date") ?? "";
   if (moveInDate !== "" && !isIsoDate(moveInDate)) {

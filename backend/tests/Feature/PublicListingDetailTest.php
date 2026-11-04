@@ -28,6 +28,8 @@ class PublicListingDetailTest extends TestCase
     {
         $published = PublicListingFixture::published([
             'title' => 'Studio full nội thất gần biển Mỹ Khê',
+            'latitude' => '16.062588',
+            'longitude' => '108.210201',
             'policies' => [
                 'schema_version' => 1,
                 'pets' => 'NOT_ALLOWED',
@@ -61,7 +63,11 @@ class PublicListingDetailTest extends TestCase
         $this->assertStringNotContainsString($published->owner->email, $encoded);
         $this->assertStringNotContainsString('storage_path', $encoded);
         $this->assertStringNotContainsString('document_sha256', $encoded);
-        $this->assertStringNotContainsString('latitude', $encoded);
+        $response->assertJsonPath('data.property.area.latitude', 16.065)
+            ->assertJsonPath('data.property.area.longitude', 108.21)
+            ->assertJsonPath('data.property.area.radius_meters', 500);
+        $this->assertStringNotContainsString('16.062588', $encoded);
+        $this->assertStringNotContainsString('108.210201', $encoded);
     }
 
     public function test_hidden_suspended_and_unknown_listings_are_not_found(): void

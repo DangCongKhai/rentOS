@@ -89,6 +89,21 @@ class OwnerListingsTest extends TestCase
         ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
     }
 
+    public function test_whole_space_listing_accepts_the_selected_property_gallery(): void
+    {
+        $owner = User::factory()->create();
+        $propertyId = $this->createCompleteProperty($owner->id);
+        DB::table('properties')->where('id', $propertyId)->update(['rental_arrangement' => 'WHOLE_SPACE']);
+        $unitId = (string) DB::table('units')->where('property_id', $propertyId)->value('id');
+        DB::table('property_media')->where('unit_id', $unitId)->delete();
+        $coverId = $this->createMedia($owner->id, $propertyId);
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing", $this->listingPayload($coverId))->assertCreated();
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 1,
+        ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
+    }
+
     public function test_editing_a_pending_listing_invalidates_its_submitted_snapshot(): void
     {
         $owner = User::factory()->create();
@@ -178,6 +193,33 @@ class OwnerListingsTest extends TestCase
             'admin_suspended_at' => now(), 'admin_suspended_by' => $admin->id, 'suspension_reason' => 'Test suspension',
         ]);
         $this->assertSame(0, Listing::query()->publiclyVisible()->count());
+    }
+
+    public function test_owner_can_open_a_listing_by_its_id_and_share_a_property_photo_with_a_unit(): void
+    {
+        $owner = User::factory()->create();
+        $propertyId = $this->createCompleteProperty($owner->id);
+        $coverId = $this->createMedia($owner->id, $propertyId);
+        $created = $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing", $this->listingPayload($coverId));
+        $created->assertCreated();
+        $listingId = $created->json('data.id');
+
+        $this->actingAs($owner)->getJson("/api/v1/owner/listings/{$listingId}")
+            ->assertOk()
+            ->assertJsonPath('data.id', $listingId)
+            ->assertJsonPath('data.property_id', $propertyId);
+
+        $unitId = (string) DB::table('units')->where('property_id', $propertyId)->value('id');
+        DB::table('property_media')->where('property_id', $propertyId)->where('unit_id', $unitId)->delete();
+
+        $this->actingAs($owner)->putJson("/api/v1/owner/properties/{$propertyId}/units/{$unitId}/shared-media", [
+            'expected_content_revision' => 1,
+            'media_ids' => [$coverId],
+        ])->assertOk()->assertJsonPath('data.content_revision', 2);
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 2,
+        ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
     }
 
     public function test_marketed_maintenance_unit_does_not_block_submission_if_a_ready_unit_is_complete(): void

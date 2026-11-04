@@ -55,7 +55,7 @@ class StoreUnitsBatchRequest extends FormRequest
             'units.*.floor' => ['nullable', 'string', 'max:100'],
             'units.*.area_m2' => ['nullable', 'numeric', 'gt:0'],
             'units.*.bedrooms' => ['required', 'integer', 'min:0'],
-            'units.*.bathrooms' => ['required', 'numeric', 'min:0'],
+            'units.*.bathrooms' => ['required', 'integer', 'min:0'],
             'units.*.bathroom_arrangement' => ['required', Rule::in(['PRIVATE', 'SHARED'])],
             'units.*.advertised_monthly_rent' => ['nullable', 'integer', 'gt:0'],
             'units.*.deposit' => ['nullable', 'integer', 'min:0'],
@@ -128,14 +128,26 @@ class StoreUnitsBatchRequest extends FormRequest
                     );
                 }
                 $seenOperationIds[$operationId] = true;
+            }
 
-                $labelExists = ! $isPreviouslySubmittedBatch
-                    && DB::table('units')
-                        ->where('property_id', $property->id)
-                        ->whereRaw('lower(btrim(label)) = lower(btrim(?))', [$unit['label']])
-                        ->exists();
+            if ($isPreviouslySubmittedBatch || $seenLabels === []) {
+                return;
+            }
 
-                if ($labelExists) {
+            $takenLabels = DB::table('units')
+                ->where('property_id', $property->id)
+                ->whereIn(DB::raw('lower(btrim(label))'), array_keys($seenLabels))
+                ->pluck('label');
+            $takenKeys = [];
+
+            foreach ($takenLabels as $label) {
+                $takenKeys[mb_strtolower(trim((string) $label))] = true;
+            }
+
+            foreach ($this->input('units', []) as $index => $unit) {
+                $labelKey = mb_strtolower(trim($unit['label']));
+
+                if (isset($takenKeys[$labelKey])) {
                     $validator->errors()->add(
                         "units.{$index}.label",
                         'This label is already used by a unit on this property.',

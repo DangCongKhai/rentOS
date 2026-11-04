@@ -29,18 +29,27 @@ async function loadUnits(url: string): Promise<AdministrativeUnit[]> {
   return (data ?? []).map((unit) => ({ code: unit.code, name: unit.name }));
 }
 
+export type SelectedLocation = {
+  city: string;
+  ward: string;
+  cities: string[];
+  wards: string[];
+};
+
 export function VietnamLocationPicker({
   cityName = "city",
   wardName = "ward",
   initialCity = "",
   initialWard = "",
   required = true,
+  onLocationChange,
 }: {
   cityName?: string;
   wardName?: string;
   initialCity?: string;
   initialWard?: string;
   required?: boolean;
+  onLocationChange?: (location: SelectedLocation) => void;
 }) {
   const [cities, setCities] = useState<AdministrativeUnit[]>([]);
   const [wards, setWards] = useState<AdministrativeUnit[]>([]);
@@ -100,6 +109,15 @@ export function VietnamLocationPicker({
       active = false;
     };
   }, [cityCode, retry]);
+
+  useEffect(() => {
+    onLocationChange?.({
+      city,
+      ward,
+      cities: cities.map((unit) => unit.name),
+      wards: wards.map((unit) => unit.name),
+    });
+  }, [city, ward, cities, wards, onLocationChange]);
 
   function selectCity(code: string) {
     setCityCode(code);

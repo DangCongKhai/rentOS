@@ -59,7 +59,8 @@ export function BackendConnection() {
         Backend connection
       </h2>
       <p className="text-sm text-zinc-600 dark:text-zinc-400">
-        Checks <code className="font-mono">{apiUrl}/api/health</code> from this page.
+        Checks <code className="font-mono">{apiUrl}/api/health</code> from this
+        page.
       </p>
       <button
         type="button"
@@ -69,7 +70,13 @@ export function BackendConnection() {
       >
         {checking ? "Checking..." : "Check backend"}
       </button>
-      <p className={result.ok ? "text-sm text-green-700 dark:text-green-400" : "text-sm text-zinc-700 dark:text-zinc-300"}>
+      <p
+        className={
+          result.ok
+            ? "text-sm text-green-700 dark:text-green-400"
+            : "text-sm text-zinc-700 dark:text-zinc-300"
+        }
+      >
         {result.message}
       </p>
     </section>

@@ -50,7 +50,7 @@ class OwnerPropertiesTest extends TestCase
             ->assertJsonPath('data.content_revision', 1)
             ->assertJsonPath('data.address_line', null)
             ->assertJsonCount(1, 'data.units')
-            ->assertJsonPath('data.units.0.label', 'Entire apartment')
+            ->assertJsonPath('data.units.0.label', 'Can ho Landmark')
             ->assertJsonPath('data.units.0.is_marketed', false);
 
         $propertyId = $response->json('data.id');
@@ -745,11 +745,12 @@ class OwnerPropertiesTest extends TestCase
         );
 
         $response->assertCreated()
-            ->assertJsonPath('data.property_id', $propertyId)
-            ->assertJsonPath('data.caption', 'Living room')
-            ->assertJsonPath('data.mime_type', 'image/jpeg');
+            ->assertJsonPath('data.media.property_id', $propertyId)
+            ->assertJsonPath('data.media.caption', 'Living room')
+            ->assertJsonPath('data.media.mime_type', 'image/jpeg')
+            ->assertJsonPath('data.content_revision', 2);
 
-        $mediaId = $response->json('data.id');
+        $mediaId = $response->json('data.media.id');
 
         $this->assertDatabaseHas('property_media', [
             'id' => $mediaId,
@@ -825,14 +826,16 @@ class OwnerPropertiesTest extends TestCase
         );
 
         $first->assertCreated();
-        $mediaId = $first->json('data.id');
+        $mediaId = $first->json('data.media.id');
 
         $retry = $this->actingAs($owner)->post(
             "/api/v1/owner/properties/{$propertyId}/media",
             $payload,
         );
 
-        $retry->assertOk()->assertJsonPath('data.id', $mediaId);
+        $retry->assertOk()
+            ->assertJsonPath('data.media.id', $mediaId)
+            ->assertJsonPath('data.content_revision', 2);
 
         $this->assertDatabaseCount('property_media', 1);
         $this->assertDatabaseHas('properties', [

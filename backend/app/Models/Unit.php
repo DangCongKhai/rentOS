@@ -48,7 +48,7 @@ class Unit extends Model
             'policy_overrides' => 'object',
             'operational_status' => 'string',
             'area_m2' => 'decimal:2',
-            'bathrooms' => 'decimal:2',
+            'bathrooms' => 'integer',
             'advertised_monthly_rent' => 'integer',
             'deposit' => 'integer',
             'bedrooms' => 'integer',

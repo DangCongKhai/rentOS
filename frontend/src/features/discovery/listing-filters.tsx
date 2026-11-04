@@ -1,9 +1,22 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { createPortal } from "react-dom";
-import { clearLocation, parseListingSearchParams, toListingSearchParams, type ListingSearchState } from "./listing-search-params";
+import { DateField } from "@/components/ui/date-field";
+import { debounce, searchInputDebounceMs } from "@/lib/debounce";
+import {
+  clearLocation,
+  parseListingSearchParams,
+  toListingSearchParams,
+  type ListingSearchState,
+} from "./listing-search-params";
 import type { AmenityCatalogItem } from "./listings-api";
 
 const unitKinds = [
@@ -39,6 +52,8 @@ export function ListingFilters({
   const router = useRouter();
   const state = parseListingSearchParams(new URLSearchParams(query));
   const [panel, setPanel] = useState<BarPanel | null>(null);
+  const [locationDraft, setLocationDraft] = useState(state.location);
+  const committedLocation = useRef(state.location);
 
   function visit(next: ListingSearchState) {
     const params = toListingSearchParams({ ...next, page: 1 });
@@ -46,31 +61,58 @@ export function ListingFilters({
     router.replace(text ? `/listings?${text}` : "/listings");
   }
 
+  useEffect(() => {
+    if (state.location === committedLocation.current) return;
+    committedLocation.current = state.location;
+    setLocationDraft(state.location);
+  }, [state.location]);
+
+  useEffect(() => {
+    const search = debounce(() => {
+      const location = locationDraft.trim().replace(/\s+/g, " ");
+      if (location === committedLocation.current) return;
+      committedLocation.current = location;
+      const current = parseListingSearchParams(new URLSearchParams(query));
+      const params = toListingSearchParams({ ...current, location, page: 1 });
+      const text = params.toString();
+      router.replace(text ? `/listings?${text}` : "/listings");
+    }, searchInputDebounceMs);
+    search();
+    return () => search.cancel();
+  }, [locationDraft, query, router]);
+
   function togglePanel(next: BarPanel) {
     setPanel((current) => (current === next ? null : next));
   }
 
-  const kindLabel = unitKinds.find((kind) => kind.value === state.unitKind)?.label ?? "Loại căn";
-  const filterCount = state.amenities.length + (state.pets ? 1 : 0) + (state.moveInDate ? 1 : 0);
+  const kindLabel =
+    unitKinds.find((kind) => kind.value === state.unitKind)?.label ??
+    "Loại căn";
+  const filterCount =
+    state.amenities.length + (state.pets ? 1 : 0) + (state.moveInDate ? 1 : 0);
 
   return (
     <section className="relative grid gap-3" aria-label="Bộ lọc tin đăng">
       <div className="flex flex-wrap items-center gap-2 md:flex-nowrap">
         <div className="relative min-w-0 flex-1 basis-full md:basis-auto">
-          <label htmlFor="listing-location" className="sr-only">Địa điểm</label>
+          <label htmlFor="listing-location" className="sr-only">
+            Địa điểm
+          </label>
           <input
             id="listing-location"
-            value={state.location}
-            onChange={(event) => visit({ ...state, location: event.target.value })}
+            value={locationDraft}
+            onChange={(event) => setLocationDraft(event.target.value)}
             placeholder="Sơn Trà, Đà Nẵng"
             className="h-11 w-full rounded-full border border-[#e1e7ed] bg-white pr-10 pl-4 text-sm"
           />
-          {state.location ? (
+          {locationDraft ? (
             <button
               type="button"
               aria-label="Xóa địa điểm"
               className="absolute top-1/2 right-1.5 inline-flex size-8 -translate-y-1/2 items-center justify-center rounded-full text-lg text-[#5b6676]"
               onClick={() => {
+                setLocationDraft("");
+                committedLocation.current = "";
                 const next = clearLocation(new URLSearchParams(query));
                 const text = next.toString();
                 router.replace(text ? `/listings?${text}` : "/listings");
@@ -368,6 +410,7 @@ function FilterDialog({
   onApply: (next: ListingSearchState) => void;
 }) {
   const [draft, setDraft] = useState(state);
+  const [moveInKey, setMoveInKey] = useState(0);
 
   useEffect(() => {
     function onKey(event: KeyboardEvent) {
@@ -387,7 +430,10 @@ function FilterDialog({
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-[#091216]/45 px-4 py-8" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[80] flex items-start justify-center bg-[#091216]/45 px-4 py-8"
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -396,24 +442,43 @@ function FilterDialog({
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex items-center justify-between gap-4">
-          <h2 id="filter-dialog-title" className="inline-flex items-center gap-2 text-xl font-semibold text-[#091216]">
+          <h2
+            id="filter-dialog-title"
+            className="inline-flex items-center gap-2 text-xl font-semibold text-[#091216]"
+          >
             <FilterIcon />
             Bộ lọc
           </h2>
-          <button type="button" className="inline-flex size-11 items-center justify-center rounded-full text-2xl" onClick={onClose} aria-label="Đóng bộ lọc">
+          <button
+            type="button"
+            className="inline-flex size-11 items-center justify-center rounded-full text-2xl"
+            onClick={onClose}
+            aria-label="Đóng bộ lọc"
+          >
             ×
           </button>
         </div>
         <div className="mt-6 grid gap-5">
-          <label className="grid gap-2 text-sm font-semibold">
-            Ngày nhận phòng
-            <input type="date" value={draft.moveInDate} onChange={(event) => setDraft({ ...draft, moveInDate: event.target.value })} className="min-h-12 rounded-xl border border-[#e1e7ed] px-3 font-normal" />
-          </label>
+          <DateField
+            key={moveInKey}
+            name="moveInDate"
+            label="Ngày nhận phòng"
+            defaultValue={draft.moveInDate}
+            onValueChange={(iso) =>
+              setDraft((current) => ({ ...current, moveInDate: iso }))
+            }
+          />
           <fieldset className="grid gap-2">
             <legend className="text-sm font-semibold">Chính sách</legend>
             <div className="flex flex-wrap gap-2">
               {petOptions.map((option) => (
-                <button key={option.value || "any-pet"} type="button" aria-pressed={draft.pets === option.value} onClick={() => setDraft({ ...draft, pets: option.value })} className={`min-h-10 rounded-xl border px-3 text-sm ${draft.pets === option.value ? "border-[#3368a0] bg-[#eaf1f7] text-[#3368a0]" : "border-[#e1e7ed]"}`}>
+                <button
+                  key={option.value || "any-pet"}
+                  type="button"
+                  aria-pressed={draft.pets === option.value}
+                  onClick={() => setDraft({ ...draft, pets: option.value })}
+                  className={`min-h-10 rounded-xl border px-3 text-sm ${draft.pets === option.value ? "border-[#3368a0] bg-[#eaf1f7] text-[#3368a0]" : "border-[#e1e7ed]"}`}
+                >
                   {option.label}
                 </button>
               ))}
@@ -425,7 +490,13 @@ function FilterDialog({
               {amenities.map((amenity) => {
                 const selected = draft.amenities.includes(amenity.key);
                 return (
-                  <button key={amenity.key} type="button" aria-pressed={selected} onClick={() => toggleAmenity(amenity.key)} className={`min-h-10 rounded-xl border px-3 text-sm ${selected ? "border-[#3368a0] bg-[#eaf1f7] text-[#3368a0]" : "border-[#e1e7ed]"}`}>
+                  <button
+                    key={amenity.key}
+                    type="button"
+                    aria-pressed={selected}
+                    onClick={() => toggleAmenity(amenity.key)}
+                    className={`min-h-10 rounded-xl border px-3 text-sm ${selected ? "border-[#3368a0] bg-[#eaf1f7] text-[#3368a0]" : "border-[#e1e7ed]"}`}
+                  >
                     {amenity.label_vi}
                   </button>
                 );
@@ -437,11 +508,18 @@ function FilterDialog({
           <button
             type="button"
             className="text-sm font-semibold text-[#3368a0]"
-            onClick={() => setDraft({ ...draft, moveInDate: "", pets: "", amenities: [] })}
+            onClick={() => {
+              setMoveInKey((key) => key + 1);
+              setDraft({ ...draft, moveInDate: "", pets: "", amenities: [] });
+            }}
           >
             Xóa bộ lọc
           </button>
-          <button type="button" className="min-h-12 rounded-xl bg-[#3368a0] px-6 font-semibold text-white" onClick={() => onApply(draft)}>
+          <button
+            type="button"
+            className="min-h-12 rounded-xl bg-[#3368a0] px-6 font-semibold text-white"
+            onClick={() => onApply(draft)}
+          >
             Xem kết quả
           </button>
         </div>
