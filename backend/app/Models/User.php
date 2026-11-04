@@ -64,6 +64,16 @@ class User extends Authenticatable implements MustVerifyEmail
     }
 
     /**
+     * Get the listing reports filed by this user.
+     *
+     * @return HasMany<ListingReport, $this>
+     */
+    public function listingReports(): HasMany
+    {
+        return $this->hasMany(ListingReport::class, 'reporter_id');
+    }
+
+    /**
      * Check if the user is an administrator.
      */
     public function isAdmin(): bool
