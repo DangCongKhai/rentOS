@@ -15,6 +15,7 @@
 | - auth.php: Authenticated user endpoints
 | - admin.php: Admin dashboard and reviews
 | - tenant.php: Tenant tenancies
+| - reports.php: Listing reports and suspension
 | - owner/properties.php: Property and unit management
 | - owner/listings.php: Listing creation and publishing
 | - owner/amenities.php: Owner amenity catalog
@@ -31,6 +32,7 @@ require base_path('routes/api/v1/public.php');
 require base_path('routes/api/v1/auth.php');
 require base_path('routes/api/v1/admin.php');
 require base_path('routes/api/v1/tenant.php');
+require base_path('routes/api/v1/reports.php');
 
 // Owner endpoints
 require base_path('routes/api/v1/owner/properties.php');

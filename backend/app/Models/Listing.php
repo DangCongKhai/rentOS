@@ -10,8 +10,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
-/** @property-read Property $property */
+/**
+ * @property-read Property $property
+ * @property Carbon|null $admin_suspended_at
+ * @property Carbon|null $submitted_at
+ * @property Carbon|null $reviewed_at
+ * @property Carbon|null $archived_at
+ */
 class Listing extends Model
 {
     /** @use HasFactory<ListingFactory> */
@@ -79,6 +86,30 @@ class Listing extends Model
     public function units(): HasMany
     {
         return $this->hasMany(Unit::class, 'property_id', 'property_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function adminSuspendedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'admin_suspended_by');
+    }
+
+    /**
+     * @return HasMany<ListingReport, $this>
+     */
+    public function reports(): HasMany
+    {
+        return $this->hasMany(ListingReport::class, 'listing_id');
+    }
+
+    /**
+     * Check if listing is currently suspended by admin.
+     */
+    public function isSuspended(): bool
+    {
+        return $this->admin_suspended_at !== null;
     }
 
     /**
