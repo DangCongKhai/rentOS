@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState, useRef, type FormEvent } from "react";
+import {
+  useEffect,
+  useState,
+  useRef,
+  type KeyboardEvent,
+  type SubmitEvent,
+} from "react";
 import {
   ApiError,
   createOwnerProperty,
@@ -302,28 +308,20 @@ function NewOwnerPropertyWizard() {
     setStep((current) => Math.min(current + 1, stages.length - 1));
   }
 
-  async function submitWizard(event: FormEvent<HTMLFormElement>) {
+  function blockImplicitSubmit(event: KeyboardEvent<HTMLFormElement>) {
+    if (event.key !== "Enter") return;
+    const target = event.target;
+    if (target instanceof HTMLTextAreaElement) return;
+    if (target instanceof HTMLButtonElement) return;
     event.preventDefault();
+  }
 
-    // Only proceed to next step if NOT on final review step
-    if (step < stages.length - 1) {
-      goNext(event.currentTarget);
-      return;
-    }
+  function submitWizard(event: SubmitEvent<HTMLFormElement>) {
+    event.preventDefault();
+  }
 
-    // At this point: step === stages.length - 1 (final step)
-    // Only submit if user explicitly clicked the submit button
-    // Check if the submit was from the actual submit button, not accidental
-    const submitButton = (event.nativeEvent as SubmitEvent).submitter;
-    if (
-      !submitButton ||
-      !submitButton.getAttribute("type")?.includes("submit")
-    ) {
-      // If triggered by Enter key in an input field, don't auto-submit
-      return;
-    }
-
-    const form = new FormData(event.currentTarget);
+  async function saveDraft(formElement: HTMLFormElement) {
+    const form = new FormData(formElement);
     if (!read(form, "name")) {
       setError("Nhập tên bất động sản ở bước 1 trước khi lưu bản nháp.");
       setStep(0);
@@ -564,6 +562,7 @@ function NewOwnerPropertyWizard() {
         <form
           ref={formRef}
           onSubmit={submitWizard}
+          onKeyDown={blockImplicitSubmit}
           className="mt-6 grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start"
         >
           <WizardProgress
@@ -719,11 +718,15 @@ function NewOwnerPropertyWizard() {
                     Mở bất động sản đã tạo
                   </button>
                 ) : (
-                  <button
-                    type="submit"
-                    disabled={saving}
-                    className={primaryButton}
-                  >
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={(event) => {
+                    const form = event.currentTarget.form;
+                    if (form) void saveDraft(form);
+                  }}
+                  className={primaryButton}
+                >
                     {saving ? "Đang lưu…" : "Tạo bản nháp"}
                   </button>
                 )}
