@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import type { AmenityCatalogEntry } from "@/lib/auth-api";
 import { CheckboxGroup } from "./shared/checkbox-group";
 import { textareaClass } from "./shared/form-styles";
@@ -8,9 +9,10 @@ type AmenitiesStepProps = {
   catalog: AmenityCatalogEntry[];
   loadingCatalog: boolean;
   sharedAmenityKeys: Set<string>;
-  onSharedAmenityKeysChange: (keys: Set<string>) => void;
+  onSharedAmenityKeysChange: (keys: Set<string> | ((current: Set<string>) => Set<string>)) => void;
   amenityScope: "property" | "unit";
   onAmenityScopeChange: (scope: "property" | "unit") => void;
+  rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
 };
 
 export function AmenitiesStep({
@@ -20,7 +22,11 @@ export function AmenitiesStep({
   onSharedAmenityKeysChange,
   amenityScope,
   onAmenityScopeChange,
+  rentalArrangement,
 }: AmenitiesStepProps) {
+  const [unitAmenityKeys, setUnitAmenityKeys] = useState<Set<string>>(
+    () => new Set()
+  );
   const amenityEntries = catalog.filter((item) =>
     item.scopes.includes("shared")
   );
@@ -29,13 +35,82 @@ export function AmenitiesStep({
   );
 
   function handleSharedAmenityChange(key: string, checked: boolean) {
-    const next = new Set(sharedAmenityKeys);
-    if (checked) next.add(key);
-    else next.delete(key);
-    onSharedAmenityKeysChange(next);
+    onSharedAmenityKeysChange((current) => {
+      const next = new Set(current);
+      if (checked) next.add(key);
+      else next.delete(key);
+      return next;
+    });
   }
 
-  return ( 
+  function setWholeSpaceSelection(keys: string[], checked: boolean) {
+    const shared = new Set(sharedAmenityKeys);
+    const units = new Set(unitAmenityKeys);
+    for (const key of keys) {
+      const amenity = catalog.find((item) => item.key === key);
+      const target = amenity?.scopes.includes("shared") ? shared : units;
+      if (checked) target.add(key);
+      else target.delete(key);
+    }
+    onSharedAmenityKeysChange(shared);
+    setUnitAmenityKeys(units);
+  }
+
+  if (rentalArrangement === "WHOLE_SPACE") {
+    return (
+      <div className="space-y-4">
+        {loadingCatalog ? (
+          <p className="text-sm text-slate-500">Đang tải tiện ích…</p>
+        ) : (
+          <CheckboxGroup
+            items={catalog.map((amenity) => {
+              const shared = amenity.scopes.includes("shared");
+              return {
+                key: amenity.key,
+                label: amenity.label,
+                checked: shared
+                  ? sharedAmenityKeys.has(amenity.key)
+                  : unitAmenityKeys.has(amenity.key),
+                name: shared
+                  ? `amenity:${amenity.key}`
+                  : `unit_amenity:${amenity.key}`,
+                detailsName: shared
+                  ? `amenity_details:${amenity.key}`
+                  : `unit_amenity_details:${amenity.key}`,
+              };
+            })}
+            namePrefix="amenity:"
+            detailsNamePrefix="amenity_details:"
+            onBulkChange={setWholeSpaceSelection}
+            onChange={(key, checked) => {
+              const amenity = catalog.find((item) => item.key === key);
+              if (amenity?.scopes.includes("shared")) {
+                handleSharedAmenityChange(key, checked);
+                return;
+              }
+              setUnitAmenityKeys((current) => {
+                const next = new Set(current);
+                if (checked) next.add(key);
+                else next.delete(key);
+                return next;
+              });
+            }}
+          />
+        )}
+        <label className="block text-sm font-medium text-slate-700">
+          Tiện ích khác
+          <textarea
+            name="custom_amenities"
+            rows={2}
+            className={textareaClass}
+            placeholder="Mỗi dòng một tiện ích"
+          />
+        </label>
+      </div>
+    );
+  }
+
+  return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

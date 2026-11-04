@@ -10,9 +10,10 @@ export function WizardProgress({
   stages,
   currentStep,
   onStepChange,
+
 }: WizardProgressProps) {
   return (
-    <aside className="space-y-3">
+    <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-sm font-semibold text-slate-900">
           Các bước đăng ký

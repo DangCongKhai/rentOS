@@ -53,6 +53,12 @@ export function ListingDetailView({
   const query = searchParams.toString();
   const listingsHref = query ? `/listings?${query}` : "/listings";
   const extras = extraAmenities(listing);
+  const wholeSpace = listing.property.rental_arrangement === "WHOLE_SPACE";
+  const wholeUnit = wholeSpace ? listing.units[0] : undefined;
+  const sharedAmenityKeys = new Set(listing.property.shared_amenities.map((amenity) => amenity.key));
+  const unitAmenities = uniqueUnitAmenities(listing.units).filter((amenity) =>
+    wholeSpace ? !sharedAmenityKeys.has(amenity.key) : true,
+  );
 
   function chooseUnit(unitId: string) {
     setPreferredUnitId(unitId);
@@ -95,13 +101,27 @@ export function ListingDetailView({
               ) : null}
             </header>
 
-            <AvailableUnits
-              units={listing.units}
-              selectedUnitId={preferredUnitId}
-              openUnitId={openUnitId}
-              onChoose={chooseUnit}
-              onClose={() => setOpenUnitId(null)}
-            />
+            {wholeSpace && wholeUnit ? (
+              <section className="grid gap-4" aria-label="Thông tin cho thuê">
+                <h2 className="text-2xl font-bold text-[#091216]">Thông tin cho thuê</h2>
+                <div className="grid gap-3 rounded-2xl border border-[#d5dee7] bg-white p-6 sm:grid-cols-2">
+                  <Fact value={wholeUnit.bedrooms > 0 ? `${wholeUnit.bedrooms} phòng ngủ` : "Không tách phòng ngủ"} caption="Phòng ngủ" />
+                  <Fact value={bathLabel([wholeUnit])} caption="Phòng tắm" />
+                  <Fact value={areaLabel([wholeUnit])} caption="Diện tích" />
+                  <Fact value={dong(Number(wholeUnit.advertised_monthly_rent))} caption="Giá thuê mỗi tháng" />
+                  <Fact value={dong(Number(wholeUnit.deposit))} caption="Tiền đặt cọc" />
+                  <Fact value={`${wholeUnit.max_occupants} người`} caption="Số người tối đa" />
+                </div>
+              </section>
+            ) : (
+              <AvailableUnits
+                units={listing.units}
+                selectedUnitId={preferredUnitId}
+                openUnitId={openUnitId}
+                onChoose={chooseUnit}
+                onClose={() => setOpenUnitId(null)}
+              />
+            )}
 
             <section className="grid gap-4" aria-label="Tiện ích nổi bật">
               <h2 className="text-2xl font-bold text-[#091216]">Tiện ích nổi bật</h2>
@@ -112,9 +132,9 @@ export function ListingDetailView({
                   ))}
                 </ul>
               </section>
-              {uniqueUnitAmenities(listing.units).length > 0 ? (
+              {unitAmenities.length > 0 ? (
                 <ul className="grid grid-cols-[repeat(auto-fill,minmax(9.5rem,1fr))] gap-3">
-                  {uniqueUnitAmenities(listing.units).map((amenity) => (
+                  {unitAmenities.map((amenity) => (
                     <AmenityCard key={amenity.key} amenity={amenity} scope="Trong căn" />
                   ))}
                 </ul>

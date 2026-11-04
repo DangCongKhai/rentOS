@@ -28,6 +28,51 @@ type RentalArrangementStepProps = {
   onSetActiveUnit: (index: number) => void;
 };
 
+function ArrangementOption({
+  value,
+  label,
+  description,
+  checked,
+  onChange,
+}: {
+  value: "WHOLE_SPACE" | "SEPARATE_UNITS";
+  label: string;
+  description: string;
+  checked: boolean;
+  onChange: () => void;
+}) {
+  return (
+    <div className={`flex items-center gap-2 rounded-lg border bg-white p-3 ${checked ? "border-[#3368a0]" : "border-slate-200"}`}>
+      <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
+        <input
+          type="radio"
+          name="rental_arrangement"
+          value={value}
+          checked={checked}
+          onChange={onChange}
+          className="accent-[#3368a0]"
+        />
+        <span className="text-sm font-semibold text-slate-900">{label}</span>
+      </label>
+      <span className="group relative shrink-0">
+        <button
+          type="button"
+          aria-label={`Giải thích ${label}`}
+          className="flex size-6 items-center justify-center rounded-full border border-slate-300 text-xs font-bold text-slate-600 hover:border-[#3368a0] hover:text-[#3368a0]"
+        >
+          !
+        </button>
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute right-0 top-[calc(100%+8px)] z-20 hidden w-56 rounded-lg border border-slate-200 bg-white p-3 text-xs leading-5 text-slate-600 shadow-lg group-hover:block group-focus-within:block"
+        >
+          {description}
+        </span>
+      </span>
+    </div>
+  );
+}
+
 export function RentalArrangementStep({
   rentalArrangement,
   onRentalArrangementChange,
@@ -47,42 +92,22 @@ export function RentalArrangementStep({
         <legend className="text-sm font-semibold text-slate-700">
           Hình thức cho thuê
         </legend>
-        <label className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <input
-            type="radio"
-            name="rental_arrangement"
+        <div className="grid gap-3 sm:grid-cols-2">
+          <ArrangementOption
             value="WHOLE_SPACE"
+            label="Toàn bộ không gian"
+            description="Cho thuê toàn bộ căn nhà hoặc căn hộ."
             checked={rentalArrangement === "WHOLE_SPACE"}
             onChange={() => onRentalArrangementChange("WHOLE_SPACE")}
-            className="mt-1 accent-[#3368a0]"
           />
-          <span>
-            <strong className="block text-sm text-slate-900">
-              Toàn bộ không gian
-            </strong>
-            <span className="mt-1 block text-sm text-slate-600">
-              Cho thuê toàn bộ căn nhà hoặc căn hộ.
-            </span>
-          </span>
-        </label>
-        <label className="flex cursor-pointer gap-3 rounded-lg border border-slate-200 bg-white p-4">
-          <input
-            type="radio"
-            name="rental_arrangement"
+          <ArrangementOption
             value="SEPARATE_UNITS"
+            label="Cho thuê từng căn/phòng"
+            description="Tạo nhiều căn/phòng trong cùng bất động sản."
             checked={rentalArrangement === "SEPARATE_UNITS"}
             onChange={() => onRentalArrangementChange("SEPARATE_UNITS")}
-            className="mt-1 accent-[#3368a0]"
           />
-          <span>
-            <strong className="block text-sm text-slate-900">
-              Cho thuê từng căn/phòng
-            </strong>
-            <span className="mt-1 block text-sm text-slate-600">
-              Tạo nhiều căn/phòng trong cùng bất động sản.
-            </span>
-          </span>
-        </label>
+        </div>
       </fieldset>
       {rentalArrangement === "WHOLE_SPACE" ? (
         <section className="rounded-lg border border-slate-200 bg-white p-4">

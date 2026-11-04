@@ -183,7 +183,7 @@ class AccountAuthFlowsTest extends TestCase
         $this->actingAs($user)->getJson('/api/v1/me')
             ->assertOk()
             ->assertJsonPath('data.id', $user->id)
-            ->assertJsonMissingPath('data.is_admin')
+            ->assertJsonPath('data.is_admin', false)
             ->assertJsonMissingPath('data.password');
 
         $this->actingAs($user)->patchJson('/api/v1/me', [

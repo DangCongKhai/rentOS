@@ -7,6 +7,8 @@ type CheckboxGroupItem = {
   label: string;
   checked: boolean;
   detailsValue?: string;
+  name?: string;
+  detailsName?: string;
 };
 
 type CheckboxGroupProps = {
@@ -14,6 +16,7 @@ type CheckboxGroupProps = {
   namePrefix: string;
   detailsNamePrefix: string;
   onChange: (key: string, checked: boolean) => void;
+  onBulkChange?: (keys: string[], checked: boolean) => void;
   gridCols?: "sm:grid-cols-2" | "sm:grid-cols-3";
 };
 
@@ -22,24 +25,19 @@ export function CheckboxGroup({
   namePrefix,
   detailsNamePrefix,
   onChange,
+  onBulkChange,
   gridCols = "sm:grid-cols-2",
 }: CheckboxGroupProps) {
   const allChecked = items.length > 0 && items.every((item) => item.checked);
   const noneChecked = items.every((item) => !item.checked);
 
-  function handleCheckAll() {
+  function setAll(checked: boolean) {
+    if (onBulkChange) {
+      onBulkChange(items.map((item) => item.key), checked);
+      return;
+    }
     items.forEach((item) => {
-      if (!item.checked) {
-        onChange(item.key, true);
-      }
-    });
-  }
-
-  function handleUncheckAll() {
-    items.forEach((item) => {
-      if (item.checked) {
-        onChange(item.key, false);
-      }
+      if (item.checked !== checked) onChange(item.key, checked);
     });
   }
 
@@ -56,7 +54,7 @@ export function CheckboxGroup({
         <div className="flex gap-2">
           <button
             type="button"
-            onClick={handleCheckAll}
+            onClick={() => setAll(true)}
             disabled={allChecked}
             className="text-xs font-medium text-[#3368a0] hover:underline disabled:opacity-50 disabled:no-underline"
           >
@@ -65,7 +63,7 @@ export function CheckboxGroup({
           <span className="text-slate-300">|</span>
           <button
             type="button"
-            onClick={handleUncheckAll}
+            onClick={() => setAll(false)}
             disabled={noneChecked}
             className="text-xs font-medium text-[#3368a0] hover:underline disabled:opacity-50 disabled:no-underline"
           >
@@ -82,7 +80,7 @@ export function CheckboxGroup({
             <span className="inline-flex items-center gap-2">
               <input
                 type="checkbox"
-                name={`${namePrefix}${item.key}`}
+                name={item.name ?? `${namePrefix}${item.key}`}
                 checked={item.checked}
                 onChange={(event) => onChange(item.key, event.target.checked)}
                 className="size-4 accent-[#3368a0]"
@@ -91,7 +89,7 @@ export function CheckboxGroup({
             </span>
             <input
               type="text"
-              name={`${detailsNamePrefix}${item.key}`}
+              name={item.detailsName ?? `${detailsNamePrefix}${item.key}`}
               maxLength={160}
               aria-label={`Ghi chú ${item.label}`}
               placeholder="Ghi chú tùy chọn"

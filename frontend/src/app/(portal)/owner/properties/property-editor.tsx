@@ -45,17 +45,63 @@ function fieldValue(form: FormData, name: string): string {
   return String(form.get(name) ?? "").trim();
 }
 
+function optionalNumber(form: FormData, name: string): number | null {
+  const value = fieldValue(form, name);
+  return value === "" ? null : Number(value);
+}
+
+function combinedAmenityValue(
+  shared?: AmenityDocument,
+  unit?: AmenityDocument,
+): AmenityDocument {
+  return {
+    schema_version: 1,
+    standard: { ...(shared?.standard ?? {}), ...(unit?.standard ?? {}) },
+    custom: [...(shared?.custom ?? []), ...(unit?.custom ?? [])].filter(
+      (item, index, all) => all.indexOf(item) === index,
+    ),
+  };
+}
+
+function documentsFromCombinedForm(
+  form: FormData,
+  catalog: AmenityCatalogEntry[],
+): { shared: AmenityDocument; unit: AmenityDocument } {
+  const sharedStandard: AmenityDocument["standard"] = {};
+  const unitStandard: AmenityDocument["standard"] = {};
+  const custom = fieldValue(form, "custom_amenities")
+    .split("\n")
+    .map((item) => item.trim())
+    .filter(Boolean);
+  for (const amenity of catalog) {
+    if (form.get(`amenity:${amenity.key}`) !== "on") continue;
+    const details = fieldValue(form, `amenity_details:${amenity.key}`);
+    const entry = { enabled: true, ...(details ? { details } : {}) };
+    if (amenity.scopes.includes("shared")) sharedStandard[amenity.key] = entry;
+    if (amenity.scopes.includes("unit")) unitStandard[amenity.key] = entry;
+  }
+  return {
+    shared: { schema_version: 1, standard: sharedStandard, custom },
+    unit: { schema_version: 1, standard: unitStandard, custom },
+  };
+}
+
 
 function AmenityFields({
   catalog,
   scope,
+  scopes,
   value,
 }: {
   catalog: AmenityCatalogEntry[];
-  scope: "shared" | "unit";
+  scope?: "shared" | "unit";
+  scopes?: Array<"shared" | "unit">;
   value?: AmenityDocument;
 }) {
-  const entries = catalog.filter((item) => item.scopes.includes(scope));
+  const accepted = new Set(scopes ?? (scope ? [scope] : []));
+  const entries = catalog.filter((item) =>
+    item.scopes.some((itemScope) => accepted.has(itemScope as "shared" | "unit")),
+  );
   const selected = new Set(
     Object.entries(value?.standard ?? {})
       .filter(([, amenity]) => amenity.enabled)
@@ -64,7 +110,9 @@ function AmenityFields({
   return (
     <fieldset className="space-y-2">
       <legend className="text-sm font-semibold text-slate-800">
-        Tiện nghi {scope === "shared" ? "dùng chung" : "trong phòng"}
+        {scopes && scopes.length > 1
+          ? "Tiện nghi"
+          : `Tiện nghi ${scope === "unit" ? "trong phòng" : "dùng chung"}`}
       </legend>
       <div className="flex flex-wrap gap-2">
         {entries.map((item) => (
@@ -102,6 +150,46 @@ function AmenityFields({
         />
       </label>
     </fieldset>
+  );
+}
+
+function WholeSpaceFields({ property }: { property: OwnerPropertyDetail }) {
+  const unit = property.units.find((item) => !item.archived_at);
+  return (
+    <>
+      <label className="text-sm font-medium text-slate-700">
+        Diện tích (m²)
+        <input name="area_m2" type="number" min="0.1" step="0.01" defaultValue={unit?.area_m2 ?? ""} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Phòng ngủ
+        <input name="bedrooms" type="number" min="0" required defaultValue={unit?.bedrooms ?? 0} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Phòng tắm
+        <input name="bathrooms" type="number" min="0" step="1" required defaultValue={unit?.bathrooms ?? 1} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Giá thuê tháng (VND)
+        <input name="advertised_monthly_rent" type="number" min="1" defaultValue={unit?.advertised_monthly_rent ?? ""} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Tiền đặt cọc (VND)
+        <input name="deposit" type="number" min="0" defaultValue={unit?.deposit ?? ""} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Thời hạn thuê tối thiểu (tháng)
+        <input name="minimum_rental_months" type="number" min="3" required defaultValue={unit?.minimum_rental_months ?? 3} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700">
+        Số người tối đa
+        <input name="max_occupants" type="number" min="1" defaultValue={unit?.max_occupants ?? ""} className={fieldClass} />
+      </label>
+      <label className="text-sm font-medium text-slate-700 md:col-span-2">
+        Mô tả căn
+        <textarea name="unit_description" rows={3} defaultValue={unit?.description ?? ""} className={fieldClass} />
+      </label>
+    </>
   );
 }
 
@@ -221,6 +309,10 @@ export function PropertyEditor({
     setNotice(null);
     setFieldErrors({});
     try {
+      const wholeSpace = property.rental_arrangement === "WHOLE_SPACE";
+      const amenities = wholeSpace
+        ? documentsFromCombinedForm(form, catalog)
+        : { shared: amenitiesFromForm(form, catalog, "shared"), unit: null };
       const updated = await updateOwnerProperty(property.id, {
         name: fieldValue(form, "name"),
         property_type: fieldValue(form, "property_type"),
@@ -229,7 +321,20 @@ export function PropertyEditor({
         ward: fieldValue(form, "ward") || null,
         city: fieldValue(form, "city") || null,
         description: fieldValue(form, "description") || null,
-        shared_amenities: amenitiesFromForm(form, catalog, "shared"),
+        shared_amenities: amenities.shared,
+        ...(wholeSpace
+          ? {
+              unit_amenities: amenities.unit,
+              unit_description: fieldValue(form, "unit_description") || null,
+              area_m2: optionalNumber(form, "area_m2"),
+              bedrooms: optionalNumber(form, "bedrooms") ?? 0,
+              bathrooms: optionalNumber(form, "bathrooms") ?? 0,
+              advertised_monthly_rent: optionalNumber(form, "advertised_monthly_rent"),
+              deposit: optionalNumber(form, "deposit"),
+              minimum_rental_months: optionalNumber(form, "minimum_rental_months") ?? 3,
+              max_occupants: optionalNumber(form, "max_occupants"),
+            }
+          : {}),
         policies: {
           schema_version: 1,
           pets: fieldValue(form, "pets"),
@@ -285,6 +390,8 @@ export function PropertyEditor({
   const units = property?.units.filter((unit) => !unit.archived_at) ?? [];
   const policy = property?.policies;
   const separate = property?.rental_arrangement === "SEPARATE_UNITS";
+  const activeTab: WorkspaceTab =
+    property?.rental_arrangement === "WHOLE_SPACE" && tab === "units" ? "overview" : tab;
 
   return (
     <section className="mx-auto w-full max-w-6xl px-1 py-4 sm:px-2 sm:py-6">
@@ -342,12 +449,14 @@ export function PropertyEditor({
               ["units", "Danh sách căn"],
               ["photos", "Hình ảnh"],
             ] as const
-          ).map(([value, label]) => (
+          )
+            .filter(([value]) => property.rental_arrangement !== "WHOLE_SPACE" || value !== "units")
+            .map(([value, label]) => (
             <button
               key={value}
               type="button"
               onClick={() => openTab(value)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === value ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+              className={`rounded-full px-4 py-2 text-sm font-semibold ${activeTab === value ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
             >
               {label}
             </button>
@@ -355,7 +464,7 @@ export function PropertyEditor({
         </nav>
       )}
 
-      {property && tab === "overview" && (
+      {property && activeTab === "overview" && (
         <form
           key={property.id}
           onSubmit={saveProperty}
@@ -445,13 +554,24 @@ export function PropertyEditor({
                 className={fieldClass}
               />
             </label>
+            {property.rental_arrangement === "WHOLE_SPACE" && (
+              <WholeSpaceFields property={property} />
+            )}
           </div>
           <div className="mt-6 grid gap-6 lg:grid-cols-2">
             <AmenityFields
               key={`shared-${property.content_revision}`}
               catalog={catalog}
-              scope="shared"
-              value={property.shared_amenities}
+              scope={property.rental_arrangement === "WHOLE_SPACE" ? undefined : "shared"}
+              scopes={property.rental_arrangement === "WHOLE_SPACE" ? ["shared", "unit"] : undefined}
+              value={
+                property.rental_arrangement === "WHOLE_SPACE"
+                  ? combinedAmenityValue(
+                      property.shared_amenities,
+                      property.units.find((unit) => !unit.archived_at)?.amenities,
+                    )
+                  : property.shared_amenities
+              }
             />
             <fieldset className="space-y-3">
               <legend className="text-sm font-semibold text-slate-800">
@@ -500,7 +620,7 @@ export function PropertyEditor({
         </form>
       )}
 
-      {property && tab === "units" && (
+      {property && activeTab === "units" && (
         <div className="space-y-5">
           <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-3 p-4 sm:p-5">
@@ -602,7 +722,7 @@ export function PropertyEditor({
         </div>
       )}
 
-      {property && tab === "photos" && (
+      {property && activeTab === "photos" && (
         <PropertyPhotos
           property={property}
           media={media}

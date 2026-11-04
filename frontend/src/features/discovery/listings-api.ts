@@ -96,6 +96,7 @@ export type ListingDetail = {
   property: {
     name: string;
     property_type: string;
+    rental_arrangement?: "WHOLE_SPACE" | "SEPARATE_UNITS";
     address_line: string;
     ward: string | null;
     city: string;

@@ -20,6 +20,7 @@ export type CurrentUser = {
   email: string;
   email_verified_at: string | null;
   phone: string | null;
+  is_admin: boolean;
 };
 
 export type TenantTenancy = {

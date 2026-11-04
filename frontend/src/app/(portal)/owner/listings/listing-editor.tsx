@@ -46,14 +46,19 @@ function statusLabel(listing: OwnerListing): string {
   return "Bản nháp";
 }
 
+function missingListingFields(unit: OwnerUnit): string[] {
+  const missing: string[] = [];
+  if (!unit.description?.trim()) missing.push("mô tả");
+  if (unit.area_m2 === null) missing.push("diện tích");
+  if (unit.advertised_monthly_rent === null) missing.push("giá thuê");
+  if (unit.deposit === null) missing.push("tiền cọc");
+  if (unit.max_occupants === null) missing.push("số người");
+  return missing;
+}
+
 function unitReady(unit: OwnerUnit): boolean {
   return (
-    unit.operational_status === "READY" &&
-    Boolean(unit.description?.trim()) &&
-    unit.area_m2 !== null &&
-    unit.advertised_monthly_rent !== null &&
-    unit.deposit !== null &&
-    unit.max_occupants !== null
+    unit.operational_status === "READY" && missingListingFields(unit).length === 0
   );
 }
 
@@ -102,6 +107,10 @@ function previewListing(
     property: {
       name: property.name,
       property_type: property.property_type,
+      rental_arrangement:
+        property.rental_arrangement === "SEPARATE_UNITS"
+          ? "SEPARATE_UNITS"
+          : "WHOLE_SPACE",
       address_line: property.address_line ?? "",
       ward: property.ward,
       city: property.city ?? "",
@@ -194,7 +203,32 @@ export function ListingEditor({
           router.replace(`/owner/listings/${listingResult.id}`);
           return;
         }
-        setProperty(propertyResult);
+        let nextProperty = propertyResult;
+        const activeUnits = nextProperty.units.filter((unit) => !unit.archived_at);
+        if (activeUnits.length === 1) {
+          const unit = activeUnits[0];
+          const description = unit.description?.trim()
+            ? unit.description
+            : nextProperty.description?.trim() || null;
+          const canMarket =
+            unit.operational_status === "READY" &&
+            Boolean(description) &&
+            unit.area_m2 !== null &&
+            unit.advertised_monthly_rent !== null &&
+            unit.deposit !== null &&
+            unit.max_occupants !== null;
+          if (canMarket && (!unit.is_marketed || !unit.description?.trim())) {
+            await updateOwnerUnit(nextProperty.id, unit.id, {
+              expected_content_revision: nextProperty.content_revision,
+              ...(unit.description?.trim() ? {} : { description }),
+              is_marketed: true,
+            });
+            if (ignore) return;
+            nextProperty = await getOwnerProperty(nextProperty.id);
+          }
+        }
+        if (ignore) return;
+        setProperty(nextProperty);
         setListing(listingResult);
         setMedia(mediaResult);
         setAmenityLabels(
@@ -531,6 +565,17 @@ export function ListingEditor({
                 )}
               </div>
             </section>
+            {units.length === 1 ? (
+              !unitReady(units[0]) && (
+                <p
+                  role="alert"
+                  className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                >
+                  Còn thiếu {missingListingFields(units[0]).join(", ")}. Bổ sung
+                  trong trang bất động sản trước khi gửi duyệt.
+                </p>
+              )
+            ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <h2 className="text-lg font-semibold text-slate-900">
                 Căn đưa lên tin
@@ -551,7 +596,7 @@ export function ListingEditor({
                       <p className="text-xs text-slate-500">
                         {unitReady(unit)
                           ? "Đủ thông tin để đăng"
-                          : "Còn thiếu mô tả, diện tích, giá, cọc hoặc số người"}
+                          : `Còn thiếu ${missingListingFields(unit).join(", ")}`}
                       </p>
                     </div>
                     <button
@@ -570,6 +615,7 @@ export function ListingEditor({
                 ))}
               </ul>
             </section>
+            )}
           </form>
         ) : (
           <div className="min-w-0 overflow-hidden rounded-2xl bg-[#f4f6f8] p-4 sm:p-6">

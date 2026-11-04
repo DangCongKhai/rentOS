@@ -97,7 +97,7 @@ export function ReviewStep({
   
   // Check rules
   const rulesCount = sharedRules.split("\n").filter(Boolean).length;
-  if (rulesCount === 0) {
+  if (rulesCount === 0 && rentalArrangement !== "WHOLE_SPACE") {
     warnings.push({ step: 3, message: "Bước 4: Chưa có nội quy chung" });
   }
   
@@ -334,7 +334,7 @@ export function ReviewStep({
           className="mb-3 flex w-full items-center justify-between text-left hover:text-[#3368a0]"
         >
           <h3 className="text-sm font-semibold text-slate-800">
-            4. Quy định và nội quy
+            {rentalArrangement === "WHOLE_SPACE" ? "4. Nội quy" : "4. Quy định và nội quy"}
           </h3>
           <span className="text-xs text-[#3368a0]">Chỉnh sửa →</span>
         </button>
@@ -352,7 +352,9 @@ export function ReviewStep({
             </span>
           </div>
           <div className="flex justify-between">
-            <span className="text-slate-600">Nội quy chung:</span>
+            <span className="text-slate-600">
+              {rentalArrangement === "WHOLE_SPACE" ? "Nội quy:" : "Nội quy chung:"}
+            </span>
             <span className="font-medium text-slate-900">
               {rulesCount > 0 ? (
                 `${rulesCount} quy tắc`

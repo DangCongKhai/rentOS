@@ -12,6 +12,7 @@ import {
   type AmenityDocument,
   type OwnerUnit,
 } from "@/lib/auth-api";
+import { UnitPhotoManager } from "./unit-photos";
 
 const fieldClass =
   "mt-1 block w-full rounded-xl border border-slate-300 bg-white px-3.5 py-2.5 text-sm text-slate-900 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100";
@@ -127,7 +128,16 @@ export function UnitEditor({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({});
+  const [tab, setTab] = useState<"details" | "photos">("details");
   const listHref = `/owner/properties/${propertyId}?tab=units`;
+
+  useEffect(() => {
+    function resetBusy() {
+      setBusy(false);
+    }
+    window.addEventListener("pageshow", resetBusy);
+    return () => window.removeEventListener("pageshow", resetBusy);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -204,6 +214,7 @@ export function UnitEditor({
             .filter(Boolean),
         },
       });
+      setBusy(false);
       router.push(listHref);
     } catch (caught) {
       if (caught instanceof ApiError) {
@@ -228,6 +239,26 @@ export function UnitEditor({
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
         {unit ? `Sửa ${unit.label}` : "Phòng"}
       </h1>
+      <div className="mt-4 flex gap-2" role="tablist" aria-label="Nội dung phòng">
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "details"}
+          onClick={() => setTab("details")}
+          className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === "details" ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700"}`}
+        >
+          Thông tin
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={tab === "photos"}
+          onClick={() => setTab("photos")}
+          className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === "photos" ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700"}`}
+        >
+          Ảnh
+        </button>
+      </div>
       {loading && (
         <div
           className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 text-sm text-slate-500"
@@ -254,7 +285,12 @@ export function UnitEditor({
           ))}
         </ul>
       )}
-      {unit && (
+      {unit && tab === "photos" && (
+        <div className="mt-6">
+          <UnitPhotoManager propertyId={propertyId} unitId={unit.id} />
+        </div>
+      )}
+      {unit && tab === "details" && (
         <form
           key={unit.id}
           onSubmit={saveUnit}
@@ -319,7 +355,7 @@ export function UnitEditor({
               name="bathrooms"
               type="number"
               min="0"
-              step="0.5"
+              step="1"
               required
               defaultValue={unit.bathrooms ?? 1}
               className={fieldClass}

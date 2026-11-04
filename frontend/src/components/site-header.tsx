@@ -176,6 +176,14 @@ export function SiteHeader() {
                     {user.email}
                   </span>
                 </div>
+                {user.is_admin ? (
+                  <Link
+                    href="/admin"
+                    className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors text-left min-h-[38px]"
+                  >
+                    Quản lý
+                  </Link>
+                ) : null}
                 <Link
                   href="/profile"
                   className="flex items-center w-full px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors text-left min-h-[38px]"

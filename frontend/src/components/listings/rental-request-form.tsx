@@ -21,6 +21,7 @@ export function RentalRequestForm({
   const selected = listing.units.some((unit) => unit.id === preferredUnitId)
     ? preferredUnitId
     : listing.units[0]?.id ?? "";
+  const wholeSpace = listing.property.rental_arrangement === "WHOLE_SPACE";
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,19 +63,23 @@ export function RentalRequestForm({
         Ngày dọn vào mong muốn
         <input name="move_in_date" type="date" className="min-h-11 rounded-xl border border-[#d5dee7] bg-white px-3 font-normal" />
       </label>
-      <label className="grid gap-1 text-sm font-medium text-[#091216]">
-        Căn ưu tiên
-        <select
-          name="unit_id"
-          value={selected}
-          onChange={(event) => onPreferredUnitChange(event.target.value)}
-          className="min-h-11 rounded-xl border border-[#d5dee7] bg-white px-3 font-normal"
-        >
-          {listing.units.map((unit) => (
-            <option key={unit.id} value={unit.id}>{unit.label}</option>
-          ))}
-        </select>
-      </label>
+      {wholeSpace ? (
+        <input type="hidden" name="unit_id" value={selected} />
+      ) : (
+        <label className="grid gap-1 text-sm font-medium text-[#091216]">
+          Căn ưu tiên
+          <select
+            name="unit_id"
+            value={selected}
+            onChange={(event) => onPreferredUnitChange(event.target.value)}
+            className="min-h-11 rounded-xl border border-[#d5dee7] bg-white px-3 font-normal"
+          >
+            {listing.units.map((unit) => (
+              <option key={unit.id} value={unit.id}>{unit.label}</option>
+            ))}
+          </select>
+        </label>
+      )}
       <label className="grid gap-1 text-sm font-medium text-[#091216]">
         Lời nhắn cho chủ nhà
         <textarea name="message" className="min-h-24 rounded-xl border border-[#d5dee7] bg-white px-3 py-2 font-normal" />

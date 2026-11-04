@@ -30,6 +30,7 @@ class CurrentUserResource extends JsonResource
             'email' => $this->email,
             'email_verified_at' => $this->email_verified_at,
             'phone' => $this->phone,
+            'is_admin' => $this->isAdmin(),
         ];
     }
 }

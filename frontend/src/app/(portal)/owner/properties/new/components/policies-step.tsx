@@ -17,15 +17,15 @@ export function PoliciesStep({
 }: PoliciesStepProps) {
   return (
     <div className="space-y-5">
-      <div>
-        <h3 className="text-sm font-semibold text-slate-800">
-          Quy định chung
-        </h3>
-        <p className="mt-1 text-xs text-slate-500">
-          Quy định thú cưng và hút thuốc được áp dụng cho mọi căn trừ khi thay
-          đổi sau này.
-        </p>
-      </div>
+      {rentalArrangement === "SEPARATE_UNITS" && (
+        <div>
+          <h3 className="text-sm font-semibold text-slate-800">Quy định chung</h3>
+          <p className="mt-1 text-xs text-slate-500">
+            Quy định thú cưng và hút thuốc được áp dụng cho mọi căn trừ khi thay
+            đổi sau này.
+          </p>
+        </div>
+      )}
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="text-sm font-semibold text-slate-700">
           Thú cưng
@@ -55,12 +55,16 @@ export function PoliciesStep({
         </label>
       </div>
       <label className="block text-sm font-semibold text-slate-700">
-        Nội quy chung
+        {rentalArrangement === "WHOLE_SPACE" ? "Nội quy" : "Nội quy chung"}
         <textarea
           name="shared_rules"
           rows={3}
           className={textareaClass}
-          placeholder="Mỗi dòng một nội quy dùng chung"
+          placeholder={
+            rentalArrangement === "WHOLE_SPACE"
+              ? "Mỗi dòng một nội quy"
+              : "Mỗi dòng một nội quy dùng chung"
+          }
         />
       </label>
       {rentalArrangement === "SEPARATE_UNITS" && (

@@ -316,6 +316,20 @@ export default function NewOwnerPropertyPage() {
               .map((item) => item.trim())
               .filter(Boolean),
           },
+          ...(rentalArrangement === "WHOLE_SPACE"
+            ? {
+                area_m2: numberFromForm(form, "area_m2"),
+                bedrooms: numberFromForm(form, "bedrooms", 0) ?? 0,
+                bathrooms: numberFromForm(form, "bathrooms", 1) ?? 1,
+                advertised_monthly_rent: numberFromForm(form, "rent"),
+                deposit: numberFromForm(form, "deposit"),
+                minimum_rental_months: numberFromForm(form, "minimum_rental_months", 3) ?? 3,
+                max_occupants: numberFromForm(form, "max_occupants", 1),
+                unit_description:
+                  read(form, "unit_description") || read(form, "description") || null,
+                unit_amenities: unitAmenityDocumentFromForm(form, catalog, sharedAmenityKeys),
+              }
+            : {}),
         });
         setCreatedProperty(property);
       }
@@ -387,9 +401,19 @@ export default function NewOwnerPropertyPage() {
             (unit) => !unit.archived_at
           );
           if (wholeSpaceUnit) {
+            const description =
+              read(form, "unit_description") || read(form, "description") || null;
+            const area = numberFromForm(form, "area_m2");
             await updateOwnerUnit(property.id, wholeSpaceUnit.id, {
               expected_content_revision: property.content_revision,
-              area_m2: numberFromForm(form, "area_m2"),
+              description,
+              is_marketed:
+                Boolean(description?.trim()) &&
+                area !== null &&
+                rent !== null &&
+                deposit !== null &&
+                maxOccupants !== null,
+              area_m2: area,
               bedrooms: numberFromForm(form, "bedrooms", 0) ?? 0,
               bathrooms: numberFromForm(form, "bathrooms", 1) ?? 1,
               bathroom_arrangement: "PRIVATE",
@@ -432,6 +456,21 @@ export default function NewOwnerPropertyPage() {
     setStep(newStep);
   }
 
+  const visibleStages =
+    rentalArrangement === "WHOLE_SPACE"
+      ? ["Thông tin cơ bản", "Hình thức thuê", "Tiện ích", "Nội quy", "Kiểm tra lại"]
+      : stages;
+  const visibleStageDescriptions =
+    rentalArrangement === "WHOLE_SPACE"
+      ? [
+          stageDescriptions[0],
+          "Chọn cho thuê cả căn và nhập giá, diện tích, số người.",
+          "Chọn tiện ích của căn này.",
+          "Thiết lập thú cưng, hút thuốc và nội quy của căn này.",
+          stageDescriptions[4],
+        ]
+      : stageDescriptions;
+
   return (
     <section className="mx-auto w-full max-w-6xl py-3 sm:py-5">
       <p className="text-sm text-slate-500">
@@ -460,21 +499,21 @@ export default function NewOwnerPropertyPage() {
         className="mt-6 grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start"
       >
         <WizardProgress
-          stages={stages}
+          stages={visibleStages}
           currentStep={step}
           onStepChange={handleStepChange}
         />
 
-        <div className={shellClass}>
-          <header className="border-b border-slate-200 px-5 py-4 sm:px-6">
+        <div className={`${shellClass} flex max-h-[calc(100dvh-18rem)] flex-col self-start`}>
+          <header className="sticky top-0 z-10 shrink-0 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
             <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
-              {stages[step]}
+              {visibleStages[step]}
             </h2>
             <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-              {stageDescriptions[step]}
+              {visibleStageDescriptions[step]}
             </p>
           </header>
-          <div className="m-4 space-y-5 rounded-xl bg-slate-50 p-4 sm:m-5 sm:p-5">
+          <div className="m-4 min-h-0 flex-1 space-y-5 overflow-y-auto rounded-xl bg-slate-50 p-4 sm:m-5 sm:p-5">
             <div hidden={step !== 0}>
               <BasicInfoStep />
             </div>
@@ -504,6 +543,7 @@ export default function NewOwnerPropertyPage() {
                 onSharedAmenityKeysChange={setSharedAmenityKeys}
                 amenityScope={amenityScope}
                 onAmenityScopeChange={setAmenityScope}
+                rentalArrangement={rentalArrangement}
               />
             </div>
 
@@ -560,7 +600,7 @@ export default function NewOwnerPropertyPage() {
             )}
           </div>
 
-          <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 sm:px-6">
+          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 sm:px-6">
             <button
               type="button"
               onClick={() => router.push("/owner/properties")}
