@@ -6,6 +6,7 @@ use App\Models\Property;
 use App\Models\PropertyMedia;
 use App\Models\Unit;
 use App\Models\User;
+use App\Services\GeocodingService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Client\ConnectionException;
@@ -20,6 +21,8 @@ use Throwable;
 
 class PropertyWriteService
 {
+    public function __construct(private readonly GeocodingService $geocoding) {}
+
     /**
      * Create a property draft and, for WHOLE_SPACE, its initial unit atomically.
      *
@@ -30,10 +33,10 @@ class PropertyWriteService
     {
         $operationId = $attributes['client_operation_id'];
         $requestHash = hash('sha256', json_encode($this->canonicalize($attributes), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
+        $coordinates = $this->coordinatesFor($attributes);
 
-        return DB::transaction(function () use ($owner, $attributes, $operationId, $requestHash): array {
+        return DB::transaction(function () use ($owner, $attributes, $operationId, $requestHash, $coordinates): array {
             $owner = $this->lockActiveOwner($owner);
-
             $existingOperation = DB::table('idempotency_records')
                 ->where('actor_id', $owner->id)
                 ->where('action', 'property.create')
@@ -60,6 +63,7 @@ class PropertyWriteService
                 409,
             );
 
+            $sharedAmenities = $this->amenitiesObject($attributes['shared_amenities'] ?? []);
             $property = Property::query()->create([
                 'owner_id' => $owner->id,
                 'client_operation_id' => $operationId,
@@ -71,24 +75,30 @@ class PropertyWriteService
                 'ward' => $attributes['ward'] ?? null,
                 'city' => $attributes['city'] ?? null,
                 'description' => $attributes['description'] ?? null,
-                'shared_amenities' => $this->amenitiesObject($attributes['shared_amenities'] ?? []),
+                'shared_amenities' => $sharedAmenities,
                 'policies' => $attributes['policies'] ?? self::defaultPolicies(),
-                'latitude' => $attributes['latitude'] ?? null,
-                'longitude' => $attributes['longitude'] ?? null,
+                'latitude' => $attributes['latitude'] ?? ($coordinates['latitude'] ?? null),
+                'longitude' => $attributes['longitude'] ?? ($coordinates['longitude'] ?? null),
             ]);
 
             $units = [];
             if ($property->rental_arrangement === 'WHOLE_SPACE') {
                 $units[] = $property->units()->create([
                     'client_operation_id' => (string) Str::uuid(),
-                    'label' => $this->wholeSpaceLabel($property->property_type),
+                    'label' => $property->name,
                     'unit_kind' => $this->wholeSpaceKind($property->property_type),
-                    'bedrooms' => 0,
-                    'bathrooms' => 0,
+                    'description' => $this->wholeSpaceDescription($attributes),
+                    'area_m2' => $attributes['area_m2'] ?? null,
+                    'bedrooms' => $attributes['bedrooms'] ?? 0,
+                    'bathrooms' => $attributes['bathrooms'] ?? 0,
                     'bathroom_arrangement' => 'PRIVATE',
-                    'minimum_rental_months' => 3,
-                    'amenities' => self::emptyAmenities(),
+                    'advertised_monthly_rent' => $attributes['advertised_monthly_rent'] ?? null,
+                    'deposit' => $attributes['deposit'] ?? null,
+                    'minimum_rental_months' => $attributes['minimum_rental_months'] ?? 3,
+                    'max_occupants' => $attributes['max_occupants'] ?? null,
+                    'amenities' => $this->amenitiesObject($attributes['unit_amenities'] ?? []),
                     'policy_overrides' => new \stdClass,
+                    'is_marketed' => $this->wholeSpaceUnitIsReady($attributes),
                 ]);
             }
 
@@ -138,7 +148,9 @@ class PropertyWriteService
      */
     public function update(User $owner, Property $property, array $attributes): Property
     {
-        return DB::transaction(function () use ($owner, $property, $attributes): Property {
+        $coordinates = $this->coordinatesForUpdate($property, $attributes);
+
+        return DB::transaction(function () use ($owner, $property, $attributes, $coordinates): Property {
             $property = Property::query()->whereKey($property->id)->lockForUpdate()->firstOrFail();
             $owner = $this->lockActiveOwner($owner);
             Gate::authorize('update', $property);
@@ -148,17 +160,29 @@ class PropertyWriteService
             $before = $this->auditSnapshot($property);
             unset($attributes['expected_content_revision']);
             $this->validatePublishedPropertyEdit($property, $attributes);
+            $unitAttributes = $this->pullWholeSpaceUnitAttributes($attributes);
+            if ($coordinates !== null) {
+                $attributes['latitude'] = $coordinates['latitude'];
+                $attributes['longitude'] = $coordinates['longitude'];
+            }
             if (array_key_exists('shared_amenities', $attributes)) {
                 $attributes['shared_amenities'] = $this->amenitiesObject($attributes['shared_amenities']);
             }
             $property->fill($attributes);
 
-            if (! $property->isDirty()) {
+            $syncWholeSpaceUnit = $property->rental_arrangement === 'WHOLE_SPACE'
+                && ($property->isDirty() || $unitAttributes !== []);
+
+            if (! $property->isDirty() && ! $syncWholeSpaceUnit) {
                 return $property->load('units');
             }
 
             $property->content_revision++;
             $property->save();
+
+            if ($syncWholeSpaceUnit) {
+                $this->syncWholeSpaceUnit($property, $unitAttributes);
+            }
 
             $correlationId = (string) Str::uuid();
             $invalidatedListingIds = $this->invalidatePendingListings($property);
@@ -244,14 +268,6 @@ class PropertyWriteService
         }, 3);
     }
 
-    private static function emptyAmenities(): object
-    {
-        return (object) ['schema_version' => 1, 'standard' => new \stdClass, 'custom' => []];
-    }
-
-    /**
-     * @param  array<string, mixed>  $amenities
-     */
     private function amenitiesObject(array $amenities): object
     {
         $amenities = AmenityCatalog::normalizeDocument($amenities);
@@ -288,13 +304,158 @@ class PropertyWriteService
         ];
     }
 
-    private function wholeSpaceLabel(string $propertyType): string
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array{latitude: float, longitude: float}|null
+     */
+    private function coordinatesFor(array $attributes): ?array
     {
-        return match ($propertyType) {
-            'HOUSE' => 'Entire house',
-            'APARTMENT_BUILDING' => 'Entire building',
-            default => 'Entire apartment',
-        };
+        if (array_key_exists('latitude', $attributes) || array_key_exists('longitude', $attributes)) {
+            return null;
+        }
+
+        return $this->geocoding->geocode(
+            is_string($attributes['address_line'] ?? null) ? $attributes['address_line'] : null,
+            is_string($attributes['ward'] ?? null) ? $attributes['ward'] : null,
+            is_string($attributes['city'] ?? null) ? $attributes['city'] : null,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array{latitude: float, longitude: float}|null
+     */
+    private function coordinatesForUpdate(Property $property, array $attributes): ?array
+    {
+        if (array_key_exists('latitude', $attributes) || array_key_exists('longitude', $attributes)) {
+            return null;
+        }
+
+        $addressFields = ['address_line', 'ward', 'city'];
+        $changed = false;
+        foreach ($addressFields as $field) {
+            if (array_key_exists($field, $attributes) && $attributes[$field] !== $property->{$field}) {
+                $changed = true;
+            }
+        }
+
+        if (! $changed) {
+            return null;
+        }
+
+        $addressLine = array_key_exists('address_line', $attributes) ? $attributes['address_line'] : $property->address_line;
+        $ward = array_key_exists('ward', $attributes) ? $attributes['ward'] : $property->ward;
+        $city = array_key_exists('city', $attributes) ? $attributes['city'] : $property->city;
+
+        return $this->geocoding->geocode(
+            is_string($addressLine) ? $addressLine : null,
+            is_string($ward) ? $ward : null,
+            is_string($city) ? $city : null,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @return array<string, mixed>
+     */
+    private function pullWholeSpaceUnitAttributes(array &$attributes): array
+    {
+        $keys = [
+            'unit_amenities',
+            'unit_description',
+            'area_m2',
+            'bedrooms',
+            'bathrooms',
+            'advertised_monthly_rent',
+            'deposit',
+            'minimum_rental_months',
+            'max_occupants',
+        ];
+        $unitAttributes = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $attributes)) {
+                $unitAttributes[$key] = $attributes[$key];
+                unset($attributes[$key]);
+            }
+        }
+
+        return $unitAttributes;
+    }
+
+    /**
+     * @param  array<string, mixed>  $unitAttributes
+     */
+    private function syncWholeSpaceUnit(Property $property, array $unitAttributes): void
+    {
+        $unit = $property->units()->whereNull('archived_at')->orderBy('id')->first();
+        if (! $unit instanceof Unit) {
+            return;
+        }
+
+        $changes = [
+            'label' => $property->name,
+            'unit_kind' => $this->wholeSpaceKind($property->property_type),
+        ];
+        if (array_key_exists('unit_amenities', $unitAttributes) && is_array($unitAttributes['unit_amenities'])) {
+            $changes['amenities'] = $this->amenitiesObject($unitAttributes['unit_amenities']);
+        } elseif ($property->wasChanged('shared_amenities')) {
+            $changes['amenities'] = $property->shared_amenities;
+        }
+        if (array_key_exists('unit_description', $unitAttributes)) {
+            $description = $unitAttributes['unit_description'];
+            $changes['description'] = is_string($description) && trim($description) !== ''
+                ? $description
+                : $property->description;
+        } elseif (! is_string($unit->description) || trim($unit->description) === '') {
+            $changes['description'] = $property->description;
+        }
+        foreach (['area_m2', 'bedrooms', 'bathrooms', 'advertised_monthly_rent', 'deposit', 'minimum_rental_months', 'max_occupants'] as $field) {
+            if (array_key_exists($field, $unitAttributes)) {
+                $changes[$field] = $unitAttributes[$field];
+            }
+        }
+        $unit->fill($changes);
+        if ($this->storedUnitIsReady($unit)) {
+            $unit->is_marketed = true;
+        }
+
+        if ($unit->isDirty()) {
+            $unit->save();
+        }
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function wholeSpaceDescription(array $attributes): ?string
+    {
+        $description = $attributes['unit_description'] ?? $attributes['description'] ?? null;
+
+        return is_string($description) && trim($description) !== '' ? $description : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     */
+    private function wholeSpaceUnitIsReady(array $attributes): bool
+    {
+        $description = $attributes['unit_description'] ?? $attributes['description'] ?? null;
+
+        return is_string($description) && trim($description) !== ''
+            && ($attributes['area_m2'] ?? null) !== null
+            && ($attributes['advertised_monthly_rent'] ?? null) !== null
+            && ($attributes['deposit'] ?? null) !== null
+            && ($attributes['max_occupants'] ?? null) !== null;
+    }
+
+    private function storedUnitIsReady(Unit $unit): bool
+    {
+        return $unit->operational_status === 'READY'
+            && is_string($unit->description) && trim($unit->description) !== ''
+            && $unit->area_m2 !== null
+            && $unit->advertised_monthly_rent !== null
+            && $unit->deposit !== null
+            && $unit->max_occupants !== null;
     }
 
     private function wholeSpaceKind(string $propertyType): string

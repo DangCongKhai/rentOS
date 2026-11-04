@@ -50,7 +50,7 @@ return new class extends Migration
             $table->text('floor')->nullable();
             $table->decimal('area_m2', 12, 2)->nullable();
             $table->integer('bedrooms');
-            $table->decimal('bathrooms', 6, 2);
+            $table->integer('bathrooms');
             $table->text('bathroom_arrangement');
             $table->jsonb('amenities')->default(
                 DB::raw('\'{"schema_version":1,"standard":{},"custom":[]}\'::jsonb'),

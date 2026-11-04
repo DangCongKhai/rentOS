@@ -50,7 +50,7 @@ class OwnerPropertiesTest extends TestCase
             ->assertJsonPath('data.content_revision', 1)
             ->assertJsonPath('data.address_line', null)
             ->assertJsonCount(1, 'data.units')
-            ->assertJsonPath('data.units.0.label', 'Entire apartment')
+            ->assertJsonPath('data.units.0.label', 'Can ho Landmark')
             ->assertJsonPath('data.units.0.is_marketed', false);
 
         $propertyId = $response->json('data.id');

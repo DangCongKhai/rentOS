@@ -55,7 +55,7 @@ class StoreUnitsBatchRequest extends FormRequest
             'units.*.floor' => ['nullable', 'string', 'max:100'],
             'units.*.area_m2' => ['nullable', 'numeric', 'gt:0'],
             'units.*.bedrooms' => ['required', 'integer', 'min:0'],
-            'units.*.bathrooms' => ['required', 'numeric', 'min:0'],
+            'units.*.bathrooms' => ['required', 'integer', 'min:0'],
             'units.*.bathroom_arrangement' => ['required', Rule::in(['PRIVATE', 'SHARED'])],
             'units.*.advertised_monthly_rent' => ['nullable', 'integer', 'gt:0'],
             'units.*.deposit' => ['nullable', 'integer', 'min:0'],

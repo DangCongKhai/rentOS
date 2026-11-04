@@ -89,6 +89,21 @@ class OwnerListingsTest extends TestCase
         ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
     }
 
+    public function test_whole_space_listing_accepts_the_selected_property_gallery(): void
+    {
+        $owner = User::factory()->create();
+        $propertyId = $this->createCompleteProperty($owner->id);
+        DB::table('properties')->where('id', $propertyId)->update(['rental_arrangement' => 'WHOLE_SPACE']);
+        $unitId = (string) DB::table('units')->where('property_id', $propertyId)->value('id');
+        DB::table('property_media')->where('unit_id', $unitId)->delete();
+        $coverId = $this->createMedia($owner->id, $propertyId);
+
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing", $this->listingPayload($coverId))->assertCreated();
+        $this->actingAs($owner)->postJson("/api/v1/owner/properties/{$propertyId}/listing/submit", [
+            'expected_content_revision' => 1,
+        ])->assertOk()->assertJsonPath('data.moderation_status', 'PENDING');
+    }
+
     public function test_editing_a_pending_listing_invalidates_its_submitted_snapshot(): void
     {
         $owner = User::factory()->create();

@@ -46,7 +46,7 @@ class UpdateUnitRequest extends FormRequest
             'floor' => ['sometimes', 'nullable', 'string', 'max:100'],
             'area_m2' => ['sometimes', 'nullable', 'numeric', 'gt:0'],
             'bedrooms' => ['sometimes', 'required', 'integer', 'min:0'],
-            'bathrooms' => ['sometimes', 'required', 'numeric', 'min:0'],
+            'bathrooms' => ['sometimes', 'required', 'integer', 'min:0'],
             'bathroom_arrangement' => ['sometimes', 'required', Rule::in([
                 'PRIVATE', 'SHARED',
             ])],

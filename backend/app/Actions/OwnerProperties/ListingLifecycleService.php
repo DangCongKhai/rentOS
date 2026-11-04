@@ -2,6 +2,7 @@
 
 namespace App\Actions\OwnerProperties;
 
+use App\Domain\Media\MarketedUnitPhotoQuery;
 use App\Models\Listing;
 use App\Models\Property;
 use App\Models\User;
@@ -264,28 +265,9 @@ class ListingLifecycleService
         if ($readyMarketed->isEmpty()) {
             $missing['units'] = 'Cần ít nhất một căn đang quảng cáo và ở trạng thái sẵn sàng.';
         } else {
-            $readyIds = $readyMarketed->pluck('id')->all();
-            $ownPhotos = DB::table('property_media')
-                ->where('property_id', $property->id)
-                ->whereIn('unit_id', $readyIds)
-                ->where('is_selected_for_listing', true)
-                ->whereNull('deleted_at')
-                ->whereNull('purged_at')
-                ->select('unit_id');
-            $sharedPhotos = DB::table('unit_media')
-                ->join('property_media', 'property_media.id', '=', 'unit_media.media_id')
-                ->whereIn('unit_media.unit_id', $readyIds)
-                ->where('unit_media.is_selected_for_listing', true)
-                ->where('property_media.property_id', $property->id)
-                ->whereNull('property_media.unit_id')
-                ->where('property_media.is_selected_for_listing', true)
-                ->whereNull('property_media.deleted_at')
-                ->whereNull('property_media.purged_at')
-                ->select('unit_media.unit_id');
-            $coveredUnitIds = array_fill_keys(
-                $ownPhotos->union($sharedPhotos)->pluck('unit_id')->all(),
-                true,
-            );
+            $coveredUnits = DB::table('units')->whereIn('id', $readyMarketed->pluck('id')->all());
+            MarketedUnitPhotoQuery::whereHasSelectedPhoto($coveredUnits);
+            $coveredUnitIds = array_fill_keys($coveredUnits->pluck('id')->all(), true);
         }
         foreach ($readyMarketed as $unit) {
             if (! is_string($unit->description) || trim($unit->description) === ''
@@ -312,16 +294,9 @@ class ListingLifecycleService
                 ->whereNotNull('area_m2')
                 ->whereNotNull('advertised_monthly_rent')
                 ->whereNotNull('deposit')
-                ->whereNotNull('max_occupants')
-                ->whereExists(function ($query): void {
-                    $query->selectRaw('1')
-                        ->from('property_media')
-                        ->whereColumn('property_media.property_id', 'units.property_id')
-                        ->whereColumn('property_media.unit_id', 'units.id')
-                        ->where('property_media.is_selected_for_listing', true)
-                        ->whereNull('property_media.deleted_at')
-                        ->whereNull('property_media.purged_at');
-                })
+                ->whereNotNull('max_occupants');
+            MarketedUnitPhotoQuery::whereHasSelectedPhoto($hasAvailableUnit);
+            $hasAvailableUnit = $hasAvailableUnit
                 ->whereNotExists(function ($query) use ($today): void {
                     $query->selectRaw('1')
                         ->from('tenancies')

@@ -56,4 +56,11 @@ return [
         'url' => env('TINHTHANHPHO_API_URL', 'https://www.tinhthanhpho.com/api/v1'),
     ],
 
+    'nominatim' => [
+        'enabled' => (bool) env('NOMINATIM_ENABLED', true),
+        'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org/search'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'rentOS/1.0 (property geocoding)'),
+        'timeout' => (int) env('NOMINATIM_TIMEOUT', 5),
+    ],
+
 ];

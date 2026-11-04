@@ -31,6 +31,7 @@ class PublicListingDetailResource extends JsonResource
             'property' => [
                 'name' => $property->name,
                 'property_type' => $property->property_type,
+                'rental_arrangement' => $property->rental_arrangement,
                 'address_line' => $property->address_line,
                 'ward' => $property->ward,
                 'city' => $property->city,
