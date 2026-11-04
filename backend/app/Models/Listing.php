@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Media\MarketedUnitPhotoQuery;
+use Database\Factories\ListingFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
