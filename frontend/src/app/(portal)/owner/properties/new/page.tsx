@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, useRef, type FormEvent } from "react";
 import {
   ApiError,
@@ -21,13 +21,21 @@ import { AmenitiesStep } from "./components/amenities-step";
 import { PoliciesStep } from "./components/policies-step";
 import { ReviewStep, type ReviewStepFormData } from "./components/review-step";
 import { emptyRoom, type RoomDraft } from "./components/shared/types";
-import { primaryButton, secondaryButton, shellClass } from "./components/shared/form-styles";
+import {
+  primaryButton,
+  secondaryButton,
+  shellClass,
+} from "./components/shared/form-styles";
 
 function extractFormData(form: HTMLFormElement | null): ReviewStepFormData {
   function read(name: string): string {
     if (!form) return "";
     const value = form.elements.namedItem(name);
-    if (value instanceof HTMLInputElement || value instanceof HTMLTextAreaElement || value instanceof HTMLSelectElement) {
+    if (
+      value instanceof HTMLInputElement ||
+      value instanceof HTMLTextAreaElement ||
+      value instanceof HTMLSelectElement
+    ) {
       return value.value.trim();
     }
     return "";
@@ -72,7 +80,7 @@ function read(form: FormData, name: string): string {
 function numberFromForm(
   form: FormData,
   name: string,
-  fallback: number | null = null
+  fallback: number | null = null,
 ): number | null {
   const value = read(form, name);
   return value === "" ? fallback : Number(value);
@@ -80,11 +88,11 @@ function numberFromForm(
 
 function documentFromForm(
   form: FormData,
-  catalog: AmenityCatalogEntry[]
+  catalog: AmenityCatalogEntry[],
 ): AmenityDocument {
   const standard: AmenityDocument["standard"] = {};
   for (const amenity of catalog.filter((item) =>
-    item.scopes.includes("shared")
+    item.scopes.includes("shared"),
   )) {
     if (form.get(`amenity:${amenity.key}`) === "on") {
       const details = read(form, `amenity_details:${amenity.key}`);
@@ -107,11 +115,11 @@ function documentFromForm(
 function unitAmenityDocumentFromForm(
   form: FormData,
   catalog: AmenityCatalogEntry[],
-  excludedKeys: ReadonlySet<string> = new Set()
+  excludedKeys: ReadonlySet<string> = new Set(),
 ): AmenityDocument {
   const standard: AmenityDocument["standard"] = {};
   for (const amenity of catalog.filter((item) =>
-    item.scopes.includes("unit")
+    item.scopes.includes("unit"),
   )) {
     if (
       form.get(`unit_amenity:${amenity.key}`) === "on" &&
@@ -135,8 +143,16 @@ function unitAmenityDocumentFromForm(
 }
 
 export default function NewOwnerPropertyPage() {
+  const searchParams = useSearchParams();
+  const freshKey = searchParams.get("fresh") || "default";
+
+  return <NewOwnerPropertyWizard key={freshKey} />;
+}
+
+function NewOwnerPropertyWizard() {
   const router = useRouter();
   const formRef = useRef<HTMLFormElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
   const [catalog, setCatalog] = useState<AmenityCatalogEntry[]>([]);
   const [loadingCatalog, setLoadingCatalog] = useState(true);
@@ -154,10 +170,10 @@ export default function NewOwnerPropertyPage() {
   const [rooms, setRooms] = useState<RoomDraft[]>([emptyRoom("Phòng 101")]);
   const [activeUnitIndex, setActiveUnitIndex] = useState(0);
   const [sharedAmenityKeys, setSharedAmenityKeys] = useState<Set<string>>(
-    () => new Set()
+    () => new Set(),
   );
   const [amenityScope, setAmenityScope] = useState<"property" | "unit">(
-    "property"
+    "property",
   );
   const [setupComplete, setSetupComplete] = useState(false);
   const [reviewFormData, setReviewFormData] = useState<ReviewStepFormData>({
@@ -182,6 +198,13 @@ export default function NewOwnerPropertyPage() {
     }
   }, [step]);
 
+  // Scroll to top when step changes
+  useEffect(() => {
+    if (contentRef.current) {
+      contentRef.current.scrollTop = 0;
+    }
+  }, [step]);
+
   useEffect(() => {
     let active = true;
     getAmenityCatalog()
@@ -201,12 +224,12 @@ export default function NewOwnerPropertyPage() {
 
   const unitLabels = rooms.map((room) => room.label);
   const normalizedLabels = unitLabels.map((label) =>
-    label.trim().toLocaleLowerCase()
+    label.trim().toLocaleLowerCase(),
   );
   const duplicateLabels = new Set(
     normalizedLabels.filter(
-      (label, index) => label && normalizedLabels.indexOf(label) !== index
-    )
+      (label, index) => label && normalizedLabels.indexOf(label) !== index,
+    ),
   );
 
   function updateUnitDefaults(count: number, prefix: string, start: number) {
@@ -223,7 +246,7 @@ export default function NewOwnerPropertyPage() {
           ...existing,
           label: existing.labelEdited ? existing.label : generated,
         };
-      })
+      }),
     );
     setActiveUnitIndex((current) => Math.min(current, nextCount - 1));
   }
@@ -231,14 +254,14 @@ export default function NewOwnerPropertyPage() {
   function updateRoom(
     index: number,
     patch: Partial<RoomDraft>,
-    customized = true
+    customized = true,
   ) {
     setRooms((current) =>
       current.map((room, roomIndex) =>
         roomIndex === index
           ? { ...room, ...patch, customized: customized || room.customized }
-          : room
-      )
+          : room,
+      ),
     );
   }
 
@@ -254,12 +277,14 @@ export default function NewOwnerPropertyPage() {
           labelEdited: room.labelEdited,
           customized: false,
         };
-      })
+      }),
     );
   }
 
   function goNext(form: HTMLFormElement) {
-    if (step === 0 && !form.reportValidity()) return;
+    if (step === 0 && addressBlocksProgress()) return;
+    if (!form.reportValidity()) return;
+
     if (
       step === 1 &&
       rentalArrangement === "SEPARATE_UNITS" &&
@@ -268,7 +293,7 @@ export default function NewOwnerPropertyPage() {
         unitLabels.some((label) => !label.trim()))
     ) {
       setError(
-        "Kiểm tra tên căn: cần ít nhất một tên và không được trùng nhau."
+        "Kiểm tra tên căn: cần ít nhất một tên và không được trùng nhau.",
       );
       return;
     }
@@ -279,8 +304,22 @@ export default function NewOwnerPropertyPage() {
 
   async function submitWizard(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    // Only proceed to next step if NOT on final review step
     if (step < stages.length - 1) {
       goNext(event.currentTarget);
+      return;
+    }
+
+    // At this point: step === stages.length - 1 (final step)
+    // Only submit if user explicitly clicked the submit button
+    // Check if the submit was from the actual submit button, not accidental
+    const submitButton = (event.nativeEvent as SubmitEvent).submitter;
+    if (
+      !submitButton ||
+      !submitButton.getAttribute("type")?.includes("submit")
+    ) {
+      // If triggered by Enter key in an input field, don't auto-submit
       return;
     }
 
@@ -323,11 +362,18 @@ export default function NewOwnerPropertyPage() {
                 bathrooms: numberFromForm(form, "bathrooms", 1) ?? 1,
                 advertised_monthly_rent: numberFromForm(form, "rent"),
                 deposit: numberFromForm(form, "deposit"),
-                minimum_rental_months: numberFromForm(form, "minimum_rental_months", 3) ?? 3,
+                minimum_rental_months:
+                  numberFromForm(form, "minimum_rental_months", 3) ?? 3,
                 max_occupants: numberFromForm(form, "max_occupants", 1),
                 unit_description:
-                  read(form, "unit_description") || read(form, "description") || null,
-                unit_amenities: unitAmenityDocumentFromForm(form, catalog, sharedAmenityKeys),
+                  read(form, "unit_description") ||
+                  read(form, "description") ||
+                  null,
+                unit_amenities: unitAmenityDocumentFromForm(
+                  form,
+                  catalog,
+                  sharedAmenityKeys,
+                ),
               }
             : {}),
         });
@@ -336,7 +382,7 @@ export default function NewOwnerPropertyPage() {
 
       if (!setupComplete && property && createdProperty) {
         setError(
-          "Bản nháp đã được tạo nhưng chưa hoàn tất các căn. Mở bất động sản để tiếp tục trong mục Danh sách căn."
+          "Bản nháp đã được tạo nhưng chưa hoàn tất các căn. Mở bất động sản để tiếp tục trong mục Danh sách căn.",
         );
         return;
       }
@@ -373,7 +419,7 @@ export default function NewOwnerPropertyPage() {
               amenities: unitAmenityDocumentFromForm(
                 form,
                 catalog,
-                sharedAmenityKeys
+                sharedAmenityKeys,
               ),
               policy_overrides: {
                 additional_rules: read(form, `new_${index}_additional_rules`)
@@ -390,19 +436,21 @@ export default function NewOwnerPropertyPage() {
                               .trim()
                               .normalize("NFC")
                               .toLocaleLowerCase("vi") ===
-                            rule.normalize("NFC").toLocaleLowerCase("vi")
-                        )
+                            rule.normalize("NFC").toLocaleLowerCase("vi"),
+                        ),
                   ),
               },
             })),
           });
         } else {
           const wholeSpaceUnit = property.units.find(
-            (unit) => !unit.archived_at
+            (unit) => !unit.archived_at,
           );
           if (wholeSpaceUnit) {
             const description =
-              read(form, "unit_description") || read(form, "description") || null;
+              read(form, "unit_description") ||
+              read(form, "description") ||
+              null;
             const area = numberFromForm(form, "area_m2");
             await updateOwnerUnit(property.id, wholeSpaceUnit.id, {
               expected_content_revision: property.content_revision,
@@ -424,7 +472,7 @@ export default function NewOwnerPropertyPage() {
               amenities: unitAmenityDocumentFromForm(
                 form,
                 catalog,
-                sharedAmenityKeys
+                sharedAmenityKeys,
               ),
             });
           }
@@ -443,7 +491,7 @@ export default function NewOwnerPropertyPage() {
         setError(
           property
             ? "Bản nháp đã được tạo nhưng có lỗi xảy ra. Vui lòng mở bất động sản để tiếp tục."
-            : "Không thể tạo bất động sản. Vui lòng thử lại."
+            : "Không thể tạo bất động sản. Vui lòng thử lại.",
         );
       }
     } finally {
@@ -451,14 +499,31 @@ export default function NewOwnerPropertyPage() {
     }
   }
 
+  function addressBlocksProgress(): boolean {
+    const addressInput = formRef.current?.querySelector(
+      '[name="address_line"]',
+    ) as HTMLInputElement | null;
+    if (!addressInput?.validationMessage) return false;
+    addressInput.reportValidity();
+    addressInput.focus();
+    return true;
+  }
+
   function handleStepChange(newStep: number) {
+    if (newStep > step && step === 0 && addressBlocksProgress()) return;
     setError("");
     setStep(newStep);
   }
 
   const visibleStages =
     rentalArrangement === "WHOLE_SPACE"
-      ? ["Thông tin cơ bản", "Hình thức thuê", "Tiện ích", "Nội quy", "Kiểm tra lại"]
+      ? [
+          "Thông tin cơ bản",
+          "Hình thức thuê",
+          "Tiện ích",
+          "Nội quy",
+          "Kiểm tra lại",
+        ]
       : stages;
   const visibleStageDescriptions =
     rentalArrangement === "WHOLE_SPACE"
@@ -472,191 +537,199 @@ export default function NewOwnerPropertyPage() {
       : stageDescriptions;
 
   return (
-    <section className="mx-auto w-full max-w-6xl py-3 sm:py-5">
-      <p className="text-sm text-slate-500">
-        Không gian quản lý / Chủ nhà /{" "}
-        <Link href="/owner/properties" className="text-[#3368a0] hover:underline">
-          Bất động sản
-        </Link>{" "}
-        / Tạo bất động sản
-      </p>
-      <div className="mt-3">
-        <p className="text-xs font-semibold uppercase tracking-wide text-[#3368a0]">
-          Tạo bản nháp
+      <section className="mx-auto w-full max-w-6xl py-3 sm:py-5">
+        <p className="text-sm text-slate-500">
+          Không gian quản lý / Chủ nhà /{" "}
+          <Link
+            href="/owner/properties"
+            className="text-[#3368a0] hover:underline"
+          >
+            Bất động sản
+          </Link>{" "}
+          / Tạo bất động sản
         </p>
-        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-          Thêm bất động sản mới
-        </h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu
-          tìm người thuê.
-        </p>
-      </div>
+        <div className="mt-3">
+          <p className="text-xs font-semibold uppercase tracking-wide text-[#3368a0]">
+            Tạo bản nháp
+          </p>
+          <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
+            Thêm bất động sản mới
+          </h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Cung cấp thông tin cơ bản, hình thức cho thuê và tiện ích để bắt đầu
+            tìm người thuê.
+          </p>
+        </div>
 
-      <form
-        ref={formRef}
-        onSubmit={submitWizard}
-        className="mt-6 grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start"
-      >
-        <WizardProgress
-          stages={visibleStages}
-          currentStep={step}
-          onStepChange={handleStepChange}
-        />
+        <form
+          ref={formRef}
+          onSubmit={submitWizard}
+          className="mt-6 grid gap-5 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start"
+        >
+          <WizardProgress
+            stages={visibleStages}
+            currentStep={step}
+            onStepChange={handleStepChange}
+          />
 
-        <div className={`${shellClass} flex max-h-[calc(100dvh-18rem)] flex-col self-start`}>
-          <header className="sticky top-0 z-10 shrink-0 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
-            <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
-              {visibleStages[step]}
-            </h2>
-            <p className="mt-1 text-xs text-slate-600 sm:text-sm">
-              {visibleStageDescriptions[step]}
-            </p>
-          </header>
-          <div className="m-4 min-h-0 flex-1 space-y-5 overflow-y-auto rounded-xl bg-slate-50 p-4 sm:m-5 sm:p-5">
-            <div hidden={step !== 0}>
-              <BasicInfoStep />
+          <div
+            className={`${shellClass} flex max-h-[calc(100dvh-18rem)] flex-col self-start`}
+          >
+            <header className="sticky top-0 z-10 shrink-0 border-b border-slate-200 bg-white px-5 py-4 sm:px-6">
+              <h2 className="text-lg font-bold text-slate-900 sm:text-xl">
+                {visibleStages[step]}
+              </h2>
+              <p className="mt-1 text-xs text-slate-600 sm:text-sm">
+                {visibleStageDescriptions[step]}
+              </p>
+            </header>
+            <div
+              ref={contentRef}
+              className="m-4 min-h-0 flex-1 space-y-5 overflow-y-auto rounded-xl bg-slate-50 p-4 sm:m-5 sm:p-5"
+            >
+              <div hidden={step !== 0}>
+                <BasicInfoStep />
+              </div>
+
+              <div hidden={step !== 1}>
+                <RentalArrangementStep
+                  rentalArrangement={rentalArrangement}
+                  onRentalArrangementChange={setRentalArrangement}
+                  unitCount={unitCount}
+                  unitPrefix={unitPrefix}
+                  startNumber={startNumber}
+                  rooms={rooms}
+                  activeUnitIndex={activeUnitIndex}
+                  duplicateLabels={duplicateLabels}
+                  onUpdateUnitDefaults={updateUnitDefaults}
+                  onUpdateRoom={updateRoom}
+                  onApplyRoomToEmpty={applyRoomToEmpty}
+                  onSetActiveUnit={setActiveUnitIndex}
+                />
+              </div>
+
+              <div hidden={step !== 2}>
+                <AmenitiesStep
+                  catalog={catalog}
+                  loadingCatalog={loadingCatalog}
+                  sharedAmenityKeys={sharedAmenityKeys}
+                  onSharedAmenityKeysChange={setSharedAmenityKeys}
+                  amenityScope={amenityScope}
+                  onAmenityScopeChange={setAmenityScope}
+                  rentalArrangement={rentalArrangement}
+                />
+              </div>
+
+              <div hidden={step !== 3}>
+                <PoliciesStep
+                  rentalArrangement={rentalArrangement}
+                  unitLabels={unitLabels}
+                  activeUnitIndex={activeUnitIndex}
+                  onSetActiveUnit={setActiveUnitIndex}
+                />
+              </div>
+
+              <div hidden={step !== 4}>
+                <ReviewStep
+                  formData={reviewFormData}
+                  rentalArrangement={rentalArrangement}
+                  rooms={rooms}
+                  sharedAmenityKeys={sharedAmenityKeys}
+                  catalog={catalog}
+                  onNavigateToStep={handleStepChange}
+                />
+              </div>
+
+              {error && (
+                <div
+                  role="alert"
+                  className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+                >
+                  {error}
+                  {createdProperty && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        router.push(`/owner/properties/${createdProperty.id}`)
+                      }
+                      className="ml-2 font-semibold underline"
+                    >
+                      Mở bất động sản đã tạo
+                    </button>
+                  )}
+                </div>
+              )}
+              {Object.entries(fieldErrors).length > 0 && (
+                <ul
+                  role="alert"
+                  className="mt-3 list-disc rounded-xl border border-rose-200 bg-rose-50 px-8 py-3 text-sm text-rose-800"
+                >
+                  {Object.entries(fieldErrors).map(([field, messages]) => (
+                    <li key={field}>
+                      {field}: {messages[0]}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
 
-            <div hidden={step !== 1}>
-              <RentalArrangementStep
-                rentalArrangement={rentalArrangement}
-                onRentalArrangementChange={setRentalArrangement}
-                unitCount={unitCount}
-                unitPrefix={unitPrefix}
-                startNumber={startNumber}
-                rooms={rooms}
-                activeUnitIndex={activeUnitIndex}
-                duplicateLabels={duplicateLabels}
-                onUpdateUnitDefaults={updateUnitDefaults}
-                onUpdateRoom={updateRoom}
-                onApplyRoomToEmpty={applyRoomToEmpty}
-                onSetActiveUnit={setActiveUnitIndex}
-              />
-            </div>
-
-            <div hidden={step !== 2}>
-              <AmenitiesStep
-                catalog={catalog}
-                loadingCatalog={loadingCatalog}
-                sharedAmenityKeys={sharedAmenityKeys}
-                onSharedAmenityKeysChange={setSharedAmenityKeys}
-                amenityScope={amenityScope}
-                onAmenityScopeChange={setAmenityScope}
-                rentalArrangement={rentalArrangement}
-              />
-            </div>
-
-            <div hidden={step !== 3}>
-              <PoliciesStep
-                rentalArrangement={rentalArrangement}
-                unitLabels={unitLabels}
-                activeUnitIndex={activeUnitIndex}
-                onSetActiveUnit={setActiveUnitIndex}
-              />
-            </div>
-
-            <div hidden={step !== 4}>
-              <ReviewStep
-                formData={reviewFormData}
-                rentalArrangement={rentalArrangement}
-                rooms={rooms}
-                sharedAmenityKeys={sharedAmenityKeys}
-                catalog={catalog}
-                onNavigateToStep={handleStepChange}
-              />
-            </div>
-
-            {error && (
-              <div
-                role="alert"
-                className="mt-5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-800"
+            <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 sm:px-6">
+              <button
+                type="button"
+                onClick={() => router.push("/owner/properties")}
+                className={secondaryButton}
               >
-                {error}
-                {createdProperty && (
+                Hủy
+              </button>
+              <div className="flex flex-wrap gap-3">
+                <button
+                  type="button"
+                  aria-label="Quay lại bước trước"
+                  title="Quay lại bước trước"
+                  disabled={step === 0}
+                  onClick={() => {
+                    setError("");
+                    setStep((current) => Math.max(current - 1, 0));
+                  }}
+                  className={`${secondaryButton} size-11 px-0 text-xl disabled:opacity-40`}
+                >
+                  <span aria-hidden="true">←</span>
+                </button>
+                {step < stages.length - 1 ? (
+                  <button
+                    type="button"
+                    aria-label="Đến bước tiếp theo"
+                    title="Đến bước tiếp theo"
+                    onClick={(event) => {
+                      const form = event.currentTarget.form;
+                      if (form) goNext(form);
+                    }}
+                    className={`${primaryButton} size-11 px-0 text-xl`}
+                  >
+                    <span aria-hidden="true">→</span>
+                  </button>
+                ) : createdProperty ? (
                   <button
                     type="button"
                     onClick={() =>
                       router.push(`/owner/properties/${createdProperty.id}`)
                     }
-                    className="ml-2 font-semibold underline"
+                    className={primaryButton}
                   >
                     Mở bất động sản đã tạo
                   </button>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className={primaryButton}
+                  >
+                    {saving ? "Đang lưu…" : "Tạo bản nháp"}
+                  </button>
                 )}
               </div>
-            )}
-            {Object.entries(fieldErrors).length > 0 && (
-              <ul
-                role="alert"
-                className="mt-3 list-disc rounded-xl border border-rose-200 bg-rose-50 px-8 py-3 text-sm text-rose-800"
-              >
-                {Object.entries(fieldErrors).map(([field, messages]) => (
-                  <li key={field}>
-                    {field}: {messages[0]}
-                  </li>
-                ))}
-              </ul>
-            )}
+            </footer>
           </div>
-
-          <footer className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-4 py-4 sm:px-6">
-            <button
-              type="button"
-              onClick={() => router.push("/owner/properties")}
-              className={secondaryButton}
-            >
-              Hủy
-            </button>
-            <div className="flex flex-wrap gap-3">
-              <button
-                type="button"
-                aria-label="Quay lại bước trước"
-                title="Quay lại bước trước"
-                disabled={step === 0}
-                onClick={() => {
-                  setError("");
-                  setStep((current) => Math.max(current - 1, 0));
-                }}
-                className={`${secondaryButton} size-11 px-0 text-xl disabled:opacity-40`}
-              >
-                <span aria-hidden="true">←</span>
-              </button>
-              {step < stages.length - 1 ? (
-                <button
-                  type="button"
-                  aria-label="Đến bước tiếp theo"
-                  title="Đến bước tiếp theo"
-                  onClick={(event) => {
-                    const form = event.currentTarget.form;
-                    if (form) goNext(form);
-                  }}
-                  className={`${primaryButton} size-11 px-0 text-xl`}
-                >
-                  <span aria-hidden="true">→</span>
-                </button>
-              ) : createdProperty ? (
-                <button
-                  type="button"
-                  onClick={() =>
-                    router.push(`/owner/properties/${createdProperty.id}`)
-                  }
-                  className={primaryButton}
-                >
-                  Mở bất động sản đã tạo
-                </button>
-              ) : (
-                <button
-                  type="submit"
-                  disabled={saving}
-                  className={primaryButton}
-                >
-                  {saving ? "Đang lưu…" : "Tạo bản nháp"}
-                </button>
-              )}
-            </div>
-          </footer>
-        </div>
       </form>
     </section>
   );

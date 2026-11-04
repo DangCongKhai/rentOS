@@ -208,6 +208,10 @@ export default function OwnerPortalPage() {
           description="Đăng tin cho thuê nhà hoặc căn hộ của bạn để tiếp cận hàng nghìn người thuê tiềm năng và quản lý hợp đồng chuyên nghiệp."
           ctaHref="/owner/properties/new"
           ctaText="Bắt đầu đăng tin"
+          onCtaClick={(event) => {
+            event.preventDefault();
+            router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
+          }}
         />
       )}
     </div>

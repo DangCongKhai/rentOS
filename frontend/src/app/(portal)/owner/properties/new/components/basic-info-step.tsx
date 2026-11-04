@@ -6,28 +6,15 @@ import { inputClass, textareaClass, selectClass, selectStyle } from "./shared/fo
 
 const emptyLocation: SelectedLocation = { city: "", ward: "", cities: [], wards: [] };
 
-function addressMismatch(address: string, location: SelectedLocation): string {
+export function addressMismatch(address: string, location: SelectedLocation): string {
   const value = address.trim();
   if (value === "") return "";
   if (!location.city || !location.ward) {
     return "Chọn tỉnh/thành và phường/xã trước khi nhập địa chỉ cụ thể.";
   }
-
-  const normalized = value.toLocaleLowerCase("vi");
-  const otherCity = location.cities.find(
-    (name) => name !== location.city && normalized.includes(name.toLocaleLowerCase("vi")),
-  );
-  if (otherCity) {
-    return `Địa chỉ ghi ${otherCity}, nhưng tỉnh/thành đã chọn là ${location.city}.`;
+  if (!value.includes(location.city) || !value.includes(location.ward)) {
+    return `Địa chỉ phải chứa ${location.ward} và ${location.city}.`;
   }
-
-  const otherWard = location.wards.find(
-    (name) => name !== location.ward && name.length > 2 && normalized.includes(name.toLocaleLowerCase("vi")),
-  );
-  if (otherWard) {
-    return `Địa chỉ ghi ${otherWard}, nhưng phường/xã đã chọn là ${location.ward}.`;
-  }
-
   return "";
 }
 
@@ -35,6 +22,8 @@ export function BasicInfoStep() {
   const [location, setLocation] = useState<SelectedLocation>(emptyLocation);
   const [address, setAddress] = useState("");
   const addressRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const addressError = addressMismatch(address, location);
 
   useEffect(() => {
@@ -46,9 +35,11 @@ export function BasicInfoStep() {
       <label className="block text-sm font-semibold text-slate-700">
         Tên bất động sản
         <input
+          ref={nameRef}
           name="name"
           required
           maxLength={255}
+          defaultValue=""
           className={inputClass}
           placeholder="Ví dụ: Căn hộ gần biển Mỹ Khê"
         />
@@ -69,9 +60,11 @@ export function BasicInfoStep() {
       <label className="block text-sm font-semibold text-slate-700">
         Mô tả chi tiết
         <textarea
+          ref={descriptionRef}
           name="description"
           rows={3}
           maxLength={10000}
+          defaultValue=""
           className={textareaClass}
           placeholder="Mô tả vị trí, không gian và điểm nổi bật."
         />
@@ -84,14 +77,18 @@ export function BasicInfoStep() {
           name="address_line"
           maxLength={500}
           value={address}
-          onChange={(event) => setAddress(event.target.value)}
+          onChange={(event) => {
+            const nextAddress = event.target.value;
+            setAddress(nextAddress);
+            event.target.setCustomValidity(addressMismatch(nextAddress, location));
+          }}
           aria-invalid={addressError !== ""}
-          className={inputClass}
+          className={`${inputClass} ${addressError ? "border-rose-500 bg-rose-50" : ""}`}
           placeholder="Số nhà, tên đường"
         />
         {addressError ? (
           <span role="alert" className="mt-1 block text-xs font-medium text-rose-700">
-            {addressError}
+            ❌ {addressError}
           </span>
         ) : null}
       </label>

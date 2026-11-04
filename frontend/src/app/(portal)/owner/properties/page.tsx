@@ -101,7 +101,14 @@ export default function OwnerPropertiesPage() {
             />
             Hiện mục đã lưu trữ
           </label>
-          <Link href="/owner/properties/new" className={buttonClass}>
+          <Link
+            href="/owner/properties/new"
+            className={buttonClass}
+            onClick={(event) => {
+              event.preventDefault();
+              router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
+            }}
+          >
             Tạo bất động sản
           </Link>
         </div>
@@ -206,7 +213,14 @@ export default function OwnerPropertiesPage() {
           <p className="mt-2 text-sm text-slate-600">
             Bắt đầu với thông tin cơ bản và địa chỉ, bạn có thể hoàn thiện sau.
           </p>
-          <Link href="/owner/properties/new" className={`${buttonClass} mt-5`}>
+          <Link
+            href="/owner/properties/new"
+            className={`${buttonClass} mt-5`}
+            onClick={(event) => {
+              event.preventDefault();
+              router.push(`/owner/properties/new?fresh=${crypto.randomUUID()}`);
+            }}
+          >
             Thêm bất động sản
           </Link>
         </div>
