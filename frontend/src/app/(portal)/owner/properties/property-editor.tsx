@@ -763,9 +763,7 @@ function PropertyPhotos({
   const initialUnitId = searchParams.get("unitId");
   
   const [scope, setScope] = useState<"property" | "unit">(
-    initialScope && (initialScope === "property" || initialScope === "unit")
-      ? initialScope
-      : "property"
+    separate && initialScope === "unit" ? "unit" : "property",
   );
   const [activeUnitId, setActiveUnitId] = useState(
     initialUnitId && units.some(u => u.id === initialUnitId)
@@ -773,6 +771,7 @@ function PropertyPhotos({
       : units[0]?.id ?? ""
   );
   const [pending, setPending] = useState<File[]>([]);
+  const [dragOver, setDragOver] = useState(false);
   const [listingFlags, setListingFlags] = useState<Record<string, boolean>>({});
 
   // Create blob URLs from pending files (computed during render, not in effect)
@@ -837,6 +836,29 @@ function PropertyPhotos({
   const selectionChanged =
     (selectedByUnit[activeUnitId] ?? []).length !== saved.length ||
     (selectedByUnit[activeUnitId] ?? []).some((id) => !saved.includes(id));
+
+  function addPendingFiles(files: File[]) {
+    const images = files.filter((file) =>
+      /^(image\/jpeg|image\/png|image\/webp)$/.test(file.type),
+    );
+    if (images.length < files.length) {
+      toast.error("Chỉ nhận ảnh JPG, PNG hoặc WEBP.");
+    }
+    if (images.length === 0) return;
+    setPending((current) => {
+      const next = [...current];
+      for (const file of images) {
+        const alreadyQueued = next.some(
+          (item) =>
+            item.name === file.name &&
+            item.size === file.size &&
+            item.lastModified === file.lastModified,
+        );
+        if (!alreadyQueued) next.push(file);
+      }
+      return next;
+    });
+  }
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -953,16 +975,16 @@ function PropertyPhotos({
                 : "Ảnh bất động sản được dùng trực tiếp cho tin đăng."}
             </p>
           </div>
-          <div className="flex gap-2">
-            <button
-              type="button"
-              aria-pressed={scope === "property"}
-              onClick={() => setScope("property")}
-              className={`min-h-10 rounded-lg border px-4 text-sm font-semibold ${scope === "property" ? "border-[#3368a0] bg-blue-50 text-[#285584]" : "border-slate-200 text-slate-700"}`}
-            >
-              Ảnh bất động sản
-            </button>
-            {separate && (
+          {separate && (
+            <div className="flex gap-2">
+              <button
+                type="button"
+                aria-pressed={scope === "property"}
+                onClick={() => setScope("property")}
+                className={`min-h-10 rounded-lg border px-4 text-sm font-semibold ${scope === "property" ? "border-[#3368a0] bg-blue-50 text-[#285584]" : "border-slate-200 text-slate-700"}`}
+              >
+                Ảnh bất động sản
+              </button>
               <button
                 type="button"
                 aria-pressed={scope === "unit"}
@@ -971,8 +993,8 @@ function PropertyPhotos({
               >
                 Ảnh căn/phòng
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
         {scope === "unit" && (
           <label className="mt-4 block max-w-md text-sm font-medium text-slate-700">
@@ -991,15 +1013,39 @@ function PropertyPhotos({
           </label>
         )}
         <form onSubmit={upload} className="mt-4 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl bg-slate-50 p-4">
-            <p className="text-sm text-slate-600">
-              JPG, PNG, WEBP · tối đa 8 MB mỗi ảnh · tối đa 20 ảnh
-            </p>
+          <div
+            onDragEnter={(event) => {
+              event.preventDefault();
+              if (!busy) setDragOver(true);
+            }}
+            onDragOver={(event) => {
+              event.preventDefault();
+              if (!busy) setDragOver(true);
+            }}
+            onDragLeave={(event) => {
+              event.preventDefault();
+              if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+              setDragOver(false);
+            }}
+            onDrop={(event) => {
+              event.preventDefault();
+              setDragOver(false);
+              if (busy) return;
+              addPendingFiles(Array.from(event.dataTransfer.files));
+            }}
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed p-4 ${dragOver ? "border-[#3368a0] bg-blue-50" : "border-slate-300 bg-slate-50"}`}
+          >
+            <div>
+              <p className="text-sm font-medium text-slate-800">
+                Kéo thả ảnh vào đây, hoặc chọn thêm ảnh
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                JPG, PNG, WEBP · tối đa 8 MB mỗi ảnh · tối đa 20 ảnh
+              </p>
+            </div>
             <div className="flex flex-wrap gap-2">
               <label className={`${buttonClass} cursor-pointer`}>
-                {scope === "unit"
-                  ? "Chọn ảnh"
-                  : "Tải ảnh dùng chung lên"}
+                {scope === "unit" ? "Chọn ảnh" : "Tải ảnh dùng chung lên"}
                 <input
                   type="file"
                   accept="image/jpeg,image/png,image/webp"
@@ -1007,7 +1053,7 @@ function PropertyPhotos({
                   className="sr-only"
                   disabled={busy}
                   onChange={(event) => {
-                    setPending(Array.from(event.currentTarget.files ?? []));
+                    addPendingFiles(Array.from(event.currentTarget.files ?? []));
                     event.currentTarget.value = "";
                   }}
                 />
