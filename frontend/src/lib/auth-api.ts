@@ -215,11 +215,17 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     return undefined as T;
   }
 
-  const payload = (await response.json().catch(() => ({}))) as {
+  const text = await response.text();
+  if (!text.trim()) {
+    return undefined as T;
+  }
+
+  const payload = JSON.parse(text) as {
     message?: string;
     errors?: FieldErrors;
-    data?: T;
+    data?: unknown;
     two_factor?: boolean;
+    meta?: unknown;
   };
 
   if (!response.ok) {
@@ -234,7 +240,17 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
     throw new ApiError(response.status, payload.message ?? defaultMessage, payload.errors ?? {});
   }
 
-  return (payload.data ?? payload) as T;
+  // Preserve pagination envelope { data, meta } and mutation envelopes { message, data }
+  if (payload && typeof payload === "object") {
+    if ("meta" in payload && "data" in payload) {
+      return payload as T;
+    }
+    if ("message" in payload && "data" in payload) {
+      return payload as T;
+    }
+  }
+
+  return ((payload as { data?: T }).data ?? payload) as T;
 }
 
 export async function registerAccount(input: {
