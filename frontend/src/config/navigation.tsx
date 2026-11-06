@@ -169,10 +169,6 @@ export const TENANT_PORTAL_CONFIG: PortalConfig = {
       id: "tenant-requests",
       name: "Yêu cầu thuê",
       href: "/tenant/requests",
-      badge: {
-        count: "1",
-        color: "blue",
-      },
       icon: RequestsIcon,
     },
     {

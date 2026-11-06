@@ -209,8 +209,6 @@ export function ListingDetailView({
         <RentalRequestDialog
           listing={listing}
           isSignedIn={isSignedIn}
-          preferredUnitId={preferredUnitId}
-          onPreferredUnitChange={setPreferredUnitId}
           onClose={() => setRequestOpen(false)}
         />
       ) : null}
