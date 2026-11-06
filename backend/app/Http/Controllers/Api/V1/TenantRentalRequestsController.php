@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\RentalRequests\CloseRentalRequest;
 use App\Actions\RentalRequests\SubmitRentalRequest;
-use App\Actions\RentalRequests\WithdrawRentalRequest as WithdrawRentalRequestAction;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreRentalRequest;
 use App\Http\Requests\WithdrawRentalRequest;
@@ -79,10 +79,10 @@ class TenantRentalRequestsController extends Controller
     #[Response(404, description: 'Không tìm thấy yêu cầu của người thuê.', type: 'array{message: string}')]
     #[Response(409, description: 'Yêu cầu hoặc phiên bản đã thay đổi.', type: 'array{message: string}')]
     #[Response(419, description: 'Mã CSRF không hợp lệ hoặc đã hết hạn.', type: 'array{message: string}')]
-    public function withdraw(WithdrawRentalRequest $request, string $rentalRequest, WithdrawRentalRequestAction $withdraw): HttpResponse
+    public function withdraw(WithdrawRentalRequest $request, string $rentalRequest, CloseRentalRequest $close): HttpResponse
     {
         $input = $request->validated();
-        $withdraw->handle(
+        $close->withdraw(
             $request->user(),
             strtolower($rentalRequest),
             $input['expected_updated_at'],

@@ -32,7 +32,7 @@ export function PortalSidebar() {
         <nav className="space-y-1.5" aria-label="Điều hướng các Cổng">
           {portalConfig.items.map((item) => {
             const isActive = pathname === item.href
-              || (item.id === "tenant-requests" && pathname.startsWith(item.href + "/"));
+              || ((item.id === "tenant-requests" || item.id === "owner-requests") && pathname.startsWith(item.href + "/"));
             const Icon = item.icon;
 
             return (

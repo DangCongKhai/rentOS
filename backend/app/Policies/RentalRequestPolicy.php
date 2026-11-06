@@ -31,4 +31,22 @@ class RentalRequestPolicy
     {
         return $this->view($user, $rentalRequest);
     }
+
+    public function viewOwnerInbox(User $user): bool
+    {
+        return $user->canManageOwnerProducts()
+            && ! ($user->currentAccessToken() instanceof PersonalAccessToken)
+            && Auth::guard('web')->id() === $user->id;
+    }
+
+    public function reject(User $user, RentalRequest $rentalRequest): Response
+    {
+        if (! $this->viewOwnerInbox($user)) {
+            return Response::deny();
+        }
+
+        return RentalRequest::query()->forOwner($user)->whereKey($rentalRequest->id)->exists()
+            ? Response::allow()
+            : Response::denyAsNotFound();
+    }
 }

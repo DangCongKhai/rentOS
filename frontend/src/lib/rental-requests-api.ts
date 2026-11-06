@@ -55,6 +55,28 @@ export type TenantRentalRequestList = {
   last_page: number;
 };
 
+export type OwnerRentalRequest = Pick<TenantRentalRequest,
+  "id" | "title" | "desired_move_in_date" | "desired_end_date" | "preferred_unit" |
+  "status" | "outcome_reason" | "created_at" | "closed_at"
+> & {
+  contact_name: string;
+  contact_phone: string;
+};
+
+export type OwnerRentalRequestDetail = OwnerRentalRequest & {
+  message: string;
+  updated_at: string;
+  preferred_unit_available: boolean | null;
+  alternative_units: { id: string; label: string; monthly_rent: string }[];
+};
+
+export type OwnerRentalRequestList = {
+  items: OwnerRentalRequest[];
+  counts: Record<RentalRequestStatus, number>;
+  page: number;
+  last_page: number;
+};
+
 const tenantRequestsPath = "/api/v1/tenant/rental-requests";
 
 export function getTenantRentalRequests(filter: RentalRequestFilter, page: number, signal?: AbortSignal) {
@@ -68,6 +90,24 @@ export function getTenantRentalRequest(id: string, signal?: AbortSignal) {
 
 export function withdrawTenantRentalRequest(id: string, input: { expected_updated_at: string; client_operation_id: string; reason: string }) {
   return request<void>(`${tenantRequestsPath}/${encodeURIComponent(id)}/withdraw`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+}
+
+const ownerRequestsPath = "/api/v1/owner/rental-requests";
+
+export function getOwnerRentalRequests(status: RentalRequestStatus, page: number, signal?: AbortSignal) {
+  const query = new URLSearchParams({ status, page: String(page) });
+  return request<OwnerRentalRequestList>(`${ownerRequestsPath}?${query}`, { signal });
+}
+
+export function getOwnerRentalRequest(id: string, signal?: AbortSignal) {
+  return request<OwnerRentalRequestDetail>(`${ownerRequestsPath}/${encodeURIComponent(id)}`, { signal });
+}
+
+export function rejectOwnerRentalRequest(id: string, input: { expected_updated_at: string; client_operation_id: string; reason: string }) {
+  return request<void>(`${ownerRequestsPath}/${encodeURIComponent(id)}/reject`, {
     method: "POST",
     body: JSON.stringify(input),
   });

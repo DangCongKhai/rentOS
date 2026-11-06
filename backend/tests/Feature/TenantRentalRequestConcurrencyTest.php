@@ -80,15 +80,48 @@ class TenantRentalRequestConcurrencyTest extends TestCase
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
-    /** @param array<string, string> $payload */
-    private function postInProcess(string $tenantId, string $path, array $payload): Closure
+    public function test_withdraw_and_reject_compete_for_the_same_outcome(): void
     {
-        return static function () use ($tenantId, $path, $payload): int {
+        $listing = PublicListingFixture::published();
+        $tenant = User::factory()->create();
+        $item = RentalRequest::factory()->create(['tenant_id' => $tenant->id, 'listing_id' => $listing->listingId])->refresh();
+        $payload = ['expected_updated_at' => $item->updated_at->format('Y-m-d\TH:i:s.uP')];
+        $withdraw = $payload + ['client_operation_id' => (string) Str::uuid()];
+        $reject = $payload + ['client_operation_id' => (string) Str::uuid(), 'reason' => 'Không có căn phù hợp.'];
+
+        $statuses = Concurrency::driver('process')->run([
+            $this->postInProcess($tenant->id, '/api/v1/tenant/rental-requests/'.$item->id.'/withdraw', $withdraw),
+            $this->postInProcess($listing->owner->id, '/api/v1/owner/rental-requests/'.$item->id.'/reject', $reject),
+        ], timeout: 20);
+
+        $withdrawWon = $statuses[0] === 204;
+        $this->assertSame($withdrawWon ? [204, 409] : [409, 204], $statuses);
+        $event = $withdrawWon ? 'rental_request.withdrawn' : 'rental_request.rejected';
+        $this->assertDatabaseHas('rental_requests', [
+            'id' => $item->id,
+            'status' => $withdrawWon ? 'WITHDRAWN' : 'REJECTED',
+            'outcome_reason' => $withdrawWon ? null : $reject['reason'],
+        ]);
+        $this->assertDatabaseHas('audit_logs', [
+            'entity_id' => $item->id, 'action' => $event, 'actor_id' => $withdrawWon ? $tenant->id : $listing->owner->id,
+        ]);
+        $this->assertDatabaseHas('notification_outbox', [
+            'event_key' => $event.':'.$item->id, 'recipient_id' => $withdrawWon ? $listing->owner->id : $tenant->id,
+        ]);
+        $this->assertDatabaseCount('audit_logs', 1);
+        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('idempotency_records', 1);
+    }
+
+    /** @param array<string, string> $payload */
+    private function postInProcess(string $actorId, string $path, array $payload): Closure
+    {
+        return static function () use ($actorId, $path, $payload): int {
             abort_unless(config('database.default') === 'pgsql'
                 && config('database.connections.pgsql.database') === 'rentos_test'
                 && in_array(config('database.connections.pgsql.host'), ['rentos-rnt04-db', '127.0.0.1', 'localhost'], true), 500);
 
-            Auth::guard('web')->setUser(User::query()->findOrFail($tenantId));
+            Auth::guard('web')->setUser(User::query()->findOrFail($actorId));
             $request = Request::create($path, 'POST', server: [
                 'HTTP_ACCEPT' => 'application/json',
                 'CONTENT_TYPE' => 'application/json',

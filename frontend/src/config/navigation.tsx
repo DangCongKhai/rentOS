@@ -243,10 +243,6 @@ export const OWNER_PORTAL_CONFIG: PortalConfig = {
       id: "owner-requests",
       name: "Yêu cầu thuê",
       href: "/owner/requests",
-      badge: {
-        count: "3",
-        color: "blue",
-      },
       icon: RequestsIcon,
     },
     {
