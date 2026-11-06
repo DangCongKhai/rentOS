@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth-context";
 import { SiteFrame } from "@/components/site-frame";
+import { FavouritesProvider } from "@/features/discovery/favourites-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               </div>
             }
           >
-            <SiteFrame>{children}</SiteFrame>
+            <FavouritesProvider><SiteFrame>{children}</SiteFrame></FavouritesProvider>
           </Suspense>
         </AuthProvider>
       </body>

@@ -29,6 +29,7 @@ require base_path('routes/api/v1/public.php');
 
 // Authenticated endpoints
 require base_path('routes/api/v1/auth.php');
+require base_path('routes/api/v1/favourites.php');
 require base_path('routes/api/v1/admin.php');
 require base_path('routes/api/v1/tenant.php');
 
