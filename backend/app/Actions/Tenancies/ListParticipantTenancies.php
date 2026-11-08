@@ -41,6 +41,14 @@ class ListParticipantTenancies
             ->join('units', 'units.id', '=', 'tenancies.unit_id')
             ->join('properties', 'properties.id', '=', 'units.property_id')
             ->join('rental_requests', 'rental_requests.id', '=', 'tenancies.rental_request_id')
+            ->leftJoin('tenancy_contracts as pending_contracts', function ($join): void {
+                $join->on('pending_contracts.id', '=', 'tenancies.pending_contract_id')
+                    ->on('pending_contracts.tenancy_id', '=', 'tenancies.id');
+            })
+            ->leftJoin('tenancy_contracts as latest_contracts', function ($join): void {
+                $join->on('latest_contracts.id', '=', 'tenancies.latest_confirmed_contract_id')
+                    ->on('latest_contracts.tenancy_id', '=', 'tenancies.id');
+            })
             ->join('users as counterparty', 'counterparty.id', '=', $counterpartyColumn)
             ->where($participantColumn, $viewer->id)
             ->orderByDesc('tenancies.created_at')
@@ -68,6 +76,16 @@ class ListParticipantTenancies
                 'units.label as unit_label',
                 'rental_requests.status as rental_request_status',
                 'counterparty.name as counterparty_name',
+                'pending_contracts.version_number as pending_contract_version',
+                'pending_contracts.start_date as pending_contract_start_date',
+                'pending_contracts.end_date as pending_contract_end_date',
+                'pending_contracts.monthly_rent as pending_contract_monthly_rent',
+                'pending_contracts.deposit_amount as pending_contract_deposit_amount',
+                'latest_contracts.version_number as latest_confirmed_contract_version',
+                'latest_contracts.start_date as latest_confirmed_contract_start_date',
+                'latest_contracts.end_date as latest_confirmed_contract_end_date',
+                'latest_contracts.monthly_rent as latest_confirmed_contract_monthly_rent',
+                'latest_contracts.deposit_amount as latest_confirmed_contract_deposit_amount',
             ])
             ->get();
     }

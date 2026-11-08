@@ -12,6 +12,25 @@ class StoreTenancyProposalRequest extends OwnerProductRequest
         return parent::authorize();
     }
 
+    protected function prepareForValidation(): void
+    {
+        $snapshot = $this->input('policies_snapshot');
+
+        if (! is_string($snapshot)) {
+            return;
+        }
+
+        try {
+            $decoded = json_decode($snapshot, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return;
+        }
+
+        if (is_array($decoded)) {
+            $this->merge(['policies_snapshot' => $decoded]);
+        }
+    }
+
     /**
      * Get the validation rules that apply to the request.
      *

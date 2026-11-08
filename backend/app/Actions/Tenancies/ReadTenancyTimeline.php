@@ -45,8 +45,36 @@ class ReadTenancyTimeline
 
         $rentalRequest = DB::table('rental_requests')
             ->where('id', $tenancy->rental_request_id)
-            ->select(['id', 'status', 'created_at', 'closed_at'])
+            ->select([
+                'id',
+                'status',
+                'created_at',
+                'closed_at',
+                'contact_name',
+                'contact_phone',
+            ])
             ->first();
+
+        $context = DB::table('tenancies')
+            ->join('units', 'units.id', '=', 'tenancies.unit_id')
+            ->join('properties', 'properties.id', '=', 'units.property_id')
+            ->join('users as owners', 'owners.id', '=', 'tenancies.owner_id')
+            ->join('users as tenants', 'tenants.id', '=', 'tenancies.tenant_id')
+            ->where('tenancies.id', $tenancyId)
+            ->select([
+                'units.id as unit_id',
+                'units.label as unit_label',
+                'properties.id as property_id',
+                'properties.name as property_name',
+                'properties.address_line',
+                'properties.ward',
+                'properties.city',
+                'owners.name as owner_name',
+                'tenants.name as tenant_name',
+            ])
+            ->first();
+
+        abort_if($context === null, 404);
 
         $contracts = DB::table('tenancy_contracts')
             ->where('tenancy_id', $tenancyId)
@@ -102,6 +130,21 @@ class ReadTenancyTimeline
         return [
             'tenancy' => $tenancy,
             'rental_request' => $rentalRequest,
+            'property' => [
+                'id' => $context->property_id,
+                'name' => $context->property_name,
+                'address_line' => $context->address_line,
+                'ward' => $context->ward,
+                'city' => $context->city,
+            ],
+            'unit' => [
+                'id' => $context->unit_id,
+                'label' => $context->unit_label,
+            ],
+            'participants' => [
+                'owner_name' => $context->owner_name,
+                'tenant_name' => $context->tenant_name,
+            ],
             'contracts' => $contracts,
             'pending_contract' => $pendingContract,
             'current_agreement' => $currentAgreement,
