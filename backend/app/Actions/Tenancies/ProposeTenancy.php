@@ -7,11 +7,11 @@ use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Database\QueryException;
 use Throwable;
 
 class ProposeTenancy
@@ -72,7 +72,6 @@ class ProposeTenancy
                 $rentalRequestId,
                 $data,
                 $requestHash,
-                $fileHash,
                 $tenancyId,
                 $contractId,
                 $context,
@@ -313,7 +312,7 @@ class ProposeTenancy
     }
 
     /**
-     * @param array<mixed> $value
+     * @param  array<mixed>  $value
      * @return array<mixed>
      */
     private function canonicalize(array $value): array

@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class ConfirmTenancyContract
 {
     /**
-     * @param array{client_operation_id: string, document_sha256: string} $input
+     * @param  array{client_operation_id: string, document_sha256: string}  $input
      * @return array{tenancy: object, contract: object, replayed: bool}
      */
     public function handle(

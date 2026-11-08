@@ -176,10 +176,10 @@ class OwnerTenancyProposalsTest extends TestCase
         $this->assertDatabaseHas('rental_requests', [
             'id' => $rentalRequestId,
             'status' => 'PENDING',
-            'closed_at' => null
+            'closed_at' => null,
         ]);
         $this->assertDatabaseMissing('tenancies', [
-            'rental_request_id' => $rentalRequestId
+            'rental_request_id' => $rentalRequestId,
         ]);
 
         // the fixture's existing tenancy and contract remain; the failed proposal adds none.

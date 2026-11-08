@@ -1,8 +1,8 @@
 <?php
 
+use App\Http\Controllers\Api\V1\OwnerTenancyLifecycleController;
 use App\Http\Controllers\Api\V1\OwnerTenancyProposalsController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Api\V1\OwnerTenancyLifecycleController;
 
 Route::middleware('auth:sanctum')
     ->prefix('v1')

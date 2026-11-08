@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class MarkTenancyMoveIn
 {
     /**
-     * @param array{client_operation_id: string} $input
+     * @param  array{client_operation_id: string}  $input
      * @return array{tenancy: object, replayed: bool}
      */
     public function handle(User $owner, string $tenancyId, array $input): array

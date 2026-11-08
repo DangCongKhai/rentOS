@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Tenancies\CorrectTenancyProposal;
 use App\Actions\Tenancies\ProposeTenancy;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CorrectTenancyProposalRequest;
 use App\Http\Requests\StoreTenancyProposalRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use App\Actions\Tenancies\CorrectTenancyProposal;
-use App\Http\Requests\CorrectTenancyProposalRequest;
 
 class OwnerTenancyProposalsController extends Controller
 {

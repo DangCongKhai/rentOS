@@ -2,15 +2,15 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Tenancies\ConfirmTenancyContract;
+use App\Actions\Tenancies\DeclineTenancyContract;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ConfirmTenancyContractRequest;
+use App\Http\Requests\DeclineTenancyContractRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Actions\Tenancies\ConfirmTenancyContract;
-use App\Http\Requests\ConfirmTenancyContractRequest;
-use App\Actions\Tenancies\DeclineTenancyContract;
-use App\Http\Requests\DeclineTenancyContractRequest;
 
 class TenantTenanciesController extends Controller
 {

@@ -74,7 +74,6 @@ class CorrectTenancyProposal
                 $tenancyId,
                 $input,
                 $requestHash,
-                $fileHash,
                 $contractId,
                 $context,
                 &$storedPath,
@@ -314,7 +313,7 @@ class CorrectTenancyProposal
     }
 
     /**
-     * @param array<mixed> $value
+     * @param  array<mixed>  $value
      * @return array<mixed>
      */
     private function canonicalize(array $value): array

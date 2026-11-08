@@ -2,13 +2,13 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Actions\Tenancies\CloseTenancy;
 use App\Actions\Tenancies\MarkTenancyMoveIn;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CloseTenancyRequest;
 use App\Http\Requests\MarkTenancyMoveInRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
-use App\Actions\Tenancies\CloseTenancy;
-use App\Http\Requests\CloseTenancyRequest;
 
 class OwnerTenancyLifecycleController extends Controller
 {
@@ -37,33 +37,33 @@ class OwnerTenancyLifecycleController extends Controller
     }
 
     public function cancel(
-    CloseTenancyRequest $request,
-    string $tenancy,
-    CloseTenancy $close,
-): JsonResponse {
-    return $this->close(
-        $request,
-        $tenancy,
-        'cancel',
-        $close,
-    );
-}
+        CloseTenancyRequest $request,
+        string $tenancy,
+        CloseTenancy $close,
+    ): JsonResponse {
+        return $this->close(
+            $request,
+            $tenancy,
+            'cancel',
+            $close,
+        );
+    }
 
-public function end(
-    CloseTenancyRequest $request,
-    string $tenancy,
-    CloseTenancy $close,
-): JsonResponse {
-    return $this->close(
-        $request,
-        $tenancy,
-        'end',
-        $close,
-    );
-}
+    public function end(
+        CloseTenancyRequest $request,
+        string $tenancy,
+        CloseTenancy $close,
+    ): JsonResponse {
+        return $this->close(
+            $request,
+            $tenancy,
+            'end',
+            $close,
+        );
+    }
 
     /**
-     * @param 'cancel'|'end' $transition
+     * @param  'cancel'|'end'  $transition
      */
     private function close(
         CloseTenancyRequest $request,

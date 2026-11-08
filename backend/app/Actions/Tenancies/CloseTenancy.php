@@ -12,8 +12,8 @@ use Illuminate\Support\Str;
 class CloseTenancy
 {
     /**
-     * @param 'cancel'|'end' $transition
-     * @param array{client_operation_id: string, reason: string} $input
+     * @param  'cancel'|'end'  $transition
+     * @param  array{client_operation_id: string, reason: string}  $input
      * @return array{tenancy: object, replayed: bool}
      */
     public function handle(
