@@ -4,6 +4,25 @@ namespace App\Http\Requests;
 
 class CorrectTenancyProposalRequest extends OwnerProductRequest
 {
+    protected function prepareForValidation(): void
+    {
+        $snapshot = $this->input('policies_snapshot');
+
+        if (! is_string($snapshot)) {
+            return;
+        }
+
+        try {
+            $decoded = json_decode($snapshot, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return;
+        }
+
+        if (is_array($decoded)) {
+            $this->merge(['policies_snapshot' => $decoded]);
+        }
+    }
+
     /**
      * @return array<string, array<int, string>>
      */

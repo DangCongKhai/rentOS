@@ -36,7 +36,9 @@ function readSnapshot(
 
   const root = parsed as Record<string, unknown>;
   const property =
-    root.property && typeof root.property === "object" && !Array.isArray(root.property)
+    root.property &&
+    typeof root.property === "object" &&
+    !Array.isArray(root.property)
       ? (root.property as Record<string, unknown>)
       : {};
   const unit =
@@ -49,15 +51,19 @@ function readSnapshot(
 
 function rulesToText(value: unknown): string {
   return Array.isArray(value)
-    ? value.filter((rule): rule is string => typeof rule === "string").join("\n")
+    ? value
+        .filter((rule): rule is string => typeof rule === "string")
+        .join("\n")
     : "";
 }
 
 function errorMessage(error: unknown): string {
   if (error instanceof ApiError) {
-    return [error.message, ...Object.values(error.errors).flat()]
-      .filter(Boolean)
-      .join(" ");
+    const fieldMessages = [
+      ...new Set(Object.values(error.errors).flat().filter(Boolean)),
+    ];
+
+    return fieldMessages.length > 0 ? fieldMessages.join(" ") : error.message;
   }
 
   return "Không thể gửi phiên bản mới. Vui lòng thử lại.";

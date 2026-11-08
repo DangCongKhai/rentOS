@@ -577,8 +577,7 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
               Người thuê đã từ chối phiên bản {latestContract.version_number}
             </h2>
             <p className="mt-1 text-sm text-slate-700">
-              Cập nhật điều khoản và gửi một phiên bản hợp đồng mới để xác
-              nhận.
+              Cập nhật điều khoản và gửi một phiên bản hợp đồng mới để xác nhận.
             </p>
           </div>
           <Link
@@ -855,9 +854,7 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
               />
               <button
                 type="button"
-                onClick={() =>
-                  void closeTenancy(canCancel ? "cancel" : "end")
-                }
+                onClick={() => void closeTenancy(canCancel ? "cancel" : "end")}
                 disabled={closeLoading || closeReason.trim().length < 5}
                 className="mt-3 min-h-11 w-full rounded-xl border border-rose-200 px-4 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
               >

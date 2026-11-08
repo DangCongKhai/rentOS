@@ -167,9 +167,9 @@ export default function TenantPortalPage() {
                   <div className="flex items-center gap-3">
                     <Link
                       className="inline-flex items-center justify-center min-h-[38px] px-4 py-2 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-800 text-xs font-semibold transition-colors"
-                      href="/"
+                      href={`/tenant/tenancies/${encodeURIComponent(tenancy.id)}`}
                     >
-                      Chi tiết nơi ở
+                      Xem đề xuất và hợp đồng
                     </Link>
                   </div>
                 </div>
