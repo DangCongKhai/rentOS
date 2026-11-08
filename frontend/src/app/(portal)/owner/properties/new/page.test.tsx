@@ -68,9 +68,7 @@ describe("new owner property wizard", () => {
 
     await user.click(screen.getByRole("button", { name: "Tiện ích" }));
 
-    expect(
-      screen.queryByRole("tab", { name: "Toàn bất động sản" }),
-    ).toBeNull();
+    expect(screen.queryByRole("tab", { name: "Toàn bất động sản" })).toBeNull();
     expect(screen.queryByRole("tab", { name: "Trong căn/phòng" })).toBeNull();
     expect(
       await screen.findByRole("checkbox", { name: /Wi-Fi/ }),
@@ -80,10 +78,12 @@ describe("new owner property wizard", () => {
     await user.click(screen.getByRole("button", { name: "Chọn tất cả" }));
 
     expect(
-      (screen.getByRole("checkbox", { name: /Wi-Fi/ }) as HTMLInputElement).checked,
+      (screen.getByRole("checkbox", { name: /Wi-Fi/ }) as HTMLInputElement)
+        .checked,
     ).toBe(true);
     expect(
-      (screen.getByRole("checkbox", { name: /Điều hòa/ }) as HTMLInputElement).checked,
+      (screen.getByRole("checkbox", { name: /Điều hòa/ }) as HTMLInputElement)
+        .checked,
     ).toBe(true);
     expect(screen.getByText("2 / 2 đã chọn")).toBeTruthy();
 

@@ -1,6 +1,8 @@
 import { ListingSearchValidationError } from "./listing-search-params";
 
-const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+const apiUrl = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+).replace(/\/$/, "");
 
 export class ListingUnavailableError extends Error {
   constructor() {
@@ -104,7 +106,11 @@ export type ListingDetail = {
     shared_rules: string[];
     shared_amenities: PublicAmenity[];
     custom_amenities: string[];
-    area?: { latitude: number; longitude: number; radius_meters: number } | null;
+    area?: {
+      latitude: number;
+      longitude: number;
+      radius_meters: number;
+    } | null;
   };
   owner: {
     name: string | null;
@@ -140,15 +146,26 @@ async function publicGet<T>(path: string, signal?: AbortSignal): Promise<T> {
   return (await response.json()) as T;
 }
 
-export function fetchListings(params: URLSearchParams, signal?: AbortSignal): Promise<ListingSearchResponse> {
+export function fetchListings(
+  params: URLSearchParams,
+  signal?: AbortSignal,
+): Promise<ListingSearchResponse> {
   const query = params.toString();
-  return publicGet<ListingSearchResponse>(`/api/v1/listings${query ? `?${query}` : ""}`, signal);
+  return publicGet<ListingSearchResponse>(
+    `/api/v1/listings${query ? `?${query}` : ""}`,
+    signal,
+  );
 }
 
-export function fetchListing(id: string, signal?: AbortSignal): Promise<{ data: ListingDetail }> {
+export function fetchListing(
+  id: string,
+  signal?: AbortSignal,
+): Promise<{ data: ListingDetail }> {
   return publicGet<{ data: ListingDetail }>(`/api/v1/listings/${id}`, signal);
 }
 
-export function fetchAmenities(signal?: AbortSignal): Promise<{ data: AmenityCatalogItem[] }> {
+export function fetchAmenities(
+  signal?: AbortSignal,
+): Promise<{ data: AmenityCatalogItem[] }> {
   return publicGet<{ data: AmenityCatalogItem[] }>("/api/v1/amenities", signal);
 }

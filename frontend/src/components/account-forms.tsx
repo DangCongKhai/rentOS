@@ -3,7 +3,12 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ApiError, login, registerAccount, getCurrentUser } from "@/lib/auth-api";
+import {
+  ApiError,
+  login,
+  registerAccount,
+  getCurrentUser,
+} from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
 import { GoogleAuthButton } from "./google-auth-button";
@@ -27,7 +32,8 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
     if (!email) {
       newErrors.email = "Vui lòng nhập địa chỉ email.";
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-      newErrors.email = "Địa chỉ email không phù hợp (ví dụ: name@example.com).";
+      newErrors.email =
+        "Địa chỉ email không phù hợp (ví dụ: name@example.com).";
     }
 
     // Password Validation
@@ -37,7 +43,9 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
 
     if (isRegister) {
       const name = String(values.get("name") ?? "").trim();
-      const passwordConfirmation = String(values.get("password_confirmation") ?? "");
+      const passwordConfirmation = String(
+        values.get("password_confirmation") ?? "",
+      );
 
       // Name Validation
       if (!name) {
@@ -49,15 +57,18 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
         if (password.length < 8) {
           newErrors.password = "Mật khẩu phải có ít nhất 8 ký tự.";
         } else if (!/[A-Za-z]/.test(password) || !/[0-9]/.test(password)) {
-          newErrors.password = "Mật khẩu không phù hợp. Phải bao gồm cả chữ cái và chữ số.";
+          newErrors.password =
+            "Mật khẩu không phù hợp. Phải bao gồm cả chữ cái và chữ số.";
         }
       }
 
       // Password Confirmation
       if (!passwordConfirmation) {
-        newErrors.password_confirmation = "Vui lòng nhập lại mật khẩu xác nhận.";
+        newErrors.password_confirmation =
+          "Vui lòng nhập lại mật khẩu xác nhận.";
       } else if (password && password !== passwordConfirmation) {
-        newErrors.password_confirmation = "Mật khẩu không trùng nhau. Vui lòng kiểm tra lại.";
+        newErrors.password_confirmation =
+          "Mật khẩu không trùng nhau. Vui lòng kiểm tra lại.";
       }
     }
 
@@ -88,7 +99,9 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
           name: String(values.get("name") ?? "").trim(),
           email: String(values.get("email") ?? "").trim(),
           password: String(values.get("password") ?? ""),
-          password_confirmation: String(values.get("password_confirmation") ?? ""),
+          password_confirmation: String(
+            values.get("password_confirmation") ?? "",
+          ),
         });
         await refreshUser();
         router.push("/profile");
@@ -100,7 +113,7 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
         password: String(values.get("password") ?? ""),
       });
       await refreshUser();
-      
+
       // Check email verification status and redirect accordingly
       try {
         const currentUser = await getCurrentUser();
@@ -119,15 +132,21 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
         let friendlyMessage = "";
         const fieldErrors: Record<string, string> = {};
 
-        if (error.status === 401 || error.message.includes("These credentials do not match our records")) {
-          friendlyMessage = "Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.";
+        if (
+          error.status === 401 ||
+          error.message.includes("These credentials do not match our records")
+        ) {
+          friendlyMessage =
+            "Email hoặc mật khẩu không chính xác. Vui lòng kiểm tra lại.";
         } else if (error.errors) {
           for (const [field, msgs] of Object.entries(error.errors)) {
             const rawMsg = msgs[0] ?? "";
             if (rawMsg.includes("already been taken")) {
-              fieldErrors[field] = "Địa chỉ email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.";
+              fieldErrors[field] =
+                "Địa chỉ email này đã được sử dụng. Vui lòng đăng nhập hoặc dùng email khác.";
             } else if (rawMsg.includes("confirmation")) {
-              fieldErrors[field] = "Mật khẩu không trùng nhau. Vui lòng kiểm tra lại.";
+              fieldErrors[field] =
+                "Mật khẩu không trùng nhau. Vui lòng kiểm tra lại.";
             } else if (rawMsg.includes("at least 8")) {
               fieldErrors[field] = "Mật khẩu phải có ít nhất 8 ký tự.";
             } else {
@@ -206,7 +225,9 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
             name="email"
             type="email"
             autoComplete="email"
-            placeholder={isRegister ? "Nhập địa chỉ email của bạn" : "mai.nguyen@email.com"}
+            placeholder={
+              isRegister ? "Nhập địa chỉ email của bạn" : "mai.nguyen@email.com"
+            }
             onChange={() => handleInputChange("email")}
             required
             maxLength={255}
@@ -247,7 +268,11 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
             <span>Xác nhận mật khẩu</span>
             <input
               aria-invalid={Boolean(errors.password_confirmation)}
-              aria-describedby={errors.password_confirmation ? "password_confirmation-error" : undefined}
+              aria-describedby={
+                errors.password_confirmation
+                  ? "password_confirmation-error"
+                  : undefined
+              }
               name="password_confirmation"
               type="password"
               autoComplete="new-password"
@@ -260,7 +285,10 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
                   : "border-slate-300 focus:border-[#3368a0] focus:ring-2 focus:ring-blue-100"
               }`}
             />
-            <FieldError id="password_confirmation-error" message={errors.password_confirmation} />
+            <FieldError
+              id="password_confirmation-error"
+              message={errors.password_confirmation}
+            />
           </label>
         )}
 
@@ -295,12 +323,15 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
                 className="w-4 h-4 mt-0.5 rounded border-slate-300 text-[#3368a0] focus:ring-[#3368a0]"
               />
               <span>
-                Tôi đồng ý với Điều khoản sử dụng và Chính sách riêng tư của rentOS.
+                Tôi đồng ý với Điều khoản sử dụng và Chính sách riêng tư của
+                rentOS.
               </span>
             </label>
             <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-600 leading-relaxed">
               <p>
-                Không cần chọn vai trò khi đăng ký. Bạn trở thành người thuê khi bắt đầu thuê nhà, và trở thành chủ nhà khi bắt đầu đăng tin cho thuê. Cùng một tài khoản cho cả hai.
+                Không cần chọn vai trò khi đăng ký. Bạn trở thành người thuê khi
+                bắt đầu thuê nhà, và trở thành chủ nhà khi bắt đầu đăng tin cho
+                thuê. Cùng một tài khoản cho cả hai.
               </p>
             </div>
           </div>
@@ -313,13 +344,20 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
           type="submit"
           disabled={busy}
         >
-          <span>{busy ? "Đang xử lý…" : isRegister ? "Tạo tài khoản" : "Đăng nhập"}</span>
-          <span aria-hidden="true" className="text-base font-normal">&rarr;</span>
+          <span>
+            {busy ? "Đang xử lý…" : isRegister ? "Tạo tài khoản" : "Đăng nhập"}
+          </span>
+          <span aria-hidden="true" className="text-base font-normal">
+            &rarr;
+          </span>
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-slate-600">
         {isRegister ? "Đã có tài khoản? " : "Chưa có tài khoản? "}
-        <Link href={isRegister ? "/login" : "/register"} className="text-[#3368a0] font-semibold hover:underline">
+        <Link
+          href={isRegister ? "/login" : "/register"}
+          className="text-[#3368a0] font-semibold hover:underline"
+        >
           {isRegister ? "Đăng nhập" : "Tạo tài khoản"}
         </Link>
       </p>

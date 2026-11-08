@@ -15,24 +15,28 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 **MANDATORY**: Complete the full CI suite before claiming work is done. Zero tolerance for ANY errors.
 
 ### Frontend Checks (MUST ALL PASS):
+
 - `npm run lint` → exit code 0 (no ESLint errors)
 - `npm run typecheck` → exit code 0 (no TypeScript errors)
 - `npm test` → exit code 0 (all tests passing)
 - `npm run build` → exit code 0 (successful production build)
 
 ### Backend Checks (MUST ALL PASS):
+
 - `composer run lint` → no errors
 - `composer run typecheck` → exit code 0 (no PHPStan errors)
 - `composer run test` → all tests passing
 - Backend builds successfully
 
 ### Rules:
+
 - Do NOT say "done", "fixed", or "complete" until BOTH frontend AND backend pass ALL checks
 - Run full CI suite before declaring work finished: `npm run lint && npm run typecheck && npm test && npm run build`
 - React Compiler strict mode violations must be fixed, not ignored (except with explicit justification)
 - Do NOT commit or push code with ANY linting/type/test errors in either frontend or backend
 
 Common violations to avoid:
+
 - Accessing refs during render (`formRef.current` in component body)
 - Calling `setState` synchronously within effects
 - Using `<a>` tags for internal navigation (use `<Link />` from `next/link`)
@@ -46,7 +50,7 @@ Do not add tests just to prove the app shell, providers, or tooling are configur
 
 ## Images
 
-Raster photos use `<Image>` from `next/image`. A `fill` image includes a `sizes` value that matches its layout. 
+Raster photos use `<Image>` from `next/image`. A `fill` image includes a `sizes` value that matches its layout.
 
 Use raw `<img>` only for small SVGs, and that line must have an explicit `eslint-disable-next-line @next/next/no-img-element` comment.
 
@@ -59,6 +63,7 @@ The primary action for that screen stays outside the scroller, in view, at the b
 ## Client-Side Validation
 
 Before submitting forms to the backend:
+
 1. Validate all required fields client-side
 2. Show specific, field-level error messages
 3. Parse backend validation errors (422 responses) and display them clearly
@@ -69,13 +74,16 @@ Example error format: `"Room 1 - Field Name: Error message"` (Vietnamese: `"Phò
 ## State Management Patterns
 
 ### Location Search Debouncing
+
 Use the pattern from `src/features/discovery/listing-filters.tsx`:
+
 - Keep `locationDraft` state separate from committed location
 - Use `committedLocation` ref to track what's been submitted
 - Debounce search updates (use `searchInputDebounceMs` constant)
 - Clean up debounce on unmount
 
 ### Refs in React 19
+
 - Do NOT access `ref.current` during render
 - Do NOT update refs during render (no `myRef.current = value` in component body)
 - Access refs only in:
@@ -87,6 +95,7 @@ Use the pattern from `src/features/discovery/listing-filters.tsx`:
 ## API Error Handling
 
 Use the `ApiError` class from `@/lib/auth-api`:
+
 ```typescript
 try {
   await apiCall();

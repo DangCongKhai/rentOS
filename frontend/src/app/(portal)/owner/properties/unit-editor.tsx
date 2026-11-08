@@ -239,7 +239,11 @@ export function UnitEditor({
       <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
         {unit ? `Sửa ${unit.label}` : "Phòng"}
       </h1>
-      <div className="mt-4 flex gap-2" role="tablist" aria-label="Nội dung phòng">
+      <div
+        className="mt-4 flex gap-2"
+        role="tablist"
+        aria-label="Nội dung phòng"
+      >
         <button
           type="button"
           role="tab"

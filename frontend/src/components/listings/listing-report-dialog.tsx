@@ -46,7 +46,9 @@ export function ListingReportDialog({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const description = String(new FormData(event.currentTarget).get("description") ?? "").trim();
+    const description = String(
+      new FormData(event.currentTarget).get("description") ?? "",
+    ).trim();
     if (!reason) {
       setNotice("");
       setError("Chọn lý do báo cáo.");
@@ -62,7 +64,10 @@ export function ListingReportDialog({
   }
 
   return (
-    <div className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 p-4 sm:items-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-[80] flex items-start justify-center bg-black/60 p-4 sm:items-center"
+      onClick={onClose}
+    >
       <div
         role="dialog"
         aria-modal="true"
@@ -73,19 +78,34 @@ export function ListingReportDialog({
         <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 id="report-title" className="text-[22px] font-bold leading-[30px] tracking-[-0.22px] text-[#091216]">
+              <h2
+                id="report-title"
+                className="text-[22px] font-bold leading-[30px] tracking-[-0.22px] text-[#091216]"
+              >
                 Báo cáo tin đăng này
               </h2>
               <p className="text-sm leading-5 text-[#5b6676]">{listingTitle}</p>
             </div>
-            <button type="button" className="flex size-11 items-center justify-center rounded-xl" aria-label="Đóng" onClick={onClose}>
+            <button
+              type="button"
+              className="flex size-11 items-center justify-center rounded-xl"
+              aria-label="Đóng"
+              onClick={onClose}
+            >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/images/listings/report-close.svg" alt="" width={22} height={22} />
+              <img
+                src="/images/listings/report-close.svg"
+                alt=""
+                width={22}
+                height={22}
+              />
             </button>
           </div>
 
           <fieldset className="grid gap-2">
-            <legend className="pb-2 text-sm font-semibold leading-[21px] text-[#091216]">Lý do</legend>
+            <legend className="pb-2 text-sm font-semibold leading-[21px] text-[#091216]">
+              Lý do
+            </legend>
             {reasons.map((item) => {
               const selected = reason === item.value;
               return (
@@ -105,11 +125,17 @@ export function ListingReportDialog({
                     className={`flex size-5 shrink-0 items-center justify-center rounded-[10px] border-2 ${selected ? "border-[#3368a0]" : "border-[#7a8799]"}`}
                     aria-hidden="true"
                   >
-                    <span className={`size-2.5 rounded-[5px] ${selected ? "bg-[#3368a0]" : ""}`} />
+                    <span
+                      className={`size-2.5 rounded-[5px] ${selected ? "bg-[#3368a0]" : ""}`}
+                    />
                   </span>
                   <span>
-                    <span className="block text-[15px] font-bold leading-[22px] text-[#091216]">{item.title}</span>
-                    <span className="block text-[13px] leading-5 text-[#5b6676]">{item.detail}</span>
+                    <span className="block text-[15px] font-bold leading-[22px] text-[#091216]">
+                      {item.title}
+                    </span>
+                    <span className="block text-[13px] leading-5 text-[#5b6676]">
+                      {item.detail}
+                    </span>
                   </span>
                 </label>
               );
@@ -126,12 +152,27 @@ export function ListingReportDialog({
 
           <p className="flex items-start gap-3 rounded-[15px] border border-[#bfd3ea] bg-[#eef3f9] px-[18px] py-3.5 text-sm leading-5 text-[#1f3a5c]">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/images/listings/report-info.svg" alt="" width={18} height={18} className="mt-0.5" />
-            Việc báo cáo không tự động ẩn bài đăng. Quản trị viên sẽ xem xét bài viết này.
+            <img
+              src="/images/listings/report-info.svg"
+              alt=""
+              width={18}
+              height={18}
+              className="mt-0.5"
+            />
+            Việc báo cáo không tự động ẩn bài đăng. Quản trị viên sẽ xem xét bài
+            viết này.
           </p>
 
-          {error ? <p role="alert" className="text-sm text-rose-700">{error}</p> : null}
-          {notice ? <p role="status" className="text-sm text-[#1f3a5c]">{notice}</p> : null}
+          {error ? (
+            <p role="alert" className="text-sm text-rose-700">
+              {error}
+            </p>
+          ) : null}
+          {notice ? (
+            <p role="status" className="text-sm text-[#1f3a5c]">
+              {notice}
+            </p>
+          ) : null}
 
           <div className="flex justify-end gap-3">
             <button

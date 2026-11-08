@@ -33,7 +33,10 @@ export function CheckboxGroup({
 
   function setAll(checked: boolean) {
     if (onBulkChange) {
-      onBulkChange(items.map((item) => item.key), checked);
+      onBulkChange(
+        items.map((item) => item.key),
+        checked,
+      );
       return;
     }
     items.forEach((item) => {

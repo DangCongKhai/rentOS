@@ -27,7 +27,9 @@ export function ListingRequestAside({
       >
         Gửi yêu cầu thuê
       </button>
-      <p className="mt-3 text-[13px] leading-5 text-[#5b6676]">Gửi yêu cầu không giữ chỗ. Chủ nhà sẽ liên lạc với bạn.</p>
+      <p className="mt-3 text-[13px] leading-5 text-[#5b6676]">
+        Gửi yêu cầu không giữ chỗ. Chủ nhà sẽ liên lạc với bạn.
+      </p>
     </aside>
   );
 }

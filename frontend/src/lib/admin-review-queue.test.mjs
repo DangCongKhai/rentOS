@@ -20,9 +20,16 @@ test("only pending packages without prior initial approval enter the queue", () 
     pending,
     { ...pending, id: "approved", status: "APPROVED" },
     { ...pending, id: "rejected", status: "REJECTED" },
-    { ...pending, id: "already-reviewed", initialApprovedAt: "2026-10-18T00:00:00Z" },
+    {
+      ...pending,
+      id: "already-reviewed",
+      initialApprovedAt: "2026-10-18T00:00:00Z",
+    },
   ];
-  assert.deepEqual(getReviewQueue(items).map((item) => item.id), ["first"]);
+  assert.deepEqual(
+    getReviewQueue(items).map((item) => item.id),
+    ["first"],
+  );
 });
 
 test("search supports accents, case and extra surrounding spaces", () => {
@@ -32,7 +39,11 @@ test("search supports accents, case and extra surrounding spaces", () => {
 });
 
 test("search matches Vietnamese đ in titles and owner names", () => {
-  assert.equal(getReviewQueue([{ ...pending, title: "Gần ĐH Bách khoa" }], "dh bach khoa").length, 1);
+  assert.equal(
+    getReviewQueue([{ ...pending, title: "Gần ĐH Bách khoa" }], "dh bach khoa")
+      .length,
+    1,
+  );
   assert.equal(getReviewQueue([{ ...pending, owner: "Đức" }], "duc").length, 1);
 });
 
@@ -43,10 +54,20 @@ test("search uses title or owner, not private or unrelated fields", () => {
 });
 
 test("queue sorts oldest first without mutating the input", () => {
-  const older = { ...pending, id: "older", submittedAt: "2026-10-18T16:20:00+07:00" };
+  const older = {
+    ...pending,
+    id: "older",
+    submittedAt: "2026-10-18T16:20:00+07:00",
+  };
   const items = [pending, older];
-  assert.deepEqual(getReviewQueue(items).map((item) => item.id), ["older", "first"]);
-  assert.deepEqual(items.map((item) => item.id), ["first", "older"]);
+  assert.deepEqual(
+    getReviewQueue(items).map((item) => item.id),
+    ["older", "first"],
+  );
+  assert.deepEqual(
+    items.map((item) => item.id),
+    ["first", "older"],
+  );
 });
 
 test("an empty queue returns no rows", () => {

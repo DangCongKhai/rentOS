@@ -18,8 +18,18 @@ const listing: ListingDetail = {
   availability_label: "Trống từ 02/05/2027",
   available_unit_count: 0,
   gallery: [
-    { id: "photo-1", caption: "Mặt ngoài", sort_order: 0, url: "/photos/outside.webp" },
-    { id: "photo-2", caption: "Phòng khách", sort_order: 1, url: "/photos/living.webp" },
+    {
+      id: "photo-1",
+      caption: "Mặt ngoài",
+      sort_order: 0,
+      url: "/photos/outside.webp",
+    },
+    {
+      id: "photo-2",
+      caption: "Phòng khách",
+      sort_order: 1,
+      url: "/photos/living.webp",
+    },
   ],
   property: {
     name: "Nhà Hải Châu",
@@ -29,7 +39,9 @@ const listing: ListingDetail = {
     city: "Đà Nẵng",
     description: "Nhà cho thuê",
     shared_rules: ["Không hút thuốc trong nhà"],
-    shared_amenities: [{ key: "laundry", label_vi: "Giặt là chung", details: "Tầng trệt" }],
+    shared_amenities: [
+      { key: "laundry", label_vi: "Giặt là chung", details: "Tầng trệt" },
+    ],
     custom_amenities: [],
   },
   owner: { name: "Quoc Huy Le" },
@@ -76,14 +88,21 @@ describe("listing detail", () => {
 
     const shared = screen.getByRole("region", { name: "Tiện ích chung" });
     expect(shared.textContent).toContain("Giặt là chung");
-    expect(screen.getByText("Đã được giữ/đặt. Trống từ 02/05/2027")).toBeTruthy();
-    expect(screen.getByRole("region", { name: "Nội quy đang quảng cáo" }).textContent).toContain("Không hút thuốc trong nhà");
+    expect(
+      screen.getByText("Đã được giữ/đặt. Trống từ 02/05/2027"),
+    ).toBeTruthy();
+    expect(
+      screen.getByRole("region", { name: "Nội quy đang quảng cáo" })
+        .textContent,
+    ).toContain("Không hút thuốc trong nhà");
     expect(screen.getByText("Quoc Huy Le")).toBeTruthy();
 
     await user.click(screen.getByRole("button", { name: /Phòng 1/ }));
 
     const dialog = screen.getByRole("dialog", { name: "Chi tiết Phòng 1" });
-    const unitAmenities = within(dialog).getByRole("region", { name: "Tiện ích trong căn Phòng 1" });
+    const unitAmenities = within(dialog).getByRole("region", {
+      name: "Tiện ích trong căn Phòng 1",
+    });
     expect(unitAmenities.textContent).not.toContain("Máy giặt");
     expect(within(dialog).getByText(/Máy giặt riêng/)).toBeTruthy();
   });
@@ -97,9 +116,13 @@ describe("listing detail", () => {
 
     await user.click(screen.getByRole("button", { name: "Gửi yêu cầu thuê" }));
     const dialog = screen.getByRole("dialog", { name: "Gửi yêu cầu thuê" });
-    await user.click(within(dialog).getByRole("button", { name: "Gửi yêu cầu thuê" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Gửi yêu cầu thuê" }),
+    );
 
-    expect(within(dialog).getByRole("alert").textContent).toContain("Nhập số điện thoại.");
+    expect(within(dialog).getByRole("alert").textContent).toContain(
+      "Nhập số điện thoại.",
+    );
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
   });
@@ -109,7 +132,11 @@ describe("listing detail", () => {
     render(<ListingDetailView listing={listing} isSignedIn={false} />);
 
     await user.click(screen.getByRole("button", { name: "Gửi yêu cầu thuê" }));
-    await user.click(within(screen.getByRole("dialog")).getByRole("button", { name: "Gửi yêu cầu thuê" }));
+    await user.click(
+      within(screen.getByRole("dialog")).getByRole("button", {
+        name: "Gửi yêu cầu thuê",
+      }),
+    );
 
     expect(push).toHaveBeenCalledWith("/login");
   });
@@ -118,25 +145,42 @@ describe("listing detail", () => {
     const user = userEvent.setup();
     render(<ListingDetailView listing={listing} isSignedIn />);
 
-    expect(screen.queryByRole("dialog", { name: "Báo cáo tin đăng này" })).toBeNull();
+    expect(
+      screen.queryByRole("dialog", { name: "Báo cáo tin đăng này" }),
+    ).toBeNull();
 
     await user.click(screen.getByRole("button", { name: "Báo cáo" }));
     const dialog = screen.getByRole("dialog", { name: "Báo cáo tin đăng này" });
-    await user.click(within(dialog).getByRole("button", { name: "Gửi báo cáo" }));
+    await user.click(
+      within(dialog).getByRole("button", { name: "Gửi báo cáo" }),
+    );
 
-    expect(within(dialog).getByRole("alert").textContent).toContain("Chọn lý do báo cáo.");
+    expect(within(dialog).getByRole("alert").textContent).toContain(
+      "Chọn lý do báo cáo.",
+    );
 
-    await user.click(within(dialog).getByRole("radio", { name: /Sai lệch thông tin/ }));
-    await user.type(within(dialog).getByRole("textbox", { name: "Mô tả (bắt buộc)" }), "Ảnh không giống căn thật.");
-    await user.click(within(dialog).getByRole("button", { name: "Gửi báo cáo" }));
+    await user.click(
+      within(dialog).getByRole("radio", { name: /Sai lệch thông tin/ }),
+    );
+    await user.type(
+      within(dialog).getByRole("textbox", { name: "Mô tả (bắt buộc)" }),
+      "Ảnh không giống căn thật.",
+    );
+    await user.click(
+      within(dialog).getByRole("button", { name: "Gửi báo cáo" }),
+    );
 
-    expect(within(dialog).getByRole("status").textContent).toContain("Chưa gửi báo cáo.");
+    expect(within(dialog).getByRole("status").textContent).toContain(
+      "Chưa gửi báo cáo.",
+    );
   });
 
   it("asks a guest to sign in before reporting", () => {
     render(<ListingDetailView listing={listing} isSignedIn={false} />);
 
-    const link = screen.getByRole("link", { name: "Đăng nhập để báo cáo tin đăng này" });
+    const link = screen.getByRole("link", {
+      name: "Đăng nhập để báo cáo tin đăng này",
+    });
     expect(link.getAttribute("href")).toBe("/login");
     expect(screen.queryByRole("button", { name: "Báo cáo" })).toBeNull();
   });

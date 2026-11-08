@@ -1,4 +1,6 @@
-const apiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000").replace(/\/$/, "");
+const apiUrl = (
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000"
+).replace(/\/$/, "");
 
 type FieldErrors = Record<string, string[]>;
 
@@ -127,11 +129,20 @@ export type OwnerUnit = {
   max_occupants: number | null;
   operational_status: "READY" | "MAINTENANCE" | "RETIRED";
   is_marketed: boolean;
-  policy_overrides: { pets?: string; smoking?: string; additional_rules?: string[] };
+  policy_overrides: {
+    pets?: string;
+    smoking?: string;
+    additional_rules?: string[];
+  };
   archived_at: string | null;
 };
 
-export type AmenityCatalogEntry = { key: string; label: string; label_vi?: string; scopes: string[] };
+export type AmenityCatalogEntry = {
+  key: string;
+  label: string;
+  label_vi?: string;
+  scopes: string[];
+};
 
 export function csrfToken(): string | null {
   if (typeof document === "undefined") return null;
@@ -158,7 +169,10 @@ export async function initializeCsrf(): Promise<void> {
   });
 
   if (!response.ok) {
-    throw new ApiError(response.status, "Không thể khởi tạo phiên bảo mật. Vui lòng thử lại.");
+    throw new ApiError(
+      response.status,
+      "Không thể khởi tạo phiên bảo mật. Vui lòng thử lại.",
+    );
   }
 }
 
@@ -169,12 +183,20 @@ async function ensureCsrfToken(): Promise<string> {
     token = csrfToken();
   }
   if (!token) {
-    throw new ApiError(419, "Phiên bảo mật đã hết hạn. Vui lòng tải lại trang.");
+    throw new ApiError(
+      419,
+      "Phiên bảo mật đã hết hạn. Vui lòng tải lại trang.",
+    );
   }
   return token;
 }
 
-async function executeFetch(path: string, method: string, headers: Headers, init: RequestInit): Promise<Response> {
+async function executeFetch(
+  path: string,
+  method: string,
+  headers: Headers,
+  init: RequestInit,
+): Promise<Response> {
   return fetch(`${apiUrl}${path}`, {
     ...init,
     method,
@@ -184,12 +206,19 @@ async function executeFetch(path: string, method: string, headers: Headers, init
   });
 }
 
-export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+export async function request<T>(
+  path: string,
+  init: RequestInit = {},
+): Promise<T> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
 
-  if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+  if (
+    init.body &&
+    !(init.body instanceof FormData) &&
+    !headers.has("Content-Type")
+  ) {
     headers.set("Content-Type", "application/json");
   }
 
@@ -223,15 +252,20 @@ export async function request<T>(path: string, init: RequestInit = {}): Promise<
   };
 
   if (!response.ok) {
-    const defaultMessage = response.status === 401
-      ? "Thông tin đăng nhập không đúng hoặc phiên đã hết hạn."
-      : response.status === 419
-        ? "Phiên bảo mật đã hết hạn. Vui lòng thử lại."
-        : response.status === 429
-          ? "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại."
-          : "Có lỗi xảy ra. Vui lòng kiểm tra thông tin và thử lại.";
+    const defaultMessage =
+      response.status === 401
+        ? "Thông tin đăng nhập không đúng hoặc phiên đã hết hạn."
+        : response.status === 419
+          ? "Phiên bảo mật đã hết hạn. Vui lòng thử lại."
+          : response.status === 429
+            ? "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại."
+            : "Có lỗi xảy ra. Vui lòng kiểm tra thông tin và thử lại.";
 
-    throw new ApiError(response.status, payload.message ?? defaultMessage, payload.errors ?? {});
+    throw new ApiError(
+      response.status,
+      payload.message ?? defaultMessage,
+      payload.errors ?? {},
+    );
   }
 
   return (payload.data ?? payload) as T;
@@ -243,11 +277,20 @@ export async function registerAccount(input: {
   password: string;
   password_confirmation: string;
 }): Promise<void> {
-  await request<void>("/register", { method: "POST", body: JSON.stringify(input) });
+  await request<void>("/register", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
-export async function login(input: { email: string; password: string }): Promise<void> {
-  await request<void>("/login", { method: "POST", body: JSON.stringify(input) });
+export async function login(input: {
+  email: string;
+  password: string;
+}): Promise<void> {
+  await request<void>("/login", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function logout(): Promise<void> {
@@ -258,8 +301,14 @@ export async function getCurrentUser(): Promise<CurrentUser> {
   return request<CurrentUser>("/api/v1/me");
 }
 
-export async function updateProfile(input: { name: string; phone: string | null }): Promise<CurrentUser> {
-  return request<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(input) });
+export async function updateProfile(input: {
+  name: string;
+  phone: string | null;
+}): Promise<CurrentUser> {
+  return request<CurrentUser>("/api/v1/me", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function updatePassword(input: {
@@ -267,14 +316,22 @@ export async function updatePassword(input: {
   password: string;
   password_confirmation: string;
 }): Promise<void> {
-  await request<void>("/user/password", { method: "PUT", body: JSON.stringify(input) });
+  await request<void>("/user/password", {
+    method: "PUT",
+    body: JSON.stringify(input),
+  });
 }
 
 export async function resendVerification(): Promise<void> {
-  await request<void>("/email/verification-notification", { method: "POST", body: "{}" });
+  await request<void>("/email/verification-notification", {
+    method: "POST",
+    body: "{}",
+  });
 }
 
-export async function forgotPassword(input: { email: string }): Promise<{ message: string }> {
+export async function forgotPassword(input: {
+  email: string;
+}): Promise<{ message: string }> {
   return request<{ message: string }>("/forgot-password", {
     method: "POST",
     body: JSON.stringify(input),
@@ -297,9 +354,13 @@ export async function getTenantTenancies(): Promise<TenantTenancy[]> {
   return request<TenantTenancy[]>("/api/v1/tenant/tenancies");
 }
 
-export async function getOwnerProperties(includeArchived = false): Promise<OwnerProperty[]> {
+export async function getOwnerProperties(
+  includeArchived = false,
+): Promise<OwnerProperty[]> {
   const query = includeArchived ? "?include_archived=1" : "";
-  const result = await request<OwnerProperty[] | { data: OwnerProperty[] }>(`/api/v1/owner/properties${query}`);
+  const result = await request<OwnerProperty[] | { data: OwnerProperty[] }>(
+    `/api/v1/owner/properties${query}`,
+  );
   return Array.isArray(result) ? result : result.data;
 }
 
@@ -307,53 +368,79 @@ export async function getAmenityCatalog(): Promise<AmenityCatalogEntry[]> {
   return request<AmenityCatalogEntry[]>("/api/v1/owner/amenities");
 }
 
-export async function getOwnerProperty(propertyId: string): Promise<OwnerPropertyDetail> {
-  const property = await request<OwnerPropertyDetail>(`/api/v1/owner/properties/${propertyId}`);
+export async function getOwnerProperty(
+  propertyId: string,
+): Promise<OwnerPropertyDetail> {
+  const property = await request<OwnerPropertyDetail>(
+    `/api/v1/owner/properties/${propertyId}`,
+  );
   return {
     ...property,
     units: Array.isArray(property.units) ? property.units : [],
   };
 }
 
-export async function getOwnerPropertyMedia(propertyId: string): Promise<OwnerPropertyMedia[]> {
-  return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/media`);
+export async function getOwnerPropertyMedia(
+  propertyId: string,
+): Promise<OwnerPropertyMedia[]> {
+  return request<OwnerPropertyMedia[]>(
+    `/api/v1/owner/properties/${propertyId}/media`,
+  );
 }
 
-export async function getOwnerListingById(listingId: string): Promise<OwnerListing> {
+export async function getOwnerListingById(
+  listingId: string,
+): Promise<OwnerListing> {
   return request<OwnerListing>(`/api/v1/owner/listings/${listingId}`);
 }
 
-export async function getOwnerListing(propertyId: string): Promise<OwnerListing | null> {
+export async function getOwnerListing(
+  propertyId: string,
+): Promise<OwnerListing | null> {
   try {
-    return await request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing`);
+    return await request<OwnerListing>(
+      `/api/v1/owner/properties/${propertyId}/listing`,
+    );
   } catch (error) {
     if (error instanceof ApiError && error.status === 404) return null;
     throw error;
   }
 }
 
-export async function createOwnerListing(propertyId: string, input: {
-  client_operation_id: string;
-  title: string;
-  description: string;
-  cover_media_id: string | null;
-}): Promise<OwnerListing> {
-  return request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing`, {
-    method: "POST",
-    body: JSON.stringify(input),
-  });
+export async function createOwnerListing(
+  propertyId: string,
+  input: {
+    client_operation_id: string;
+    title: string;
+    description: string;
+    cover_media_id: string | null;
+  },
+): Promise<OwnerListing> {
+  return request<OwnerListing>(
+    `/api/v1/owner/properties/${propertyId}/listing`,
+    {
+      method: "POST",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-export async function updateOwnerListing(propertyId: string, input: {
-  expected_content_revision: number;
-  title: string;
-  description: string;
-  cover_media_id: string | null;
-}): Promise<OwnerListing> {
-  return request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing`, {
-    method: "PATCH",
-    body: JSON.stringify(input),
-  });
+export async function updateOwnerListing(
+  propertyId: string,
+  input: {
+    expected_content_revision: number;
+    title: string;
+    description: string;
+    cover_media_id: string | null;
+  },
+): Promise<OwnerListing> {
+  return request<OwnerListing>(
+    `/api/v1/owner/properties/${propertyId}/listing`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
 async function listingAction(
@@ -361,106 +448,225 @@ async function listingAction(
   action: "submit" | "publish" | "hide" | "archive",
   expectedContentRevision: number,
 ): Promise<OwnerListing> {
-  return request<OwnerListing>(`/api/v1/owner/properties/${propertyId}/listing/${action}`, {
-    method: "POST",
-    body: JSON.stringify({ expected_content_revision: expectedContentRevision }),
-  });
+  return request<OwnerListing>(
+    `/api/v1/owner/properties/${propertyId}/listing/${action}`,
+    {
+      method: "POST",
+      body: JSON.stringify({
+        expected_content_revision: expectedContentRevision,
+      }),
+    },
+  );
 }
 
-export async function submitOwnerListing(propertyId: string, expectedContentRevision: number): Promise<OwnerListing> {
+export async function submitOwnerListing(
+  propertyId: string,
+  expectedContentRevision: number,
+): Promise<OwnerListing> {
   return listingAction(propertyId, "submit", expectedContentRevision);
 }
 
-export async function publishOwnerListing(propertyId: string, expectedContentRevision: number): Promise<OwnerListing> {
+export async function publishOwnerListing(
+  propertyId: string,
+  expectedContentRevision: number,
+): Promise<OwnerListing> {
   return listingAction(propertyId, "publish", expectedContentRevision);
 }
 
-export async function hideOwnerListing(propertyId: string, expectedContentRevision: number): Promise<OwnerListing> {
+export async function hideOwnerListing(
+  propertyId: string,
+  expectedContentRevision: number,
+): Promise<OwnerListing> {
   return listingAction(propertyId, "hide", expectedContentRevision);
 }
 
-export async function archiveOwnerListing(propertyId: string, expectedContentRevision: number): Promise<OwnerListing> {
+export async function archiveOwnerListing(
+  propertyId: string,
+  expectedContentRevision: number,
+): Promise<OwnerListing> {
   return listingAction(propertyId, "archive", expectedContentRevision);
 }
 
-export async function createOwnerProperty(input: Record<string, unknown>): Promise<OwnerPropertyDetail> {
-  return request<OwnerPropertyDetail>("/api/v1/owner/properties", { method: "POST", body: JSON.stringify(input) });
-}
-
-export async function updateOwnerProperty(propertyId: string, input: Record<string, unknown>): Promise<OwnerPropertyDetail> {
-  return request<OwnerPropertyDetail>(`/api/v1/owner/properties/${propertyId}`, { method: "PATCH", body: JSON.stringify(input) });
-}
-
-export async function archiveOwnerProperty(propertyId: string, expectedContentRevision: number): Promise<OwnerPropertyDetail> {
-  return request<OwnerPropertyDetail>(`/api/v1/owner/properties/${propertyId}/archive`, {
-    method: "PATCH", body: JSON.stringify({ expected_content_revision: expectedContentRevision }),
+export async function createOwnerProperty(
+  input: Record<string, unknown>,
+): Promise<OwnerPropertyDetail> {
+  return request<OwnerPropertyDetail>("/api/v1/owner/properties", {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
-export async function createOwnerUnit(propertyId: string, input: Record<string, unknown>): Promise<OwnerUnit> {
-  return request<OwnerUnit>(`/api/v1/owner/properties/${propertyId}/units`, { method: "POST", body: JSON.stringify(input) });
+export async function updateOwnerProperty(
+  propertyId: string,
+  input: Record<string, unknown>,
+): Promise<OwnerPropertyDetail> {
+  return request<OwnerPropertyDetail>(
+    `/api/v1/owner/properties/${propertyId}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
 }
 
-export async function updateOwnerUnit(propertyId: string, unitId: string, input: Record<string, unknown>): Promise<OwnerUnit> {
-  return request<OwnerUnit>(`/api/v1/owner/properties/${propertyId}/units/${unitId}`, { method: "PATCH", body: JSON.stringify(input) });
+export async function archiveOwnerProperty(
+  propertyId: string,
+  expectedContentRevision: number,
+): Promise<OwnerPropertyDetail> {
+  return request<OwnerPropertyDetail>(
+    `/api/v1/owner/properties/${propertyId}/archive`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        expected_content_revision: expectedContentRevision,
+      }),
+    },
+  );
 }
 
-export async function archiveOwnerUnit(propertyId: string, unitId: string, expectedContentRevision: number): Promise<OwnerUnit> {
-  return request<OwnerUnit>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/archive`, {
-    method: "PATCH", body: JSON.stringify({ expected_content_revision: expectedContentRevision }),
+export async function createOwnerUnit(
+  propertyId: string,
+  input: Record<string, unknown>,
+): Promise<OwnerUnit> {
+  return request<OwnerUnit>(`/api/v1/owner/properties/${propertyId}/units`, {
+    method: "POST",
+    body: JSON.stringify(input),
   });
 }
 
-export async function createOwnerUnitBatch(propertyId: string, input: Record<string, unknown>): Promise<OwnerUnit[]> {
-  return request<OwnerUnit[]>(`/api/v1/owner/properties/${propertyId}/units/bulk`, { method: "POST", body: JSON.stringify(input) });
+export async function updateOwnerUnit(
+  propertyId: string,
+  unitId: string,
+  input: Record<string, unknown>,
+): Promise<OwnerUnit> {
+  return request<OwnerUnit>(
+    `/api/v1/owner/properties/${propertyId}/units/${unitId}`,
+    { method: "PATCH", body: JSON.stringify(input) },
+  );
 }
 
-export async function uploadOwnerMedia(propertyId: string, input: {
-  file: File;
-  client_operation_id: string;
-  expected_content_revision: number;
-  unit_id?: string;
-  caption?: string;
-}): Promise<{ media: OwnerPropertyMedia; content_revision: number }> {
+export async function archiveOwnerUnit(
+  propertyId: string,
+  unitId: string,
+  expectedContentRevision: number,
+): Promise<OwnerUnit> {
+  return request<OwnerUnit>(
+    `/api/v1/owner/properties/${propertyId}/units/${unitId}/archive`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({
+        expected_content_revision: expectedContentRevision,
+      }),
+    },
+  );
+}
+
+export async function createOwnerUnitBatch(
+  propertyId: string,
+  input: Record<string, unknown>,
+): Promise<OwnerUnit[]> {
+  return request<OwnerUnit[]>(
+    `/api/v1/owner/properties/${propertyId}/units/bulk`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function uploadOwnerMedia(
+  propertyId: string,
+  input: {
+    file: File;
+    client_operation_id: string;
+    expected_content_revision: number;
+    unit_id?: string;
+    caption?: string;
+  },
+): Promise<{ media: OwnerPropertyMedia; content_revision: number }> {
   const body = new FormData();
   body.set("photo", input.file);
   body.set("client_operation_id", input.client_operation_id);
-  body.set("expected_content_revision", String(input.expected_content_revision));
+  body.set(
+    "expected_content_revision",
+    String(input.expected_content_revision),
+  );
   if (input.unit_id) body.set("unit_id", input.unit_id);
   if (input.caption) body.set("caption", input.caption);
-  return request<{ media: OwnerPropertyMedia; content_revision: number }>(`/api/v1/owner/properties/${propertyId}/media`, { method: "POST", body });
+  return request<{ media: OwnerPropertyMedia; content_revision: number }>(
+    `/api/v1/owner/properties/${propertyId}/media`,
+    { method: "POST", body },
+  );
 }
 
-export async function updateOwnerGallery(propertyId: string, input: {
-  expected_content_revision: number;
-  items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
-}): Promise<OwnerPropertyMedia[]> {
-  return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/gallery`, {
-    method: "PUT", body: JSON.stringify(input),
-  });
+export async function updateOwnerGallery(
+  propertyId: string,
+  input: {
+    expected_content_revision: number;
+    items: Array<{
+      media_id: string;
+      revision: number;
+      sort_order: number;
+      is_selected_for_listing: boolean;
+    }>;
+  },
+): Promise<OwnerPropertyMedia[]> {
+  return request<OwnerPropertyMedia[]>(
+    `/api/v1/owner/properties/${propertyId}/gallery`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-export async function saveOwnerUnitSharedMedia(propertyId: string, unitId: string, input: {
-  expected_content_revision: number;
-  media_ids: string[];
-}): Promise<{ content_revision: number }> {
-  return request<{ content_revision: number }>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/shared-media`, {
-    method: "PUT", body: JSON.stringify(input),
-  });
+export async function saveOwnerUnitSharedMedia(
+  propertyId: string,
+  unitId: string,
+  input: {
+    expected_content_revision: number;
+    media_ids: string[];
+  },
+): Promise<{ content_revision: number }> {
+  return request<{ content_revision: number }>(
+    `/api/v1/owner/properties/${propertyId}/units/${unitId}/shared-media`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-export async function updateOwnerUnitGallery(propertyId: string, unitId: string, input: {
-  expected_content_revision: number;
-  items: Array<{ media_id: string; revision: number; sort_order: number; is_selected_for_listing: boolean }>;
-}): Promise<OwnerPropertyMedia[]> {
-  return request<OwnerPropertyMedia[]>(`/api/v1/owner/properties/${propertyId}/units/${unitId}/gallery`, {
-    method: "PUT", body: JSON.stringify(input),
-  });
+export async function updateOwnerUnitGallery(
+  propertyId: string,
+  unitId: string,
+  input: {
+    expected_content_revision: number;
+    items: Array<{
+      media_id: string;
+      revision: number;
+      sort_order: number;
+      is_selected_for_listing: boolean;
+    }>;
+  },
+): Promise<OwnerPropertyMedia[]> {
+  return request<OwnerPropertyMedia[]>(
+    `/api/v1/owner/properties/${propertyId}/units/${unitId}/gallery`,
+    {
+      method: "PUT",
+      body: JSON.stringify(input),
+    },
+  );
 }
 
-export async function removeOwnerMedia(propertyId: string, mediaId: string, expectedContentRevision: number, revision: number): Promise<OwnerPropertyMedia> {
-  return request<OwnerPropertyMedia>(`/api/v1/owner/properties/${propertyId}/media/${mediaId}`, {
-    method: "DELETE",
-    body: JSON.stringify({ expected_content_revision: expectedContentRevision, revision }),
-  });
+export async function removeOwnerMedia(
+  propertyId: string,
+  mediaId: string,
+  expectedContentRevision: number,
+  revision: number,
+): Promise<OwnerPropertyMedia> {
+  return request<OwnerPropertyMedia>(
+    `/api/v1/owner/properties/${propertyId}/media/${mediaId}`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({
+        expected_content_revision: expectedContentRevision,
+        revision,
+      }),
+    },
+  );
 }

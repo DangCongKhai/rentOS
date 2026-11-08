@@ -9,7 +9,8 @@ interface GoogleAuthButtonProps {
 export function GoogleAuthButton({ mode }: GoogleAuthButtonProps) {
   const [showNotice, setShowNotice] = useState(false);
 
-  const label = mode === "register" ? "Đăng ký với Google" : "Đăng nhập với Google";
+  const label =
+    mode === "register" ? "Đăng ký với Google" : "Đăng nhập với Google";
 
   return (
     <div className="w-full space-y-2">
@@ -50,7 +51,10 @@ export function GoogleAuthButton({ mode }: GoogleAuthButtonProps) {
         >
           <div className="flex items-center gap-2">
             <span className="text-sm">ℹ️</span>
-            <span>Tính năng đăng nhập bằng Google đang được hoàn thiện và sẽ sớm ra mắt.</span>
+            <span>
+              Tính năng đăng nhập bằng Google đang được hoàn thiện và sẽ sớm ra
+              mắt.
+            </span>
           </div>
           <button
             type="button"

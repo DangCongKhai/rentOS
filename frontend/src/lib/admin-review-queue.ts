@@ -36,7 +36,6 @@ export function getReviewQueue(
     )
     .sort(
       (a, b) =>
-        new Date(a.submittedAt).getTime() -
-        new Date(b.submittedAt).getTime(),
+        new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
     );
 }

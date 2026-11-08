@@ -58,7 +58,8 @@ function missingListingFields(unit: OwnerUnit): string[] {
 
 function unitReady(unit: OwnerUnit): boolean {
   return (
-    unit.operational_status === "READY" && missingListingFields(unit).length === 0
+    unit.operational_status === "READY" &&
+    missingListingFields(unit).length === 0
   );
 }
 
@@ -204,7 +205,9 @@ export function ListingEditor({
           return;
         }
         let nextProperty = propertyResult;
-        const activeUnits = nextProperty.units.filter((unit) => !unit.archived_at);
+        const activeUnits = nextProperty.units.filter(
+          (unit) => !unit.archived_at,
+        );
         if (activeUnits.length === 1) {
           const unit = activeUnits[0];
           const description = unit.description?.trim()
@@ -576,45 +579,45 @@ export function ListingEditor({
                 </p>
               )
             ) : (
-            <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
-              <h2 className="text-lg font-semibold text-slate-900">
-                Căn đưa lên tin
-              </h2>
-              <p className="mt-1 text-sm text-slate-600">
-                Bật những căn sẽ xuất hiện trong tin đăng này.
-              </p>
-              <ul className="mt-4 divide-y divide-slate-100">
-                {units.map((unit) => (
-                  <li
-                    key={unit.id}
-                    className="flex items-center justify-between gap-3 py-3"
-                  >
-                    <div>
-                      <p className="font-semibold text-slate-900">
-                        {unit.label}
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        {unitReady(unit)
-                          ? "Đủ thông tin để đăng"
-                          : `Còn thiếu ${missingListingFields(unit).join(", ")}`}
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      role="switch"
-                      aria-checked={unit.is_marketed}
-                      disabled={saving !== null}
-                      onClick={() => void toggleMarketed(unit)}
-                      className={`h-6 w-11 rounded-full p-1 ${unit.is_marketed ? "bg-[#3368a0]" : "bg-slate-300"}`}
+              <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                <h2 className="text-lg font-semibold text-slate-900">
+                  Căn đưa lên tin
+                </h2>
+                <p className="mt-1 text-sm text-slate-600">
+                  Bật những căn sẽ xuất hiện trong tin đăng này.
+                </p>
+                <ul className="mt-4 divide-y divide-slate-100">
+                  {units.map((unit) => (
+                    <li
+                      key={unit.id}
+                      className="flex items-center justify-between gap-3 py-3"
                     >
-                      <span
-                        className={`block size-4 rounded-full bg-white transition ${unit.is_marketed ? "translate-x-5" : ""}`}
-                      />
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </section>
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {unit.label}
+                        </p>
+                        <p className="text-xs text-slate-500">
+                          {unitReady(unit)
+                            ? "Đủ thông tin để đăng"
+                            : `Còn thiếu ${missingListingFields(unit).join(", ")}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={unit.is_marketed}
+                        disabled={saving !== null}
+                        onClick={() => void toggleMarketed(unit)}
+                        className={`h-6 w-11 rounded-full p-1 ${unit.is_marketed ? "bg-[#3368a0]" : "bg-slate-300"}`}
+                      >
+                        <span
+                          className={`block size-4 rounded-full bg-white transition ${unit.is_marketed ? "translate-x-5" : ""}`}
+                        />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </section>
             )}
           </form>
         ) : (

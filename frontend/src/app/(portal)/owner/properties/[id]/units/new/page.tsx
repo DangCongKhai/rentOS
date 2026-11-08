@@ -62,7 +62,10 @@ function generateUUID(): string {
 }
 
 // Validate rooms before submission
-function validateRooms(rooms: RoomDraft[]): { valid: boolean; errors: string[] } {
+function validateRooms(rooms: RoomDraft[]): {
+  valid: boolean;
+  errors: string[];
+} {
   const errors: string[] = [];
   const seenLabels = new Set<string>();
 
@@ -77,7 +80,9 @@ function validateRooms(rooms: RoomDraft[]): { valid: boolean; errors: string[] }
     // Check for duplicate labels within the batch
     const normalizedLabel = room.label.trim().toLowerCase();
     if (normalizedLabel && seenLabels.has(normalizedLabel)) {
-      errors.push(`${roomLabel}: Tên "${room.label}" bị trùng với phòng khác trong danh sách`);
+      errors.push(
+        `${roomLabel}: Tên "${room.label}" bị trùng với phòng khác trong danh sách`,
+      );
     }
     seenLabels.add(normalizedLabel);
 
@@ -94,7 +99,10 @@ function validateRooms(rooms: RoomDraft[]): { valid: boolean; errors: string[] }
       errors.push(`${roomLabel}: Số người tối đa phải >= 1`);
     }
 
-    if (room.minimum_rental_months.trim() && Number(room.minimum_rental_months) < 3) {
+    if (
+      room.minimum_rental_months.trim() &&
+      Number(room.minimum_rental_months) < 3
+    ) {
       errors.push(`${roomLabel}: Thời gian thuê tối thiểu phải >= 3 tháng`);
     }
 
@@ -120,7 +128,7 @@ function validateRooms(rooms: RoomDraft[]): { valid: boolean; errors: string[] }
 // Parse backend validation errors
 function parseValidationErrors(apiError: ApiError): string[] {
   const messages: string[] = [];
-  
+
   for (const [field, fieldErrors] of Object.entries(apiError.errors)) {
     // Extract room index from field path like "units.0.label"
     const match = field.match(/^units\.(\d+)\.(.+)$/);
@@ -128,7 +136,7 @@ function parseValidationErrors(apiError: ApiError): string[] {
       const roomIndex = parseInt(match[1], 10);
       const fieldName = match[2];
       const roomLabel = `Phòng ${roomIndex + 1}`;
-      
+
       // Map field names to Vietnamese
       const fieldNames: Record<string, string> = {
         label: "Tên phòng",
@@ -165,11 +173,11 @@ function AddUnitsPageContent() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
   const propertyId = params.id;
-  
+
   const [property, setProperty] = useState<OwnerPropertyDetail | null>(null);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
-  
+
   const [unitCount, setUnitCount] = useState(1);
   const [unitPrefix, setUnitPrefix] = useState("Phòng");
   const [startNumber, setStartNumber] = useState(101);
@@ -188,7 +196,7 @@ function AddUnitsPageContent() {
         setLoading(false);
       }
     }
-    
+
     void loadProperty();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [propertyId]);
@@ -203,11 +211,7 @@ function AddUnitsPageContent() {
     setActiveRoom(0);
   }
 
-  function updateRoom(
-    index: number,
-    patch: Partial<RoomDraft>,
-    copy = true,
-  ) {
+  function updateRoom(index: number, patch: Partial<RoomDraft>, copy = true) {
     setRooms((current) => {
       const next = [...current];
       next[index] = { ...next[index], ...patch, customized: true };
@@ -268,8 +272,7 @@ function AddUnitsPageContent() {
             room.max_occupants.trim() === ""
               ? null
               : Number(room.max_occupants),
-          bedrooms:
-            room.bedrooms.trim() === "" ? null : Number(room.bedrooms),
+          bedrooms: room.bedrooms.trim() === "" ? null : Number(room.bedrooms),
           bathrooms:
             room.bathrooms.trim() === "" ? null : Number(room.bathrooms),
           bathroom_arrangement: room.bathroom_arrangement,
@@ -281,7 +284,7 @@ function AddUnitsPageContent() {
       router.push(`/owner/properties/${propertyId}?tab=units`);
     } catch (error) {
       console.error("Error creating units:", error);
-      
+
       // Parse and display backend validation errors
       if (error instanceof ApiError && error.status === 422) {
         const validationErrors = parseValidationErrors(error);
@@ -290,7 +293,9 @@ function AddUnitsPageContent() {
             toast.error(errorMsg, { duration: 6000 });
           });
         } else {
-          toast.error(error.message || "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.");
+          toast.error(
+            error.message || "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.",
+          );
         }
       } else if (error instanceof ApiError) {
         toast.error(error.message);
@@ -389,8 +394,8 @@ function AddUnitsPageContent() {
                 Chi tiết phòng
               </h2>
               <p className="mt-1 text-sm text-slate-600">
-                Chọn một phòng để sửa. Nút bên dưới sao chép phòng đang xem
-                sang các phòng chưa chỉnh.
+                Chọn một phòng để sửa. Nút bên dưới sao chép phòng đang xem sang
+                các phòng chưa chỉnh.
               </p>
             </div>
             <span className="text-xs text-slate-500">
@@ -505,8 +510,8 @@ function AddUnitsPageContent() {
                       checked={room.bathroom_arrangement === "PRIVATE"}
                       onChange={(event) =>
                         updateRoom(index, {
-                          bathroom_arrangement: event.target
-                            .value as "PRIVATE" | "SHARED",
+                          bathroom_arrangement: event.target.value as
+                            "PRIVATE" | "SHARED",
                         })
                       }
                       className="h-4 w-4 text-blue-600"
@@ -521,8 +526,8 @@ function AddUnitsPageContent() {
                       checked={room.bathroom_arrangement === "SHARED"}
                       onChange={(event) =>
                         updateRoom(index, {
-                          bathroom_arrangement: event.target
-                            .value as "PRIVATE" | "SHARED",
+                          bathroom_arrangement: event.target.value as
+                            "PRIVATE" | "SHARED",
                         })
                       }
                       className="h-4 w-4 text-blue-600"
@@ -628,11 +633,13 @@ function AddUnitsPageContent() {
 
 export default function AddUnitsPage() {
   return (
-    <Suspense fallback={
-      <div className="flex items-center justify-center p-8">
-        <p className="text-slate-600">Đang tải...</p>
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center p-8">
+          <p className="text-slate-600">Đang tải...</p>
+        </div>
+      }
+    >
       <AddUnitsPageContent />
     </Suspense>
   );

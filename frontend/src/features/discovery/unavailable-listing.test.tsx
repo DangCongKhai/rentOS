@@ -10,7 +10,9 @@ describe("unavailable listing", () => {
   it("renders the unavailable copy without a hidden title", () => {
     render(<UnavailableListing />);
 
-    expect(screen.getByRole("heading", { name: "Bài đăng này hiện không khả dụng" })).toBeTruthy();
+    expect(
+      screen.getByRole("heading", { name: "Bài đăng này hiện không khả dụng" }),
+    ).toBeTruthy();
     expect(screen.queryByText("Tiêu đề bí mật bị ẩn")).toBeNull();
   });
 });
