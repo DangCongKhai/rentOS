@@ -41,8 +41,8 @@ export function AdminPrivateImage({ media }: { media: AdminMedia }) {
       </span>
     );
   // A private image needs the browser session; Next's image proxy cannot forward it.
-  // eslint-disable-next-line @next/next/no-img-element
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       className="admin-privateImage"
       src={state.src}

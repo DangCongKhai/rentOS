@@ -9,6 +9,8 @@ import {
   getOwnerRentalRequest,
   proposeOwnerTenancy,
   type OwnerRentalRequestDetail,
+  type OwnerProposalUnit,
+  type PropertyPolicies,
 } from "@/lib/auth-api";
 
 const steps = ["Chọn căn", "Điều khoản", "Tài liệu", "Xem lại và gửi"];
@@ -34,6 +36,19 @@ function moneyLabel(value: string): string {
 
 function cleanMoney(value: string): string {
   return value.replace(/\D/g, "");
+}
+
+function unitDefaults(
+  unit: OwnerProposalUnit,
+  propertyPolicies: PropertyPolicies,
+) {
+  return {
+    rent: String(unit.monthly_rent ?? ""),
+    deposit: String(unit.deposit_amount ?? ""),
+    pets: unit.policy_overrides?.pets ?? propertyPolicies.pets,
+    smoking: unit.policy_overrides?.smoking ?? propertyPolicies.smoking,
+    rulesText: (unit.policy_overrides?.additional_rules ?? []).join("\n"),
+  };
 }
 
 function isPdf(file: File): boolean {
@@ -91,7 +106,20 @@ export default function OwnerTenancyProposalPage() {
             !unit.has_date_conflict,
         );
 
-        setUnitId(preferred?.id ?? available?.id ?? "");
+        const initialUnit = preferred ?? available;
+        setUnitId(initialUnit?.id ?? "");
+
+        if (initialUnit) {
+          const defaults = unitDefaults(
+            initialUnit,
+            result.property_policies,
+          );
+          setRent(defaults.rent);
+          setDeposit(defaults.deposit);
+          setPets(defaults.pets);
+          setSmoking(defaults.smoking);
+          setRulesText(defaults.rulesText);
+        }
       } catch (caught) {
         if (!active) return;
 
@@ -118,23 +146,6 @@ export default function OwnerTenancyProposalPage() {
   }, [id, retry, router]);
 
   const selectedUnit = detail?.units.find((unit) => unit.id === unitId) ?? null;
-
-  useEffect(() => {
-    if (!detail || !selectedUnit) return;
-
-    setRent(String(selectedUnit.monthly_rent ?? ""));
-    setDeposit(String(selectedUnit.deposit_amount ?? ""));
-    setPets(
-      selectedUnit.policy_overrides?.pets ?? detail.property_policies.pets,
-    );
-    setSmoking(
-      selectedUnit.policy_overrides?.smoking ??
-        detail.property_policies.smoking,
-    );
-
-    const rules = selectedUnit.policy_overrides?.additional_rules ?? [];
-    setRulesText(rules.join("\n"));
-  }, [detail, selectedUnit]);
 
   const availableUnits =
     detail?.units.filter(
@@ -379,7 +390,18 @@ export default function OwnerTenancyProposalPage() {
                         value={unit.id}
                         checked={selected}
                         disabled={!available}
-                        onChange={() => setUnitId(unit.id)}
+                        onChange={() => {
+                          setUnitId(unit.id);
+                          const defaults = unitDefaults(
+                            unit,
+                            detail.property_policies,
+                          );
+                          setRent(defaults.rent);
+                          setDeposit(defaults.deposit);
+                          setPets(defaults.pets);
+                          setSmoking(defaults.smoking);
+                          setRulesText(defaults.rulesText);
+                        }}
                         className="mt-1 accent-[#3368a0]"
                       />
                       <span>
