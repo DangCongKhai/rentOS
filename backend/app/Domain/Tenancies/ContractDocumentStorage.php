@@ -64,6 +64,64 @@ final class ContractDocumentStorage
         ];
     }
 
+    public function signedDownloadUrl(string $path, int $expiresIn = 300): string
+    {
+        $baseUrl = rtrim((string) config('services.supabase.url'), '/');
+        $serviceRoleKey = (string) config('services.supabase.service_role_key');
+        $bucket = trim((string) config('services.supabase.contracts.bucket'));
+
+        if ($baseUrl === '' || $serviceRoleKey === '' || $bucket === '') {
+            throw new RuntimeException('Private contract storage is not configured.');
+        }
+
+        $expiresIn = max(60, min($expiresIn, 300));
+        $encodedPath = implode(
+            '/',
+            array_map(rawurlencode(...), explode('/', $path)),
+        );
+
+        $url = $baseUrl
+            .'/storage/v1/object/sign/'
+            .rawurlencode($bucket)
+            .'/'.$encodedPath;
+
+        try {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer '.$serviceRoleKey,
+                'apikey' => $serviceRoleKey,
+            ])
+                ->connectTimeout((int) config('services.supabase.storage.connect_timeout', 5))
+                ->timeout((int) config('services.supabase.storage.timeout', 30))
+                ->post($url, ['expiresIn' => $expiresIn]);
+        } catch (ConnectionException $exception) {
+            throw new RuntimeException(
+                'Private contract storage is unavailable.',
+                previous: $exception,
+            );
+        }
+
+        $signedUrl = $response->json('signedURL');
+
+        if (! $response->successful() || ! is_string($signedUrl) || $signedUrl === '') {
+            Log::warning('Supabase could not create a signed contract download URL.', [
+                'status' => $response->status(),
+                'bucket' => $bucket,
+            ]);
+
+            throw new RuntimeException('Could not create a private contract download URL.');
+        }
+
+        if (str_starts_with($signedUrl, 'https://') || str_starts_with($signedUrl, 'http://')) {
+            return $signedUrl;
+        }
+
+        if (str_starts_with($signedUrl, '/storage/v1/')) {
+            return $baseUrl.$signedUrl;
+        }
+
+        return $baseUrl.'/storage/v1/'.ltrim($signedUrl, '/');
+    }
+
     public function delete(string $path): void
     {
         $baseUrl = rtrim((string) config('services.supabase.url'), '/');

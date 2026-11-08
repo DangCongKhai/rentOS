@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\OwnerTenancyLifecycleController;
 use App\Http\Controllers\Api\V1\OwnerTenancyProposalsController;
+use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')
@@ -28,4 +29,16 @@ Route::middleware('auth:sanctum')
             '/owner/tenancies/{tenancy}/end',
             [OwnerTenancyLifecycleController::class, 'end'],
         )->name('tenancies.end');
+        Route::get(
+            '/owner/tenancies/{tenancy}',
+            [TenancyTimelineController::class, 'show'],
+        )->name('tenancies.show');
+        Route::get(
+            '/owner/tenancies/{tenancy}/contracts/{contract}/download',
+            [TenancyTimelineController::class, 'downloadContract'],
+        )->name('tenancies.contracts.download');
+        Route::get(
+            '/owner/tenancies',
+            [TenancyTimelineController::class, 'ownerIndex'],
+        )->name('tenancies.index');
     });

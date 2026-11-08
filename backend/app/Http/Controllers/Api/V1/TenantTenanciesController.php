@@ -4,33 +4,29 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Actions\Tenancies\ConfirmTenancyContract;
 use App\Actions\Tenancies\DeclineTenancyContract;
+use App\Actions\Tenancies\ListParticipantTenancies;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ConfirmTenancyContractRequest;
 use App\Http\Requests\DeclineTenancyContractRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 
 class TenantTenanciesController extends Controller
 {
     /**
      * Get active or confirmed tenancies for the authenticated tenant.
      */
-    public function index(Request $request): JsonResponse
-    {
-        /** @var User $user */
-        $user = $request->user();
-
-        $tenancies = DB::table('tenancies')
-            ->where('tenant_id', $user->id)
-            ->whereIn('status', ['ACTIVE', 'CONFIRMED'])
-            ->orderByDesc('created_at')
-            ->get();
+    public function index(
+        Request $request,
+        ListParticipantTenancies $tenancies,
+    ): JsonResponse {
+        /** @var User $tenant */
+        $tenant = $request->user();
 
         return response()->json([
-            'data' => $tenancies,
-        ]);
+            'data' => $tenancies->forTenant($tenant),
+        ])->header('Cache-Control', 'private, no-store');
     }
 
     public function confirmContract(
