@@ -140,50 +140,53 @@ class TenantTenanciesTest extends TestCase
         $this->assertContains($confirmedTenancyId, $returnedIds);
     }
 
-    public function test_non_active_tenancies_are_excluded(): void
+    public function test_historical_tenancies_are_returned_for_timeline(): void
     {
         $owner = User::factory()->create();
         $tenant = User::factory()->create();
 
-        // Tenancy with AWAITING_REVISION
-        $this->createTenancy($tenant->id, $owner->id, 'AWAITING_REVISION', [
-            'blocked_start_date' => null,
-            'blocked_end_date' => null,
-            'moved_in_at' => null,
-        ]);
+        $expectedStatuses = [
+            'AWAITING_REVISION' => $this->createTenancy($tenant->id, $owner->id, 'AWAITING_REVISION', [
+                'blocked_start_date' => null,
+                'blocked_end_date' => null,
+                'moved_in_at' => null,
+            ]),
 
-        // Tenancy with CANCELLED
-        $this->createTenancy($tenant->id, $owner->id, 'CANCELLED', [
-            'blocked_start_date' => null,
-            'blocked_end_date' => null,
-            'moved_in_at' => null,
-            'actual_ended_at' => now(),
-            'end_reason' => 'Nguoi thue huy bo',
-        ]);
+            'CANCELLED' => $this->createTenancy($tenant->id, $owner->id, 'CANCELLED', [
+                'blocked_start_date' => null,
+                'blocked_end_date' => null,
+                'moved_in_at' => null,
+                'actual_ended_at' => now(),
+                'end_reason' => 'Nguoi thue huy bo',
+            ]),
 
-        // Tenancy with ENDED
-        $this->createTenancy($tenant->id, $owner->id, 'ENDED', [
-            'blocked_start_date' => '2026-05-01',
-            'blocked_end_date' => '2026-10-01',
-            'moved_in_at' => now()->subMonths(6),
-            'actual_ended_at' => now(),
-            'end_reason' => 'Ket thuc thoi han hop dong',
-        ]);
+            'ENDED' => $this->createTenancy($tenant->id, $owner->id, 'ENDED', [
+                'blocked_start_date' => '2026-05-01',
+                'blocked_end_date' => '2026-10-01',
+                'moved_in_at' => now()->subMonths(6),
+                'actual_ended_at' => now(),
+                'end_reason' => 'Ket thuc thoi han hop dong',
+            ]),
 
-        // Tenancy with EXPIRED
-        $this->createTenancy($tenant->id, $owner->id, 'EXPIRED', [
-            'blocked_start_date' => null,
-            'blocked_end_date' => null,
-            'moved_in_at' => null,
-            'actual_ended_at' => now(),
-            'end_reason' => 'Qua han xac nhan hop dong',
-        ]);
+            'EXPIRED' => $this->createTenancy($tenant->id, $owner->id, 'EXPIRED', [
+                'blocked_start_date' => null,
+                'blocked_end_date' => null,
+                'moved_in_at' => null,
+                'actual_ended_at' => now(),
+                'end_reason' => 'Qua han xac nhan hop dong',
+            ]),
+        ];
 
         $response = $this->actingAs($tenant)->getJson('/api/v1/tenant/tenancies');
 
         $response->assertOk()
-            ->assertJsonCount(0, 'data')
-            ->assertJson(['data' => []]);
+            ->assertJsonCount(4, 'data');
+
+        $returned = collect($response->json('data'))->keyBy('id');
+
+        foreach ($expectedStatuses as $status => $id) {
+            $this->assertSame($status, $returned->get($id)['status'] ?? null);
+        }
     }
 
     public function test_user_cannot_view_other_tenants_tenancies(): void
