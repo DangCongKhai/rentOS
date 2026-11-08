@@ -354,6 +354,20 @@ export async function getTenantTenancies(): Promise<TenantTenancy[]> {
   return request<TenantTenancy[]>("/api/v1/tenant/tenancies");
 }
 
+export async function getOwnerRentalRequests(): Promise<
+  OwnerRentalRequestSummary[]
+> {
+  return request<OwnerRentalRequestSummary[]>("/api/v1/owner/rental-requests");
+}
+
+export async function getOwnerRentalRequest(
+  rentalRequestId: string,
+): Promise<OwnerRentalRequestDetail> {
+  return request<OwnerRentalRequestDetail>(
+    `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}`,
+  );
+}
+
 export async function getOwnerProperties(
   includeArchived = false,
 ): Promise<OwnerProperty[]> {
@@ -668,5 +682,88 @@ export async function removeOwnerMedia(
         revision,
       }),
     },
+  );
+}
+
+export type OwnerRentalRequestSummary = {
+  id: string;
+  status: string;
+  desired_move_in_date: string;
+  desired_end_date: string;
+  message: string;
+  contact_name: string;
+  contact_phone: string;
+  created_at: string;
+  closed_at: string | null;
+  outcome_reason: string | null;
+  listing_title: string;
+  property_name: string;
+  city: string | null;
+  preferred_unit_label: string | null;
+  tenancy_id: string | null;
+};
+
+export type OwnerProposalUnit = {
+  id: string;
+  label: string;
+  operational_status: "READY" | "MAINTENANCE" | "RETIRED";
+  monthly_rent: number | string | null;
+  deposit_amount: number | string | null;
+  minimum_rental_months: number;
+  policy_overrides: OwnerUnit["policy_overrides"];
+  has_date_conflict: boolean;
+};
+
+export type OwnerRentalRequestDetail = {
+  request: OwnerRentalRequestSummary & {
+    preferred_unit_id: string | null;
+    listing_id: string;
+    property_id: string;
+    policies: PropertyPolicies | string;
+  };
+  property_policies: PropertyPolicies;
+  units: OwnerProposalUnit[];
+};
+
+export type OwnerTenancyProposalResult = {
+  tenancy_id: string;
+  status: string;
+  confirmation_expires_at: string;
+  contract: {
+    id: string;
+    version_number: number;
+    type: string;
+    document_sha256: string;
+  };
+  replayed: boolean;
+};
+
+export async function proposeOwnerTenancy(
+  rentalRequestId: string,
+  input: {
+    client_operation_id: string;
+    unit_id: string;
+    start_date: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+    agreement_document: File;
+  },
+): Promise<OwnerTenancyProposalResult> {
+  const body = new FormData();
+
+  body.append("client_operation_id", input.client_operation_id);
+  body.append("unit_id", input.unit_id);
+  body.append("start_date", input.start_date);
+  body.append("end_date", input.end_date);
+  body.append("monthly_rent", String(input.monthly_rent));
+  body.append("deposit_amount", String(input.deposit_amount));
+  body.append("policies_snapshot", JSON.stringify(input.policies_snapshot));
+  body.append("agreement_document", input.agreement_document);
+
+  return request<OwnerTenancyProposalResult>(
+    `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}/proposal`,
+    { method: "POST", body },
   );
 }
