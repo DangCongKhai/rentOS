@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 class ListParticipantTenancies
 {
     /**
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function forOwner(User $owner): Collection
     {
@@ -17,7 +17,7 @@ class ListParticipantTenancies
     }
 
     /**
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     public function forTenant(User $tenant): Collection
     {
@@ -25,7 +25,7 @@ class ListParticipantTenancies
     }
 
     /**
-     * @return Collection<int, object>
+     * @return Collection<int, \stdClass>
      */
     private function forParticipant(User $viewer, bool $isOwner): Collection
     {
