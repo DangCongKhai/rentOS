@@ -110,10 +110,7 @@ export default function OwnerTenancyProposalPage() {
         setUnitId(initialUnit?.id ?? "");
 
         if (initialUnit) {
-          const defaults = unitDefaults(
-            initialUnit,
-            result.property_policies,
-          );
+          const defaults = unitDefaults(initialUnit, result.property_policies);
           setRent(defaults.rent);
           setDeposit(defaults.deposit);
           setPets(defaults.pets);

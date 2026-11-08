@@ -25,7 +25,7 @@ export type CurrentUser = {
   is_admin: boolean;
 };
 
-export type TenantTenancy = {
+export type ParticipantTenancySummary = {
   id: string;
   unit_id: string;
   tenant_id: string;
@@ -36,8 +36,136 @@ export type TenantTenancy = {
   confirmed_end_date: string | null;
   blocked_start_date: string | null;
   blocked_end_date: string | null;
+  pending_contract_id: string | null;
+  latest_confirmed_contract_id: string | null;
+  confirmation_expires_at: string | null;
+  moved_in_at: string | null;
+  actual_ended_at: string | null;
+  end_reason: string | null;
   created_at: string;
   updated_at: string;
+  property_name: string;
+  property_city: string | null;
+  unit_label: string;
+  rental_request_status: string;
+  counterparty_name: string;
+  pending_contract_version: number | null;
+  pending_contract_start_date: string | null;
+  pending_contract_end_date: string | null;
+  pending_contract_monthly_rent: string | number | null;
+  pending_contract_deposit_amount: string | number | null;
+  latest_confirmed_contract_version: number | null;
+  latest_confirmed_contract_start_date: string | null;
+  latest_confirmed_contract_end_date: string | null;
+  latest_confirmed_contract_monthly_rent: string | number | null;
+  latest_confirmed_contract_deposit_amount: string | number | null;
+};
+
+export type TenantTenancy = ParticipantTenancySummary;
+
+export type TenancyContractRecord = {
+  id: string;
+  version_number: number;
+  type: string;
+  renewal_request_id: string | null;
+  supersedes_contract_id: string | null;
+  basis_contract_id: string | null;
+  start_date: string;
+  end_date: string;
+  monthly_rent: string | number;
+  deposit_amount: string | number;
+  policies_snapshot: Record<string, unknown> | string;
+  document_sha256: string;
+  signed_on: string | null;
+  created_at: string;
+  owner_confirmed_at: string | null;
+  tenant_confirmed_at: string | null;
+  tenant_rejected_at: string | null;
+  tenant_rejection_reason: string | null;
+};
+
+export type TenancyTimeline = {
+  tenancy: {
+    id: string;
+    owner_id: string;
+    tenant_id: string;
+    rental_request_id: string;
+    unit_id: string;
+    status: string;
+    confirmed_start_date: string | null;
+    confirmed_end_date: string | null;
+    blocked_start_date: string | null;
+    blocked_end_date: string | null;
+    pending_contract_id: string | null;
+    latest_confirmed_contract_id: string | null;
+    confirmation_expires_at: string | null;
+    moved_in_at: string | null;
+    actual_ended_at: string | null;
+    end_reason: string | null;
+    created_at: string;
+    updated_at: string;
+  };
+  rental_request: {
+    id: string;
+    status: string;
+    created_at: string;
+    closed_at: string | null;
+    contact_name: string;
+    contact_phone: string;
+  } | null;
+  property: {
+    id: string;
+    name: string;
+    address_line: string | null;
+    ward: string | null;
+    city: string | null;
+  };
+  unit: {
+    id: string;
+    label: string;
+  };
+  participants: {
+    owner_name: string;
+    tenant_name: string;
+  };
+  contracts: TenancyContractRecord[];
+  pending_contract: TenancyContractRecord | null;
+  current_agreement: TenancyContractRecord | null;
+  upcoming_agreements: TenancyContractRecord[];
+  events: Array<{
+    action: string;
+    reason: string | null;
+    created_at: string;
+  }>;
+};
+
+export type TenancyContractDownload = {
+  contract_id: string;
+  version_number: number;
+  url: string;
+  expires_in: number;
+};
+
+export type TenancyDecisionResult = {
+  tenancy_id: string;
+  status: string;
+  contract_id: string;
+  version_number: number;
+  document_sha256: string;
+  replayed: boolean;
+  confirmed_start_date?: string | null;
+  confirmed_end_date?: string | null;
+  tenant_rejected_at?: string | null;
+  reason?: string | null;
+};
+
+export type OwnerTenancyLifecycleResult = {
+  tenancy_id: string;
+  status: string;
+  replayed: boolean;
+  moved_in_at?: string | null;
+  actual_ended_at?: string | null;
+  end_reason?: string | null;
 };
 
 export type OwnerProperty = {
@@ -352,6 +480,102 @@ export async function resetPassword(input: {
 
 export async function getTenantTenancies(): Promise<TenantTenancy[]> {
   return request<TenantTenancy[]>("/api/v1/tenant/tenancies");
+}
+
+export async function getOwnerTenancies(): Promise<
+  ParticipantTenancySummary[]
+> {
+  return request<ParticipantTenancySummary[]>("/api/v1/owner/tenancies");
+}
+
+export async function getOwnerTenancyTimeline(
+  tenancyId: string,
+): Promise<TenancyTimeline> {
+  return request<TenancyTimeline>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}`,
+  );
+}
+
+export async function getTenantTenancyTimeline(
+  tenancyId: string,
+): Promise<TenancyTimeline> {
+  return request<TenancyTimeline>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}`,
+  );
+}
+
+export async function getOwnerTenancyContractDownload(
+  tenancyId: string,
+  contractId: string,
+): Promise<TenancyContractDownload> {
+  return request<TenancyContractDownload>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/download`,
+  );
+}
+
+export async function getTenantTenancyContractDownload(
+  tenancyId: string,
+  contractId: string,
+): Promise<TenancyContractDownload> {
+  return request<TenancyContractDownload>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/download`,
+  );
+}
+
+export async function confirmTenantTenancyContract(
+  tenancyId: string,
+  contractId: string,
+  input: { client_operation_id: string; document_sha256: string },
+): Promise<TenancyDecisionResult> {
+  return request<TenancyDecisionResult>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/confirm`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function declineTenantTenancyContract(
+  tenancyId: string,
+  contractId: string,
+  input: {
+    client_operation_id: string;
+    document_sha256: string;
+    reason: string;
+  },
+): Promise<TenancyDecisionResult> {
+  return request<TenancyDecisionResult>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/decline`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function markOwnerTenancyMoveIn(
+  tenancyId: string,
+  input: { client_operation_id: string },
+): Promise<OwnerTenancyLifecycleResult> {
+  return request<OwnerTenancyLifecycleResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/move-in`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function cancelOwnerTenancy(
+  tenancyId: string,
+  input: { client_operation_id: string; reason: string },
+): Promise<OwnerTenancyLifecycleResult> {
+  return request<OwnerTenancyLifecycleResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/cancel`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function endOwnerTenancy(
+  tenancyId: string,
+  input: { client_operation_id: string; reason: string },
+): Promise<OwnerTenancyLifecycleResult> {
+  return request<OwnerTenancyLifecycleResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/end`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
 }
 
 export async function getOwnerRentalRequests(): Promise<
@@ -733,6 +957,7 @@ export type OwnerTenancyProposalResult = {
     id: string;
     version_number: number;
     type: string;
+    supersedes_contract_id?: string;
     document_sha256: string;
   };
   replayed: boolean;
@@ -764,6 +989,41 @@ export async function proposeOwnerTenancy(
 
   return request<OwnerTenancyProposalResult>(
     `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}/proposal`,
+    { method: "POST", body },
+  );
+}
+
+export async function correctOwnerTenancyProposal(
+  tenancyId: string,
+  input: {
+    client_operation_id: string;
+    supersedes_contract_id: string;
+    start_date: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+    agreement_document: File;
+    signed_on?: string | null;
+  },
+): Promise<OwnerTenancyProposalResult> {
+  const body = new FormData();
+
+  body.append("client_operation_id", input.client_operation_id);
+  body.append("supersedes_contract_id", input.supersedes_contract_id);
+  body.append("start_date", input.start_date);
+  body.append("end_date", input.end_date);
+  body.append("monthly_rent", String(input.monthly_rent));
+  body.append("deposit_amount", String(input.deposit_amount));
+  body.append("policies_snapshot", JSON.stringify(input.policies_snapshot));
+  body.append("agreement_document", input.agreement_document);
+
+  if (input.signed_on) {
+    body.append("signed_on", input.signed_on);
+  }
+
+  return request<OwnerTenancyProposalResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/correction`,
     { method: "POST", body },
   );
 }
