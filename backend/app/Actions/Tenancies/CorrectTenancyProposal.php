@@ -245,10 +245,7 @@ class CorrectTenancyProposal
                 return $this->result($tenancyId, $contractId, false);
             });
         } catch (QueryException $exception) {
-            if (
-                $exception instanceof QueryException
-                && ($exception->errorInfo[0] ?? null) === '23P01'
-            ) {
+            if (($exception->errorInfo[0] ?? null) === '23P01') {
                 abort(409, 'The selected unit is no longer available for those dates.');
             }
 
