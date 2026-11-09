@@ -75,7 +75,6 @@ export type TenancyContractRecord = {
   monthly_rent: string | number;
   deposit_amount: string | number;
   policies_snapshot: Record<string, unknown> | string;
-  document_sha256: string;
   signed_on: string | null;
   created_at: string;
   owner_confirmed_at: string | null;
@@ -139,19 +138,11 @@ export type TenancyTimeline = {
   }>;
 };
 
-export type TenancyContractDownload = {
-  contract_id: string;
-  version_number: number;
-  url: string;
-  expires_in: number;
-};
-
 export type TenancyDecisionResult = {
   tenancy_id: string;
   status: string;
   contract_id: string;
   version_number: number;
-  document_sha256: string;
   replayed: boolean;
   confirmed_start_date?: string | null;
   confirmed_end_date?: string | null;
@@ -504,28 +495,10 @@ export async function getTenantTenancyTimeline(
   );
 }
 
-export async function getOwnerTenancyContractDownload(
-  tenancyId: string,
-  contractId: string,
-): Promise<TenancyContractDownload> {
-  return request<TenancyContractDownload>(
-    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/download`,
-  );
-}
-
-export async function getTenantTenancyContractDownload(
-  tenancyId: string,
-  contractId: string,
-): Promise<TenancyContractDownload> {
-  return request<TenancyContractDownload>(
-    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/download`,
-  );
-}
-
 export async function confirmTenantTenancyContract(
   tenancyId: string,
   contractId: string,
-  input: { client_operation_id: string; document_sha256: string },
+  input: { client_operation_id: string },
 ): Promise<TenancyDecisionResult> {
   return request<TenancyDecisionResult>(
     `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/contracts/${encodeURIComponent(contractId)}/confirm`,
@@ -538,7 +511,6 @@ export async function declineTenantTenancyContract(
   contractId: string,
   input: {
     client_operation_id: string;
-    document_sha256: string;
     reason: string;
   },
 ): Promise<TenancyDecisionResult> {
@@ -958,7 +930,6 @@ export type OwnerTenancyProposalResult = {
     version_number: number;
     type: string;
     supersedes_contract_id?: string;
-    document_sha256: string;
   };
   replayed: boolean;
 };
@@ -973,23 +944,11 @@ export async function proposeOwnerTenancy(
     monthly_rent: number;
     deposit_amount: number;
     policies_snapshot: Record<string, unknown>;
-    agreement_document: File;
   },
 ): Promise<OwnerTenancyProposalResult> {
-  const body = new FormData();
-
-  body.append("client_operation_id", input.client_operation_id);
-  body.append("unit_id", input.unit_id);
-  body.append("start_date", input.start_date);
-  body.append("end_date", input.end_date);
-  body.append("monthly_rent", String(input.monthly_rent));
-  body.append("deposit_amount", String(input.deposit_amount));
-  body.append("policies_snapshot", JSON.stringify(input.policies_snapshot));
-  body.append("agreement_document", input.agreement_document);
-
   return request<OwnerTenancyProposalResult>(
     `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}/proposal`,
-    { method: "POST", body },
+    { method: "POST", body: JSON.stringify(input) },
   );
 }
 
@@ -1003,27 +962,11 @@ export async function correctOwnerTenancyProposal(
     monthly_rent: number;
     deposit_amount: number;
     policies_snapshot: Record<string, unknown>;
-    agreement_document: File;
     signed_on?: string | null;
   },
 ): Promise<OwnerTenancyProposalResult> {
-  const body = new FormData();
-
-  body.append("client_operation_id", input.client_operation_id);
-  body.append("supersedes_contract_id", input.supersedes_contract_id);
-  body.append("start_date", input.start_date);
-  body.append("end_date", input.end_date);
-  body.append("monthly_rent", String(input.monthly_rent));
-  body.append("deposit_amount", String(input.deposit_amount));
-  body.append("policies_snapshot", JSON.stringify(input.policies_snapshot));
-  body.append("agreement_document", input.agreement_document);
-
-  if (input.signed_on) {
-    body.append("signed_on", input.signed_on);
-  }
-
   return request<OwnerTenancyProposalResult>(
     `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/correction`,
-    { method: "POST", body },
+    { method: "POST", body: JSON.stringify(input) },
   );
 }

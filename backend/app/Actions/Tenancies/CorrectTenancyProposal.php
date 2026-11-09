@@ -2,24 +2,17 @@
 
 namespace App\Actions\Tenancies;
 
-use App\Domain\Tenancies\ContractDocumentStorage;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class CorrectTenancyProposal
 {
-    public function __construct(
-        private ContractDocumentStorage $documents,
-    ) {}
-
     /**
      * @param array{
      *     client_operation_id: string,
@@ -29,30 +22,16 @@ class CorrectTenancyProposal
      *     monthly_rent: int|string,
      *     deposit_amount: int|string,
      *     policies_snapshot: array<string, mixed>,
-     *     agreement_document: UploadedFile,
      *     signed_on?: string|null
      * } $input
      * @return array{tenancy: object, contract: object, replayed: bool}
      */
     public function handle(User $owner, string $tenancyId, array $input): array
     {
-        $fileHash = hash_file(
-            'sha256',
-            $input['agreement_document']->getRealPath(),
-        );
-
-        if ($fileHash === false) {
-            throw new \RuntimeException('Could not read the agreement document.');
-        }
-
-        $hashInput = $input;
-        unset($hashInput['agreement_document']);
-        $hashInput['document_sha256'] = $fileHash;
-
         $requestHash = hash(
             'sha256',
             json_encode(
-                $this->canonicalize($hashInput),
+                $this->canonicalize($input),
                 JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE,
             ),
         );
@@ -66,8 +45,6 @@ class CorrectTenancyProposal
         abort_if($context === null, 404);
 
         $contractId = (string) Str::uuid();
-        $storedPath = null;
-
         try {
             return DB::transaction(function () use (
                 $owner,
@@ -76,7 +53,6 @@ class CorrectTenancyProposal
                 $requestHash,
                 $contractId,
                 $context,
-                &$storedPath,
             ): array {
                 $property = Property::query()
                     ->whereKey($context->property_id)
@@ -183,13 +159,6 @@ class CorrectTenancyProposal
                 $expiresAt = $now->copy()->addHours($confirmationHours);
                 $versionNumber = $latestVersion + 1;
 
-                $document = $this->documents->upload(
-                    $input['agreement_document'],
-                    $tenancyId,
-                    $contractId,
-                );
-                $storedPath = $document['path'];
-
                 DB::table('tenancy_contracts')->insert([
                     'id' => $contractId,
                     'tenancy_id' => $tenancyId,
@@ -204,8 +173,8 @@ class CorrectTenancyProposal
                         (object) $input['policies_snapshot'],
                         JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE,
                     ),
-                    'document_path' => $document['path'],
-                    'document_sha256' => $document['sha256'],
+                    'document_path' => null,
+                    'document_sha256' => null,
                     'signed_on' => $input['signed_on'] ?? null,
                     'created_by' => $owner->id,
                     'owner_confirmed_at' => $now,
@@ -239,7 +208,6 @@ class CorrectTenancyProposal
                         'contract_id' => $contractId,
                         'supersedes_contract_id' => $previousContract->id,
                         'version_number' => $versionNumber,
-                        'document_sha256' => $document['sha256'],
                         'confirmation_expires_at' => $expiresAt->toISOString(),
                     ], JSON_THROW_ON_ERROR),
                     'reason' => null,
@@ -276,11 +244,7 @@ class CorrectTenancyProposal
 
                 return $this->result($tenancyId, $contractId, false);
             });
-        } catch (Throwable $exception) {
-            if ($storedPath !== null) {
-                $this->documents->delete($storedPath);
-            }
-
+        } catch (QueryException $exception) {
             if (
                 $exception instanceof QueryException
                 && ($exception->errorInfo[0] ?? null) === '23P01'

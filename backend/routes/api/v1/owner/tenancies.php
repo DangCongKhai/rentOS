@@ -35,10 +35,6 @@ Route::middleware('auth:sanctum')
             [TenancyTimelineController::class, 'show'],
         )->name('tenancies.show');
         Route::get(
-            '/owner/tenancies/{tenancy}/contracts/{contract}/download',
-            [TenancyTimelineController::class, 'downloadContract'],
-        )->name('tenancies.contracts.download');
-        Route::get(
             '/owner/tenancies',
             [TenancyTimelineController::class, 'ownerIndex'],
         )->name('tenancies.index');

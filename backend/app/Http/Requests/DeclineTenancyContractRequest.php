@@ -24,7 +24,6 @@ class DeclineTenancyContractRequest extends FormRequest
     {
         return [
             'client_operation_id' => ['required', 'uuid'],
-            'document_sha256' => ['required', 'string', 'regex:/\A[a-f0-9]{64}\z/'],
             'reason' => ['required', 'string', 'min:5', 'max:2000'],
         ];
     }

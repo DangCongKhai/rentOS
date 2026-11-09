@@ -5,9 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\Support\PublicListingFixture;
 use Tests\Support\PublishedListing;
@@ -21,13 +19,6 @@ class OwnerTenancyCorrectionsTest extends TestCase
     {
         parent::setUp();
 
-        config([
-            'services.supabase.url' => 'https://storage.example.test',
-            'services.supabase.service_role_key' => 'test-service-role-key',
-            'services.supabase.contracts.bucket' => 'contract-documents',
-        ]);
-
-        Http::fake(fn () => Http::response([], 200));
     }
 
     public function test_owner_can_correct_and_replay_a_declined_proposal(): void
@@ -174,7 +165,6 @@ class OwnerTenancyCorrectionsTest extends TestCase
             "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/decline",
             [
                 'client_operation_id' => (string) Str::uuid(),
-                'document_sha256' => $contract->document_sha256,
                 'reason' => 'The proposed dates do not work for me.',
             ],
         )->assertOk();
@@ -211,10 +201,6 @@ class OwnerTenancyCorrectionsTest extends TestCase
                 'smoking' => 'NOT_ALLOWED',
                 'shared_rules' => [],
             ],
-            'agreement_document' => UploadedFile::fake()->createWithContent(
-                'corrected.pdf',
-                '%PDF-1.4 corrected tenancy agreement',
-            ),
             'signed_on' => null,
         ];
     }

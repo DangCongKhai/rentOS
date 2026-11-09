@@ -14,7 +14,6 @@ class DeclineTenancyContract
     /**
      * @param array{
      *     client_operation_id: string,
-     *     document_sha256: string,
      *     reason: string
      * } $input
      * @return array{tenancy: object, contract: object, replayed: bool}
@@ -30,7 +29,6 @@ class DeclineTenancyContract
         $requestHash = hash('sha256', json_encode([
             'tenancy_id' => $tenancyId,
             'contract_id' => $contractId,
-            'document_sha256' => $input['document_sha256'],
             'reason' => $reason,
         ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE));
 
@@ -109,12 +107,6 @@ class DeclineTenancyContract
                 409,
                 'This contract already has a tenant decision.',
             );
-            abort_unless(
-                hash_equals($contract->document_sha256, $input['document_sha256']),
-                409,
-                'The contract document hash does not match.',
-            );
-
             $now = now();
 
             DB::select(
@@ -154,7 +146,6 @@ class DeclineTenancyContract
                 'after_values' => json_encode([
                     'status' => 'AWAITING_REVISION',
                     'contract_id' => $contractId,
-                    'document_sha256' => $contract->document_sha256,
                     'reason' => $reason,
                 ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                 'reason' => $reason,

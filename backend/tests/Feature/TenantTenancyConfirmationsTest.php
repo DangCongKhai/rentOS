@@ -40,7 +40,6 @@ class TenantTenancyConfirmationsTest extends TestCase
         $operationId = (string) Str::uuid();
         $payload = [
             'client_operation_id' => $operationId,
-            'document_sha256' => $contract->document_sha256,
         ];
         $url = "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/confirm";
 

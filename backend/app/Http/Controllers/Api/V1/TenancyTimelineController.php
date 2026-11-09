@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Actions\Tenancies\IssueTenancyContractDownload;
 use App\Actions\Tenancies\ListParticipantTenancies;
 use App\Actions\Tenancies\ReadTenancyTimeline;
 use App\Http\Controllers\Controller;
@@ -23,20 +22,6 @@ class TenancyTimelineController extends Controller
 
         return response()->json([
             'data' => $timeline->handle($viewer, $tenancy),
-        ])->header('Cache-Control', 'private, no-store');
-    }
-
-    public function downloadContract(
-        Request $request,
-        string $tenancy,
-        string $contract,
-        IssueTenancyContractDownload $downloads,
-    ): JsonResponse {
-        /** @var User $viewer */
-        $viewer = $request->user();
-
-        return response()->json([
-            'data' => $downloads->handle($viewer, $tenancy, $contract),
         ])->header('Cache-Control', 'private, no-store');
     }
 

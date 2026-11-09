@@ -91,7 +91,6 @@ class ReadTenancyTimeline
                 'monthly_rent',
                 'deposit_amount',
                 'policies_snapshot',
-                'document_sha256',
                 'signed_on',
                 'created_at',
                 'owner_confirmed_at',

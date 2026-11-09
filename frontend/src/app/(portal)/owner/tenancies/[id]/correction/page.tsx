@@ -92,7 +92,6 @@ function CorrectionForm({
   const [rules, setRules] = useState(
     rulesToText(snapshot.unit.additional_rules),
   );
-  const [document, setDocument] = useState<File | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -100,24 +99,6 @@ function CorrectionForm({
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError("");
-
-    if (!document) {
-      setError("Chọn tài liệu hợp đồng PDF mới.");
-      return;
-    }
-
-    if (
-      document.type !== "application/pdf" &&
-      !document.name.toLowerCase().endsWith(".pdf")
-    ) {
-      setError("Tài liệu hợp đồng phải là tệp PDF.");
-      return;
-    }
-
-    if (document.size > 10 * 1024 * 1024) {
-      setError("Tài liệu PDF không được vượt quá 10 MB.");
-      return;
-    }
 
     if (!acknowledged) {
       setError("Xác nhận đã kiểm tra chính xác phiên bản hợp đồng mới.");
@@ -146,7 +127,6 @@ function CorrectionForm({
               .filter(Boolean),
           },
         },
-        agreement_document: document,
       });
 
       router.push(`/owner/tenancies/${result.tenancy_id}`);
@@ -266,16 +246,6 @@ function CorrectionForm({
           />
         </label>
 
-        <label className="grid gap-1.5 text-sm font-semibold text-slate-800">
-          Tài liệu hợp đồng PDF mới (tối đa 10 MB)
-          <input
-            type="file"
-            accept="application/pdf,.pdf"
-            onChange={(event) => setDocument(event.target.files?.[0] ?? null)}
-            className="w-full rounded-xl border border-slate-300 p-3 text-sm font-normal"
-          />
-        </label>
-
         <label className="flex items-start gap-3 text-sm text-slate-700">
           <input
             type="checkbox"
@@ -284,8 +254,8 @@ function CorrectionForm({
             className="mt-1 size-4 accent-[#3368a0]"
           />
           <span>
-            Tôi xác nhận đã kiểm tra các điều khoản và tài liệu của phiên bản
-            mới trước khi gửi cho người thuê.
+            Tôi xác nhận đã kiểm tra các điều khoản của phiên bản mới trước khi
+            gửi cho người thuê.
           </span>
         </label>
 

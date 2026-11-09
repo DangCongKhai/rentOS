@@ -12,7 +12,7 @@ use Illuminate\Support\Str;
 class ConfirmTenancyContract
 {
     /**
-     * @param  array{client_operation_id: string, document_sha256: string}  $input
+     * @param  array{client_operation_id: string}  $input
      * @return array{tenancy: object, contract: object, replayed: bool}
      */
     public function handle(
@@ -24,7 +24,6 @@ class ConfirmTenancyContract
         $requestHash = hash('sha256', json_encode([
             'tenancy_id' => $tenancyId,
             'contract_id' => $contractId,
-            'document_sha256' => $input['document_sha256'],
         ], JSON_THROW_ON_ERROR));
 
         $context = DB::table('tenancies')
@@ -101,12 +100,6 @@ class ConfirmTenancyContract
                 409,
                 'This contract already has a tenant decision.',
             );
-            abort_unless(
-                hash_equals($contract->document_sha256, $input['document_sha256']),
-                409,
-                'The contract document hash does not match.',
-            );
-
             $now = now();
 
             DB::select(
@@ -146,7 +139,6 @@ class ConfirmTenancyContract
                 'after_values' => json_encode([
                     'status' => 'CONFIRMED',
                     'contract_id' => $contractId,
-                    'document_sha256' => $contract->document_sha256,
                 ], JSON_THROW_ON_ERROR),
                 'reason' => null,
                 'correlation_id' => $input['client_operation_id'],

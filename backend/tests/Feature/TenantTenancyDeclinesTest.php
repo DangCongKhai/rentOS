@@ -40,7 +40,6 @@ class TenantTenancyDeclinesTest extends TestCase
         $operationId = (string) Str::uuid();
         $payload = [
             'client_operation_id' => $operationId,
-            'document_sha256' => $contract->document_sha256,
             'reason' => 'The proposed dates do not work for me.',
         ];
         $url = "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/decline";
@@ -98,7 +97,7 @@ class TenantTenancyDeclinesTest extends TestCase
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
-    public function test_tenant_cannot_decline_a_contract_with_a_different_document_hash(): void
+    public function test_tenant_cannot_decline_a_contract_that_is_not_pending(): void
     {
         $listing = PublicListingFixture::published();
         $unitId = $listing->unitIds[0];
@@ -121,15 +120,11 @@ class TenantTenancyDeclinesTest extends TestCase
             ->firstOrFail();
 
         $tenant = User::query()->findOrFail($tenancy->tenant_id);
-        $wrongHash = ($contract->document_sha256[0] === '0' ? '1' : '0')
-            .substr($contract->document_sha256, 1);
-
         $this->actingAs($tenant)->postJson(
-            "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/decline",
+            "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/".Str::uuid().'/decline',
             [
                 'client_operation_id' => (string) Str::uuid(),
-                'document_sha256' => $wrongHash,
-                'reason' => 'The document does not match.',
+                'reason' => 'This version is not current.',
             ],
         )->assertConflict();
 

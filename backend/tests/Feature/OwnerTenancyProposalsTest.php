@@ -5,9 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Tests\Support\PublicListingFixture;
 use Tests\Support\PublishedListing;
@@ -21,13 +19,6 @@ class OwnerTenancyProposalsTest extends TestCase
     {
         parent::setUp();
 
-        config([
-            'services.supabase.url' => 'https://storage.example.test',
-            'services.supabase.service_role_key' => 'test-service-role-key',
-            'services.supabase.contracts.bucket' => 'contract-documents',
-        ]);
-
-        Http::fake(fn () => Http::response([], 200));
     }
 
     public function test_owner_can_create_and_replay_a_tenancy_proposal(): void
@@ -91,7 +82,6 @@ class OwnerTenancyProposalsTest extends TestCase
 
         $this->assertDatabaseCount('tenancies', 1);
         $this->assertDatabaseCount('tenancy_contracts', 1);
-        Http::assertSentCount(1);
     }
 
     private function createPendingRentalRequest(
@@ -146,10 +136,6 @@ class OwnerTenancyProposalsTest extends TestCase
                 'smoking' => 'NOT_ALLOWED',
                 'shared_rules' => [],
             ],
-            'agreement_document' => UploadedFile::fake()->createWithContent(
-                'agreement.pdf',
-                "%PDF-1.4\nrentOS test agreement\n%%EOF",
-            ),
             'signed_on' => null,
         ];
     }
@@ -189,7 +175,5 @@ class OwnerTenancyProposalsTest extends TestCase
         $this->assertDatabaseCount('notification_outbox', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
 
-        // the uploaded PDF is removed after the database transaction rolls back.
-        Http::assertSentCount(2);
     }
 }

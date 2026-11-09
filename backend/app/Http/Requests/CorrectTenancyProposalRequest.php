@@ -36,7 +36,7 @@ class CorrectTenancyProposalRequest extends OwnerProductRequest
             'monthly_rent' => ['required', 'integer', 'min:1'],
             'deposit_amount' => ['required', 'integer', 'min:0'],
             'policies_snapshot' => ['required', 'array'],
-            'agreement_document' => ['required', 'file', 'mimes:pdf', 'max:10240'],
+            'agreement_document' => ['prohibited'],
             'signed_on' => ['nullable', 'date_format:Y-m-d'],
         ];
     }

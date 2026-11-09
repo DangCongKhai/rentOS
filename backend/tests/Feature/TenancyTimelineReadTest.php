@@ -37,7 +37,6 @@ class TenancyTimelineReadTest extends TestCase
             "/api/v1/tenant/tenancies/{$case['tenancy']->id}/contracts/{$case['contract']->id}/confirm",
             [
                 'client_operation_id' => (string) Str::uuid(),
-                'document_sha256' => $case['contract']->document_sha256,
             ],
         )->assertOk();
 
@@ -65,7 +64,6 @@ class TenancyTimelineReadTest extends TestCase
             "/api/v1/tenant/tenancies/{$case['tenancy']->id}/contracts/{$case['contract']->id}/confirm",
             [
                 'client_operation_id' => (string) Str::uuid(),
-                'document_sha256' => $case['contract']->document_sha256,
             ],
         )->assertOk();
 

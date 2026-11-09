@@ -2,24 +2,17 @@
 
 namespace App\Actions\Tenancies;
 
-use App\Domain\Tenancies\ContractDocumentStorage;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\QueryException;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Throwable;
 
 class ProposeTenancy
 {
-    public function __construct(
-        private ContractDocumentStorage $documents,
-    ) {}
-
     /**
      * @param array{
      *     client_operation_id: string,
@@ -29,29 +22,15 @@ class ProposeTenancy
      *     monthly_rent: int|string,
      *     deposit_amount: int|string,
      *     policies_snapshot: array<string, mixed>,
-     *     agreement_document: UploadedFile,
      *     signed_on?: string|null
      * } $data
      * @return array{tenancy: object, contract: object, replayed: bool}
      */
     public function handle(User $owner, string $rentalRequestId, array $data): array
     {
-        $fileHash = hash_file(
-            'sha256',
-            $data['agreement_document']->getRealPath(),
-        );
-
-        if ($fileHash === false) {
-            throw new \RuntimeException('Could not read the agreement document.');
-        }
-
-        $hashInput = $data;
-        unset($hashInput['agreement_document']);
-        $hashInput['document_sha256'] = $fileHash;
-
         $requestHash = hash(
             'sha256',
-            json_encode($this->canonicalize($hashInput), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
+            json_encode($this->canonicalize($data), JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
         );
 
         $context = DB::table('rental_requests as requests')
@@ -64,7 +43,6 @@ class ProposeTenancy
 
         $tenancyId = (string) Str::uuid();
         $contractId = (string) Str::uuid();
-        $storedPath = null;
 
         try {
             return DB::transaction(function () use (
@@ -75,7 +53,6 @@ class ProposeTenancy
                 $tenancyId,
                 $contractId,
                 $context,
-                &$storedPath,
             ): array {
                 $property = Property::query()
                     ->whereKey($context->property_id)
@@ -167,13 +144,6 @@ class ProposeTenancy
                 );
                 $expiresAt = $now->copy()->addHours($confirmationHours);
 
-                $document = $this->documents->upload(
-                    $data['agreement_document'],
-                    $tenancyId,
-                    $contractId,
-                );
-                $storedPath = $document['path'];
-
                 DB::table('tenancies')->insert([
                     'id' => $tenancyId,
                     'unit_id' => $unit->id,
@@ -203,8 +173,8 @@ class ProposeTenancy
                         (object) $data['policies_snapshot'],
                         JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE,
                     ),
-                    'document_path' => $document['path'],
-                    'document_sha256' => $document['sha256'],
+                    'document_path' => null,
+                    'document_sha256' => null,
                     'signed_on' => $data['signed_on'] ?? null,
                     'created_by' => $owner->id,
                     'owner_confirmed_at' => $now,
@@ -280,15 +250,8 @@ class ProposeTenancy
 
                 return $this->result($tenancyId, false);
             });
-        } catch (Throwable $exception) {
-            if ($storedPath !== null) {
-                $this->documents->delete($storedPath);
-            }
-
-            if (
-                $exception instanceof QueryException
-                && ($exception->errorInfo[0] ?? null) === '23P01'
-            ) {
+        } catch (QueryException $exception) {
+            if (($exception->errorInfo[0] ?? null) === '23P01') {
                 abort(409, 'The selected unit is no longer available for those dates.');
             }
 

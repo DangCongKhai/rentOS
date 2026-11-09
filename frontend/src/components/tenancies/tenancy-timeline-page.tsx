@@ -10,9 +10,7 @@ import {
   declineTenantTenancyContract,
   endOwnerTenancy,
   markOwnerTenancyMoveIn,
-  getOwnerTenancyContractDownload,
   getOwnerTenancyTimeline,
-  getTenantTenancyContractDownload,
   getTenantTenancyTimeline,
   type TenancyContractRecord,
   type TenancyTimeline,
@@ -154,21 +152,15 @@ function readPolicySnapshot(
 function ContractCard({
   contract,
   title,
-  party,
-  onDownload,
-  downloading,
 }: {
   contract: TenancyContractRecord;
   title: string;
-  party: Party;
-  onDownload: (contractId: string) => void;
-  downloading: string | null;
 }) {
   const policies = readPolicySnapshot(contract.policies_snapshot);
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
+      <div>
         <div>
           <h2 className="text-lg font-bold text-slate-900">{title}</h2>
           <p className="mt-1 text-sm text-slate-500">
@@ -177,14 +169,6 @@ function ContractCard({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => onDownload(contract.id)}
-          disabled={downloading === contract.id}
-          className="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-300 bg-white px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
-        >
-          {downloading === contract.id ? "Đang mở…" : "Mở tệp PDF"}
-        </button>
       </div>
 
       <dl className="mt-5 grid grid-cols-[125px_minmax(0,1fr)] gap-x-4 gap-y-3 text-sm sm:grid-cols-[150px_minmax(0,1fr)]">
@@ -246,13 +230,6 @@ function ContractCard({
         </dl>
       )}
 
-      <p className="mt-4 break-all text-xs text-slate-500">
-        SHA-256: {contract.document_sha256}
-      </p>
-      <p className="mt-2 text-xs text-slate-500">
-        Liên kết tải xuống riêng tư, chỉ có hiệu lực trong thời gian ngắn.
-        {party === "owner" && " Chỉ phiên bản đã lưu mới có giá trị."}
-      </p>
     </article>
   );
 }
@@ -265,7 +242,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [retry, setRetry] = useState(0);
-  const [downloading, setDownloading] = useState<string | null>(null);
 
   const [decisionLoading, setDecisionLoading] = useState(false);
   const [lifecycleLoading, setLifecycleLoading] = useState(false);
@@ -323,7 +299,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
     try {
       await confirmTenantTenancyContract(id, timeline.pending_contract.id, {
         client_operation_id: crypto.randomUUID(),
-        document_sha256: timeline.pending_contract.document_sha256,
       });
 
       setSuccessMessage("Bạn đã xác nhận phiên bản hợp đồng này.");
@@ -349,7 +324,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
     try {
       await declineTenantTenancyContract(id, timeline.pending_contract.id, {
         client_operation_id: crypto.randomUUID(),
-        document_sha256: timeline.pending_contract.document_sha256,
         reason: declineReason.trim(),
       });
 
@@ -431,30 +405,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
       );
     } finally {
       setCloseLoading(false);
-    }
-  }
-
-  async function downloadContract(contractId: string) {
-    if (!timeline) return;
-
-    setError("");
-    setDownloading(contractId);
-
-    try {
-      const download =
-        party === "owner"
-          ? await getOwnerTenancyContractDownload(id, contractId)
-          : await getTenantTenancyContractDownload(id, contractId);
-
-      window.open(download.url, "_blank", "noopener,noreferrer");
-    } catch (caught) {
-      setError(
-        caught instanceof ApiError
-          ? caught.message
-          : "Không mở được tài liệu. Vui lòng thử lại.",
-      );
-    } finally {
-      setDownloading(null);
     }
   }
 
@@ -616,8 +566,8 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
               Xác nhận phiên bản {pendingContract.version_number}
             </h2>
             <p className="mt-2 text-sm text-slate-600">
-              Hãy mở và đọc tệp PDF ở trên. Bạn đang phản hồi đúng phiên bản hợp
-              đồng này.
+              Vui lòng kiểm tra thời hạn, giá thuê, tiền cọc và các quy định
+              dưới đây trước khi phản hồi phiên bản này.
             </p>
 
             <label
@@ -664,9 +614,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
             <ContractCard
               contract={currentContract}
               title="Điều khoản đã xác nhận"
-              party={party}
-              onDownload={downloadContract}
-              downloading={downloading}
             />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -683,9 +630,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
             <ContractCard
               contract={pendingContract}
               title="Phiên bản đang chờ xác nhận"
-              party={party}
-              onDownload={downloadContract}
-              downloading={downloading}
             />
           )}
 
@@ -722,14 +666,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => void downloadContract(contract.id)}
-                      disabled={downloading === contract.id}
-                      className="inline-flex min-h-9 items-center justify-center rounded-xl border border-slate-300 px-3 text-xs font-semibold text-slate-800 hover:bg-slate-50 disabled:opacity-60"
-                    >
-                      {downloading === contract.id ? "Đang mở…" : "Mở PDF"}
-                    </button>
                   </article>
                 );
               })}
@@ -875,8 +811,8 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
 
           {pendingContract && party === "tenant" && (
             <p className="border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
-              Hãy mở và kiểm tra tài liệu hợp đồng của phiên bản đang chờ xác
-              nhận.
+              Hãy kiểm tra các điều khoản hiển thị ở trên của phiên bản đang
+              chờ xác nhận.
             </p>
           )}
         </aside>

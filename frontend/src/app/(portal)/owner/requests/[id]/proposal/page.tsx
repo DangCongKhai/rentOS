@@ -13,7 +13,7 @@ import {
   type PropertyPolicies,
 } from "@/lib/auth-api";
 
-const steps = ["Chọn căn", "Điều khoản", "Tài liệu", "Xem lại và gửi"];
+const steps = ["Chọn căn", "Điều khoản", "Xem lại và gửi"];
 
 const petOptions = [
   ["NOT_ALLOWED", "Không cho phép"],
@@ -51,12 +51,6 @@ function unitDefaults(
   };
 }
 
-function isPdf(file: File): boolean {
-  return (
-    file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")
-  );
-}
-
 export default function OwnerTenancyProposalPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
@@ -72,7 +66,6 @@ export default function OwnerTenancyProposalPage() {
   const [pets, setPets] = useState("");
   const [smoking, setSmoking] = useState("");
   const [rulesText, setRulesText] = useState("");
-  const [document, setDocument] = useState<File | null>(null);
   const [acknowledged, setAcknowledged] = useState(false);
   const [pending, setPending] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -176,26 +169,11 @@ export default function OwnerTenancyProposalPage() {
       }
     }
 
-    if (step === 2) {
-      if (!document) {
-        setError("Chọn tài liệu hợp đồng PDF.");
-        return false;
-      }
-      if (!isPdf(document)) {
-        setError("Tài liệu hợp đồng phải là tệp PDF.");
-        return false;
-      }
-      if (document.size > 10 * 1024 * 1024) {
-        setError("Tài liệu PDF không được vượt quá 10 MB.");
-        return false;
-      }
-    }
-
     return true;
   }
 
   async function submitProposal() {
-    if (!detail || !selectedUnit || !document) return;
+    if (!detail || !selectedUnit) return;
 
     if (!acknowledged) {
       setError("Xác nhận đã kiểm tra chính xác phiên bản đề xuất này.");
@@ -226,7 +204,6 @@ export default function OwnerTenancyProposalPage() {
               .filter(Boolean),
           },
         },
-        agreement_document: document,
       });
 
       router.push(`/owner/tenancies/${result.tenancy_id}`);
@@ -234,7 +211,12 @@ export default function OwnerTenancyProposalPage() {
     } catch (caught) {
       if (caught instanceof ApiError) {
         const fieldErrors = Object.values(caught.errors).flat();
-        setError([caught.message, ...fieldErrors].filter(Boolean).join(" "));
+
+        setError(
+          caught.status >= 500
+            ? "Máy chủ gặp lỗi khi lưu đề xuất. Vui lòng thử lại sau."
+            : [caught.message, ...fieldErrors].filter(Boolean).join(" "),
+        );
 
         if (caught.status === 409) setStep(0);
       } else {
@@ -346,7 +328,7 @@ export default function OwnerTenancyProposalPage() {
           className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
           onSubmit={(event) => {
             event.preventDefault();
-            if (step === 3) {
+            if (step === 2) {
               void submitProposal();
               return;
             }
@@ -537,45 +519,7 @@ export default function OwnerTenancyProposalPage() {
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-4">
-              <div>
-                <h2 className="text-lg font-bold text-slate-900">
-                  Tài liệu hợp đồng
-                </h2>
-                <p className="mt-1 text-sm text-slate-500">
-                  Tải lên bản PDF sẽ được lưu cùng phiên bản đề xuất này.
-                </p>
-              </div>
-
-              <label className="flex min-h-40 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-blue-200 bg-slate-50 p-6 text-center hover:bg-blue-50">
-                <span className="text-2xl text-[#3368a0]" aria-hidden="true">
-                  ↑
-                </span>
-                <span className="mt-2 font-semibold text-slate-800">
-                  Kéo thả tài liệu vào đây hoặc chọn tệp
-                </span>
-                <span className="mt-1 text-xs text-slate-500">
-                  PDF · tối đa 10 MB
-                </span>
-                <input
-                  type="file"
-                  accept="application/pdf,.pdf"
-                  className="sr-only"
-                  onChange={(event) =>
-                    setDocument(event.target.files?.[0] ?? null)
-                  }
-                />
-                {document && (
-                  <span className="mt-3 break-all text-sm font-medium text-[#285584]">
-                    {document.name}
-                  </span>
-                )}
-              </label>
-            </div>
-          )}
-
-          {step === 3 && selectedUnit && (
+          {step === 2 && selectedUnit && (
             <div className="space-y-5">
               <div>
                 <h2 className="text-lg font-bold text-slate-900">
@@ -620,10 +564,6 @@ export default function OwnerTenancyProposalPage() {
                     smoking}
                 </dd>
 
-                <dt className="text-slate-500">Tài liệu</dt>
-                <dd className="break-all text-slate-800">
-                  {document?.name ?? "Chưa chọn"}
-                </dd>
               </dl>
 
               <label className="flex items-start gap-3 rounded-xl border border-slate-200 p-4 text-sm text-slate-700">
@@ -634,8 +574,8 @@ export default function OwnerTenancyProposalPage() {
                   className="mt-1 size-4 accent-[#3368a0]"
                 />
                 <span>
-                  Tôi xác nhận đây là phiên bản chính xác gồm các điều khoản và
-                  tài liệu tôi muốn gửi cho người thuê.
+                  Tôi xác nhận các điều khoản đã nhập chính xác và muốn gửi
+                  phiên bản này cho người thuê.
                 </span>
               </label>
             </div>
@@ -663,7 +603,7 @@ export default function OwnerTenancyProposalPage() {
               {step === 0 ? "Hủy" : "Quay lại"}
             </button>
 
-            {step < 3 ? (
+            {step < 2 ? (
               <button
                 type="button"
                 onClick={() => {

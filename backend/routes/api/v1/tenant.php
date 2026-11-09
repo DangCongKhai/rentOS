@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use App\Http\Controllers\Api\V1\TenantTenanciesController;
+use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')
@@ -24,8 +24,4 @@ Route::middleware('auth:sanctum')
             [TenantTenanciesController::class, 'declineContract'],
         )->name('tenant.tenancies.contracts.decline');
 
-        Route::get(
-            '/tenant/tenancies/{tenancy}/contracts/{contract}/download',
-            [TenancyTimelineController::class, 'downloadContract'],
-        )->name('tenant.tenancies.contracts.download');
     });

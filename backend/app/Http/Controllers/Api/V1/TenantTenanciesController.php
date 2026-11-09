@@ -53,7 +53,6 @@ class TenantTenanciesController extends Controller
                 'confirmed_end_date' => $result['tenancy']->confirmed_end_date,
                 'contract_id' => $result['contract']->id,
                 'version_number' => $result['contract']->version_number,
-                'document_sha256' => $result['contract']->document_sha256,
                 'replayed' => $result['replayed'],
             ],
         ]);
@@ -81,7 +80,6 @@ class TenantTenanciesController extends Controller
                 'status' => $result['tenancy']->status,
                 'contract_id' => $result['contract']->id,
                 'version_number' => $result['contract']->version_number,
-                'document_sha256' => $result['contract']->document_sha256,
                 'tenant_rejected_at' => $result['contract']->tenant_rejected_at,
                 'reason' => $result['contract']->tenant_rejection_reason,
                 'replayed' => $result['replayed'],

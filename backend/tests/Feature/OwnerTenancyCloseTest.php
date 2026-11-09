@@ -168,7 +168,6 @@ class OwnerTenancyCloseTest extends TestCase
             "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/confirm",
             [
                 'client_operation_id' => (string) Str::uuid(),
-                'document_sha256' => $contract->document_sha256,
             ],
         )->assertOk();
 
