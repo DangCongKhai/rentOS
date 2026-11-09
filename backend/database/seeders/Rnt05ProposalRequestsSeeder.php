@@ -71,7 +71,7 @@ class Rnt05ProposalRequestsSeeder extends Seeder
         $created = 0;
         $skipped = 0;
 
-        DB::transaction(function () use ($owner, $listings, &$created, &$skipped): void {
+        DB::transaction(function () use ($listings, &$created, &$skipped): void {
             foreach (self::TENANTS as $index => $tenantData) {
                 $number = $index + 1;
                 $tenantId = $this->id(0, $number);

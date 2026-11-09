@@ -1,7 +1,7 @@
 <?php
 
-use App\Http\Controllers\Api\V1\TenantTenanciesController;
 use App\Http\Controllers\Api\V1\TenancyTimelineController;
+use App\Http\Controllers\Api\V1\TenantTenanciesController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')
