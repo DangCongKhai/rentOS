@@ -293,17 +293,11 @@ function Detail({ item, onReject }: { item: OwnerRentalRequestDetail; onReject: 
           <section className={card + " space-y-3 p-5 sm:p-6"}>
             <h2 className="text-lg font-semibold text-heading">{pending ? "Hành động" : "Kết quả"}</h2>
             {pending ? <>
-<<<<<<< HEAD
               <Link href={requestsPath + "/" + item.id + "/proposal"} className={primary + " w-full"}>
                 Tạo đề xuất kỳ thuê
               </Link>
               <button type="button" className={danger + " w-full"} onClick={onReject}>Từ chối</button>
               <p className="text-[13px] text-secondary">Gửi đề xuất sẽ tạo kỳ thuê và chuyển yêu cầu sang trạng thái đã chấp nhận.</p>
-=======
-              <button type="button" className={primary + " w-full"} disabled>Tạo đề xuất kỳ thuê</button>
-              <button type="button" className={danger + " w-full"} onClick={onReject}>Từ chối</button>
-              <p className="text-[13px] text-secondary">Tạo đề xuất kỳ thuê sẽ khả dụng khi luồng hợp đồng được tích hợp.</p>
->>>>>>> develop
             </> : <>
               <p className="text-secondary">{statuses[item.status].label}</p>
               {item.outcome_reason && <p className="break-words whitespace-pre-wrap">{item.outcome_reason}</p>}
