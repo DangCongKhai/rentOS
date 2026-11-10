@@ -7,6 +7,7 @@ use App\Domain\Media\MarketedUnitPhotoQuery;
 use App\Models\Listing;
 use App\Models\Property;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -330,7 +331,7 @@ class ListingLifecycleService
         $submittedAt = $listing->submitted_at;
         $stamp = $submittedAt === null
             ? '0'
-            : $submittedAt->utc()->format('YmdHisu');
+            : Carbon::parse($submittedAt)->utc()->format('YmdHisu');
         $revision = (string) $listing->submitted_content_revision;
         app(RecordNotification::class)->recordForAdmins(
             eventKey: 'listing.submitted:'.$listing->id.':'
