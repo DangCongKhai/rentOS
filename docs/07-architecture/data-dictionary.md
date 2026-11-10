@@ -236,30 +236,13 @@ One `users` row is the account. Domain foreign keys point at `users.id`. Supabas
 | correlation_id | uuid |  | No |  | Request or operation correlation UUID |
 | created_at | timestamptz |  | No | now() | Audit time in business transaction |
 
-## notification_outbox
-
-| Column | Type | Key | Nullable | Default | Meaning |
-| --- | --- | --- | --- | --- | --- |
-| id | uuid | PK | No | gen_random_uuid() | Outbox UUID |
-| event_key | text | UK | No |  | Stable unique domain event identity |
-| recipient_id | uuid | FK | No |  | Recipient profile |
-| event_type | text |  | No |  | Configured notification kind |
-| payload | jsonb |  | No |  | Safe resource references; no tokens/documents |
-| status | text |  | No | PENDING | PENDING PROCESSING DELIVERED FAILED |
-| attempts | integer |  | No | 0 | Bounded retry count |
-| next_attempt_at | timestamptz |  | Yes |  | Retry due time |
-| locked_until | timestamptz |  | Yes |  | Worker claim lease; recover abandoned claims |
-| delivered_at | timestamptz |  | Yes |  | Delivery handling completed |
-| last_error | text |  | Yes |  | Redacted failure summary |
-| created_at | timestamptz |  | No | now() | Record creation time in UTC |
-| updated_at | timestamptz |  | No | now() | Last record update time in UTC |
-
 ## notifications
 
 | Column | Type | Key | Nullable | Default | Meaning |
 | --- | --- | --- | --- | --- | --- |
 | id | uuid | PK | No | gen_random_uuid() | Inbox UUID |
 | recipient_id | uuid | FK | No |  | Only this user can read/mark read |
+| audience | text |  | No |  | ADMIN, TENANT, or OWNER portal context |
 | event_key | text |  | No |  | Unique with recipient_id |
 | title | text |  | No |  | Safe summary |
 | body | text |  | No |  | Safe message |
