@@ -880,6 +880,7 @@ export type NotificationAudience = "ADMIN" | "TENANT" | "OWNER";
 
 export type InboxNotification = {
   id: string;
+  actor_id: string | null;
   audience: NotificationAudience;
   title: string;
   body: string;

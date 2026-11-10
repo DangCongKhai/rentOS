@@ -202,6 +202,7 @@ class CloseTenancy
                 body: $body,
                 resourceType: 'tenancy',
                 resourceId: $tenancyId,
+                actorId: $owner->id,
             );
 
             DB::table('idempotency_records')->insert([

@@ -154,6 +154,7 @@ class ConfirmTenancyContract
                 body: 'Đề xuất kỳ thuê của bạn đã được người thuê xác nhận.',
                 resourceType: 'tenancy',
                 resourceId: $tenancyId,
+                actorId: $tenant->id,
                 sendEmail: true,
             );
 

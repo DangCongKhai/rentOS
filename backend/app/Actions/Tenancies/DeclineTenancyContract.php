@@ -162,6 +162,7 @@ class DeclineTenancyContract
                 body: 'Người thuê đã từ chối đề xuất kỳ thuê của bạn.',
                 resourceType: 'tenancy',
                 resourceId: $tenancyId,
+                actorId: $tenant->id,
             );
 
             DB::table('idempotency_records')->insert([

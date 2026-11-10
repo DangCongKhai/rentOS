@@ -231,6 +231,7 @@ class ProposeTenancy
                     body: 'Chủ nhà đã gửi đề xuất kỳ thuê cho yêu cầu của bạn.',
                     resourceType: 'tenancy',
                     resourceId: $tenancyId,
+                    actorId: $owner->id,
                     sendEmail: true,
                 );
 

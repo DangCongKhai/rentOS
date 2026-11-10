@@ -143,6 +143,7 @@ class MarkTenancyMoveIn
                 body: 'Chủ nhà đã ghi nhận ngày nhận nhà.',
                 resourceType: 'tenancy',
                 resourceId: $tenancyId,
+                actorId: $owner->id,
             );
 
             DB::table('idempotency_records')->insert([

@@ -242,6 +242,7 @@ One `users` row is the account. Domain foreign keys point at `users.id`. Supabas
 | --- | --- | --- | --- | --- | --- |
 | id | uuid | PK | No | gen_random_uuid() | Inbox UUID |
 | recipient_id | uuid | FK | No |  | Only this user can read/mark read |
+| actor_id | uuid | FK | Yes |  | User who caused the event; null for a system event |
 | audience | text |  | No |  | ADMIN, TENANT, or OWNER portal context |
 | event_key | text |  | No |  | Unique with recipient_id |
 | title | text |  | No |  | Safe summary |
@@ -250,6 +251,11 @@ One `users` row is the account. Domain foreign keys point at `users.id`. Supabas
 | resource_id | uuid |  | No |  | Target resource UUID; backend checks access |
 | read_at | timestamptz |  | Yes |  | First read time |
 | created_at | timestamptz |  | No | now() | Inbox creation time |
+
+Each row is one recipient inbox item, including its own `read_at`.
+An admin event inserts one `ADMIN` row per active admin in a single
+batch statement. `event_key` stays unique with `recipient_id`, so a
+repeated event does not add another row for the same admin.
 
 ## property_reviews
 

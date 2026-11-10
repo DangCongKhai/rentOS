@@ -88,6 +88,7 @@ class CloseRentalRequest
                 body: $body,
                 resourceType: 'rental_request',
                 resourceId: $id,
+                actorId: $user->id,
             );
             DB::table('idempotency_records')->insert([
                 'actor_id' => $user->id,

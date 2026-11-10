@@ -224,6 +224,7 @@ class CorrectTenancyProposal
                     body: 'Chủ nhà đã gửi phiên bản đề xuất cập nhật.',
                     resourceType: 'tenancy',
                     resourceId: $tenancyId,
+                    actorId: $owner->id,
                     sendEmail: true,
                 );
 

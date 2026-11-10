@@ -96,6 +96,7 @@ class SubmitRentalRequest
                 body: 'Bạn vừa nhận một yêu cầu thuê mới.',
                 resourceType: 'rental_request',
                 resourceId: $id,
+                actorId: $tenant->id,
             );
             DB::table('idempotency_records')->insert([
                 'actor_id' => $tenant->id,
