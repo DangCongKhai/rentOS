@@ -87,8 +87,37 @@ class DeliverNotification implements ShouldQueue
     private function link(object $notification): string
     {
         $base = (string) config('notifications.frontend_url');
+        if (! is_string($notification->resource_id)
+            || $notification->resource_id === '') {
+            return $base;
+        }
+
         if ($notification->resource_type === 'listing') {
+            if ($notification->audience === 'ADMIN') {
+                return $base.'/admin/review-queue/'.$notification->resource_id;
+            }
+
             return $base.'/owner/listings/'.$notification->resource_id;
+        }
+
+        if ($notification->resource_type === 'rental_request') {
+            if ($notification->audience === 'OWNER') {
+                return $base.'/owner/requests/'.$notification->resource_id;
+            }
+
+            if ($notification->audience === 'TENANT') {
+                return $base.'/tenant/requests/'.$notification->resource_id;
+            }
+        }
+
+        if ($notification->resource_type === 'tenancy') {
+            if ($notification->audience === 'OWNER') {
+                return $base.'/owner/tenancies/'.$notification->resource_id;
+            }
+
+            if ($notification->audience === 'TENANT') {
+                return $base.'/tenant/tenancies/'.$notification->resource_id;
+            }
         }
 
         return $base;

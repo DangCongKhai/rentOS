@@ -13,6 +13,7 @@ import {
 
 type Audience = "ADMIN" | "TENANT" | "OWNER";
 type Filter = "all" | "unread";
+type NotificationTarget = { href: string; label: string };
 
 function formatWhen(value: string): string {
   const date = new Date(value);
@@ -34,12 +35,58 @@ function formatWhen(value: string): string {
   return `${time} ${day}`;
 }
 
-function listingHref(item: InboxNotification): string | null {
-  if (item.resource_type !== "listing" || !item.resource_id) {
+function notificationTarget(item: InboxNotification): NotificationTarget | null {
+  if (!item.resource_id) {
     return null;
   }
 
-  return `/owner/listings/${item.resource_id}`;
+  if (item.resource_type === "listing") {
+    if (item.audience === "ADMIN") {
+      return {
+        href: `/admin/review-queue/${item.resource_id}`,
+        label: "Xem hồ sơ duyệt",
+      };
+    }
+
+    return {
+      href: `/owner/listings/${item.resource_id}`,
+      label: "Xem tin đăng",
+    };
+  }
+
+  if (item.resource_type === "rental_request") {
+    if (item.audience === "OWNER") {
+      return {
+        href: `/owner/requests/${item.resource_id}`,
+        label: "Xem yêu cầu thuê",
+      };
+    }
+
+    if (item.audience === "TENANT") {
+      return {
+        href: `/tenant/requests/${item.resource_id}`,
+        label: "Xem yêu cầu thuê",
+      };
+    }
+  }
+
+  if (item.resource_type === "tenancy") {
+    if (item.audience === "OWNER") {
+      return {
+        href: `/owner/tenancies/${item.resource_id}`,
+        label: "Xem kỳ thuê",
+      };
+    }
+
+    if (item.audience === "TENANT") {
+      return {
+        href: `/tenant/tenancies/${item.resource_id}`,
+        label: "Xem kỳ thuê",
+      };
+    }
+  }
+
+  return null;
 }
 
 export function NotificationInbox({
@@ -283,7 +330,7 @@ function NotificationRow({
   onMarkRead: () => void;
   showAudience?: boolean;
 }) {
-  const href = listingHref(item);
+  const target = notificationTarget(item);
   const unread = item.read_at == null;
 
   return (
@@ -322,15 +369,15 @@ function NotificationRow({
               {pending ? "Đang lưu…" : "Đánh dấu đã đọc"}
             </button>
           )}
-          {href && (
+          {target && (
             <Link
-              href={href}
+              href={target.href}
               className="text-sm font-semibold text-slate-700"
               onClick={() => {
                 if (unread) onMarkRead();
               }}
             >
-              Xem tin đăng
+              {target.label}
             </Link>
           )}
         </div>
