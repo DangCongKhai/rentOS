@@ -20,8 +20,7 @@ The baseline includes PostgreSQL checks, partial and expression indexes, same-pa
 | `tenancy_contracts` | Implemented baseline | Immutable original and renewal contract versions. |
 | `listing_reports` | Implemented baseline | User reports and administrative investigation state. |
 | `audit_logs` | Implemented baseline | Immutable business-action audit records. |
-| `notification_outbox` | Implemented baseline | Transactional notification delivery queue. |
-| `notifications` | Implemented baseline | User-visible notification inbox. |
+| `notifications` | Implemented baseline | User-visible notification inbox. Audience is ADMIN, TENANT, or OWNER. Email delivery is the database jobs row. |
 | `property_reviews` | **Deferred** | Property reviews and their moderation/display flows are P2-deferred under FR36, FR37, and FR79. Creating the table now would imply unsupported MVP submission, display, and moderation behavior. |
 | `idempotency_records` | Implemented baseline | Safe replay records for idempotent writes. |
 | `personal_access_tokens` | Implemented baseline | UUID-compatible Sanctum personal API tokens. |

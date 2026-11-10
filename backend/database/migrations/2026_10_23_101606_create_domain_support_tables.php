@@ -51,28 +51,10 @@ return new class extends Migration
             $table->foreign('actor_id')->references('id')->on('users');
         });
 
-        Schema::create('notification_outbox', function (Blueprint $table) {
-            $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
-            $table->text('event_key')->unique();
-            $table->uuid('recipient_id');
-            $table->text('event_type');
-            $table->jsonb('payload');
-            $table->text('status')->default('PENDING');
-            $table->integer('attempts')->default(0);
-            $table->timestampTz('next_attempt_at')->nullable();
-            $table->timestampTz('locked_until')->nullable();
-            $table->timestampTz('delivered_at')->nullable();
-            $table->text('last_error')->nullable();
-            $table->timestampTz('created_at')->useCurrent();
-            $table->timestampTz('updated_at')->useCurrent();
-
-            $table->index(['status', 'next_attempt_at']);
-            $table->foreign('recipient_id')->references('id')->on('users');
-        });
-
         Schema::create('notifications', function (Blueprint $table) {
             $table->uuid('id')->primary()->default(DB::raw('gen_random_uuid()'));
             $table->uuid('recipient_id');
+            $table->text('audience');
             $table->text('event_key');
             $table->text('title');
             $table->text('body');
@@ -82,6 +64,7 @@ return new class extends Migration
             $table->timestampTz('created_at')->useCurrent();
 
             $table->unique(['recipient_id', 'event_key']);
+            $table->index(['recipient_id', 'audience', 'read_at']);
             $table->foreign('recipient_id')->references('id')->on('users');
         });
 
@@ -118,8 +101,8 @@ return new class extends Migration
     {
         Schema::dropIfExists('favourite_properties');
         Schema::dropIfExists('idempotency_records');
-        Schema::dropIfExists('notifications');
         Schema::dropIfExists('notification_outbox');
+        Schema::dropIfExists('notifications');
         Schema::dropIfExists('audit_logs');
         Schema::dropIfExists('listing_reports');
     }

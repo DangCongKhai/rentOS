@@ -261,10 +261,8 @@ return new class extends Migration
             CREATE UNIQUE INDEX listing_reports_one_open_per_reporter_listing_unique
                 ON listing_reports (reporter_id, listing_id) WHERE status IN ('OPEN', 'REVIEWING');
 
-            ALTER TABLE notification_outbox
-                ADD CONSTRAINT notification_outbox_status_check CHECK (status IN ('PENDING', 'PROCESSING', 'DELIVERED', 'FAILED')),
-                ADD CONSTRAINT notification_outbox_attempts_check CHECK (attempts >= 0),
-                ADD CONSTRAINT notification_outbox_payload_check CHECK (jsonb_typeof(payload) = 'object');
+            ALTER TABLE notifications
+                ADD CONSTRAINT notifications_audience_check CHECK (audience IN ('ADMIN', 'TENANT', 'OWNER'));
 
             ALTER TABLE idempotency_records
                 ADD CONSTRAINT idempotency_records_hash_check CHECK (request_hash ~ '^[0-9a-fA-F]{64}$'),
@@ -1275,10 +1273,8 @@ return new class extends Migration
                 DROP CONSTRAINT IF EXISTS idempotency_records_result_ids_check,
                 DROP CONSTRAINT IF EXISTS idempotency_records_hash_check;
 
-            ALTER TABLE notification_outbox
-                DROP CONSTRAINT IF EXISTS notification_outbox_payload_check,
-                DROP CONSTRAINT IF EXISTS notification_outbox_attempts_check,
-                DROP CONSTRAINT IF EXISTS notification_outbox_status_check;
+            ALTER TABLE notifications
+                DROP CONSTRAINT IF EXISTS notifications_audience_check;
 
             ALTER TABLE listing_reports
                 DROP CONSTRAINT IF EXISTS listing_reports_resolution_check,
