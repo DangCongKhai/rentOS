@@ -1,6 +1,6 @@
 import type { SVGProps } from "react";
 
-type IconName = "shield" | "dashboard" | "queue" | "flag" | "list" | "exit" | "back" | "menu" | "close" | "search" | "check" | "clock";
+type IconName = "shield" | "dashboard" | "queue" | "flag" | "list" | "bell" | "exit" | "back" | "menu" | "close" | "search" | "check" | "clock";
 
 const paths: Record<IconName, React.ReactNode> = {
   shield: <path d="M12 3 5 6v5c0 4.5 3 7.5 7 10 4-2.5 7-5.5 7-10V6l-7-3Z" />,
@@ -8,6 +8,7 @@ const paths: Record<IconName, React.ReactNode> = {
   queue: <><path d="M4 6h16M4 11h12M4 16h7m3 1 2 2 5-5" /></>,
   flag: <><path d="M6 21V4h12l-3 4 3 4H6" /></>,
   list: <><path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1" /></>,
+  bell: <><path d="M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" /><path d="M10 21a2 2 0 0 0 4 0" /></>,
   exit: <><path d="M10 4H5v16h5m4-12 4 4-4 4m-5-4h12" /></>,
   back: <path d="m14 6-6 6 6 6" />,
   menu: <path d="M4 6h16M4 12h16M4 18h16" />,

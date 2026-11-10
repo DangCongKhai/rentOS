@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from "react";
 import { getCurrentUser, logout, type CurrentUser } from "./auth-api";
+import { clearHeldNotifications } from "./notification-inbox";
 
 export type AuthStatus = "loading" | "authenticated" | "guest";
 
@@ -74,6 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await logout();
     } finally {
+      clearHeldNotifications();
       setUser(null);
       setStatus("guest");
     }

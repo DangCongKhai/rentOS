@@ -4,7 +4,9 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { NotificationIcon } from "@/config/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useNotificationUnread } from "@/lib/notification-inbox";
 
 function NavLink({ href, active, children }: { href: string; active: boolean; children: string }) {
   return (
@@ -22,6 +24,7 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, status, signOut } = useAuth();
+  const unread = useNotificationUnread(user?.id, Boolean(user?.is_admin));
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const [scrolled, setScrolled] = useState(false);
@@ -125,19 +128,28 @@ export function SiteHeader() {
         )}
         {status === "authenticated" && user && (
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="relative p-2 rounded-full text-slate-300 hover:text-white hover:bg-white/5 transition-colors"
-              aria-label="Thông báo, 2 chưa đọc"
+            <Link
+              href="/notifications"
+              className="relative inline-flex rounded-full p-2 text-slate-300 transition-colors hover:bg-white/5 hover:text-white"
+              aria-label={
+                unread > 0
+                  ? `Thông báo, ${unread} chưa đọc`
+                  : "Thông báo"
+              }
+              aria-current={
+                pathname.startsWith("/notifications") ? "page" : undefined
+              }
             >
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-                <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-              </svg>
-              <span className="absolute top-1 right-1 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-[#d93b30] rounded-full border border-[#091216]">
-                2
-              </span>
-            </button>
+              <NotificationIcon className="h-5 w-5">
+                {unread > 0 && (
+                  <span
+                    className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full border border-[#091216] bg-[#d93b30] px-1 text-[10px] font-bold text-white"
+                  >
+                    {unread}
+                  </span>
+                )}
+              </NotificationIcon>
+            </Link>
 
             <details
               className="relative shrink-0 select-none"

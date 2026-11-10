@@ -1,13 +1,14 @@
-import { PortalComingSoon } from "@/components/portal-coming-soon";
+"use client";
+
+import { NotificationInbox } from "@/components/notification-inbox";
 
 export default function OwnerNotificationsPage() {
   return (
-    <PortalComingSoon
-      portalName="CỔNG CHỦ NHÀ"
-      pageTitle="Thông báo"
-      description="Cập nhật nhanh các thông báo xác nhận thanh toán, cảnh báo gia hạn hợp đồng và tin nhắn mới."
-      backHref="/owner"
-      backLabel="Về Tổng quan"
-    />
+    <section aria-labelledby="owner-notifications-title">
+      <NotificationInbox
+        audience="OWNER"
+        headingId="owner-notifications-title"
+      />
+    </section>
   );
 }
