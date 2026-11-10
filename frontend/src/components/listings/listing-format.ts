@@ -173,3 +173,36 @@ export function amount(value: number): string {
 export function dong(value: number): string {
   return `${amount(value)} ₫`;
 }
+
+export function meetsMinimumStay(
+  start: string,
+  end: string,
+  months: number,
+): boolean {
+  if (months <= 0) return true;
+  const earliest = addCalendarMonths(
+    new Date(`${start}T00:00:00Z`),
+    months,
+  );
+  earliest.setUTCDate(earliest.getUTCDate() - 1);
+  return new Date(`${end}T00:00:00Z`) >= earliest;
+}
+
+export function describeDuration(start: string, end: string): string {
+  const first = new Date(`${start}T00:00:00Z`);
+  const until = new Date(`${end}T00:00:00Z`);
+  until.setUTCDate(until.getUTCDate() + 1);
+  let months = (until.getUTCFullYear() - first.getUTCFullYear()) * 12 + until.getUTCMonth() - first.getUTCMonth();
+  let boundary = addCalendarMonths(first, months);
+  if (boundary > until) boundary = addCalendarMonths(first, --months);
+  const days = (until.getTime() - boundary.getTime()) / 86_400_000;
+  return [months > 0 ? `${months} tháng` : "", days > 0 ? `${days} ngày` : ""].filter(Boolean).join(" ");
+}
+
+function addCalendarMonths(date: Date, months: number): Date {
+  const boundary = new Date(date);
+  boundary.setUTCDate(1);
+  boundary.setUTCMonth(boundary.getUTCMonth() + months + 1, 0);
+  boundary.setUTCDate(Math.min(date.getUTCDate(), boundary.getUTCDate()));
+  return boundary;
+}

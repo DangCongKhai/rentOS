@@ -4,10 +4,8 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useState } from "react";
-import type {
-  ListingDetail,
-  PublicAmenity,
-} from "@/features/discovery/listings-api";
+import type { ListingDetail, PublicAmenity } from "@/features/discovery/listings-api";
+import { FavouriteButton } from "@/features/discovery/favourites-provider";
 import { AvailableUnits } from "./available-units";
 import { amenityIcon, ListingIcon } from "./listing-icon";
 import {
@@ -63,6 +61,7 @@ export function ListingDetailView({
   const query = searchParams.toString();
   const listingsHref = query ? `/listings?${query}` : "/listings";
   const extras = extraAmenities(listing);
+  const slides = photoSlides(listing);
   const wholeSpace = listing.property.rental_arrangement === "WHOLE_SPACE";
   const wholeUnit = wholeSpace ? listing.units[0] : undefined;
   const sharedAmenityKeys = new Set(
@@ -78,32 +77,21 @@ export function ListingDetailView({
   }
 
   return (
-    <div
-      className={preview ? "min-w-0" : "flex-1 bg-[#f4f6f8] px-4 py-6 sm:px-8"}
-    >
-      <div
-        className={
-          preview
-            ? "grid min-w-0 gap-8"
-            : "mx-auto grid w-full max-w-[1200px] gap-8"
-        }
-      >
-        {preview ? null : (
-          <Link
-            href={listingsHref}
-            className="w-fit text-sm font-semibold text-[#3368a0]"
-          >
-            ← Quay lại kết quả tìm kiếm
-          </Link>
+    <div className={preview ? "min-w-0" : "flex-1 bg-[#f4f6f8] px-4 py-6 sm:px-8"}>
+      <div className={preview ? "grid min-w-0 gap-8" : "mx-auto grid w-full max-w-[1200px] gap-8"}>
+        {!preview && (
+          <div className="flex items-center justify-between gap-3">
+            <Link href={listingsHref} className="w-fit text-sm font-semibold text-[#3368a0]">← Quay lại kết quả tìm kiếm</Link>
+            {slides.length === 0 && <FavouriteButton propertyId={listing.property_id} />}
+          </div>
         )}
-        <ListingPhotoGrid slides={photoSlides(listing)} />
-        <div
-          className={
-            preview
-              ? "grid min-w-0 items-start gap-8"
-              : "grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(260px,3fr)]"
-          }
-        >
+        {slides.length > 0 && (
+          <div className="relative">
+            <ListingPhotoGrid slides={slides} />
+            {!preview && <FavouriteButton propertyId={listing.property_id} className="absolute top-3 right-3 z-10" />}
+          </div>
+        )}
+        <div className={preview ? "grid min-w-0 items-start gap-8" : "grid items-start gap-8 lg:grid-cols-[minmax(0,7fr)_minmax(260px,3fr)]"}>
           <article className="order-2 grid min-w-0 gap-10 lg:order-none">
             <header className="grid gap-3">
               <div className="flex flex-wrap gap-2">
@@ -340,8 +328,6 @@ export function ListingDetailView({
         <RentalRequestDialog
           listing={listing}
           isSignedIn={isSignedIn}
-          preferredUnitId={preferredUnitId}
-          onPreferredUnitChange={setPreferredUnitId}
           onClose={() => setRequestOpen(false)}
         />
       ) : null}

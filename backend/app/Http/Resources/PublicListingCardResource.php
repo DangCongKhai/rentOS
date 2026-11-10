@@ -22,6 +22,7 @@ class PublicListingCardResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'property_id' => $this->property_id,
             'title' => $this->title,
             'availability_label' => $summary['availability_label'],
             'available_unit_count' => $summary['available_unit_count'],

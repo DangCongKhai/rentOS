@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { ListingCard } from "./listings-api";
+import { FavouriteButton } from "./favourites-provider";
 
 const cardSizes = "(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw";
 
@@ -31,13 +32,7 @@ function photoUrls(listing: ListingCard): string[] {
   return listing.cover_url ? [listing.cover_url] : [];
 }
 
-export function ListingCardView({
-  listing,
-  href,
-}: {
-  listing: ListingCard;
-  href: string;
-}) {
+export function ListingCardView({ listing, href, savedPage = false }: { listing: ListingCard; href: string; savedPage?: boolean }) {
   const urls = photoUrls(listing);
   const [index, setIndex] = useState(0);
   const [ready, setReady] = useState<Record<string, true>>({});
@@ -60,7 +55,7 @@ export function ListingCardView({
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border-default bg-surface-card">
-      <div className="relative aspect-4/3 bg-surface-brand-soft">
+      <div className={`relative bg-surface-brand-soft ${savedPage ? "aspect-video" : "aspect-4/3"}`}>
         <Link href={href} className="relative block h-full">
           {current && !ready[current] ? (
             <span
@@ -88,11 +83,10 @@ export function ListingCardView({
             );
           })}
         </Link>
-        <span className="z-[3] pointer-events-none absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold text-heading">
-          {listing.available_unit_count > 0
-            ? `${listing.available_unit_count} căn còn trống`
-            : listing.availability_label}
+        <span className="z-[3] pointer-events-none absolute left-3 top-3 max-w-[calc(100%-5rem)] rounded-full bg-white px-3 py-1 text-xs font-semibold text-heading">
+          {listing.available_unit_count > 0 ? `${listing.available_unit_count} căn còn trống` : listing.availability_label}
         </span>
+        <FavouriteButton propertyId={listing.property_id} className="absolute top-3 right-3 z-10" />
         {showControls ? (
           <>
             <button
@@ -128,6 +122,7 @@ export function ListingCardView({
         </p>
         <h3 className="text-base font-medium text-primary">{listing.title}</h3>
         <p className="text-sm text-secondary">{place}</p>
+        {savedPage && <span className="mt-2 rounded-lg border border-border-default px-3 py-2.5 text-sm font-semibold text-link">→ Xem chi tiết căn hộ</span>}
       </Link>
     </article>
   );

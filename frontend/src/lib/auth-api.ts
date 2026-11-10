@@ -560,7 +560,7 @@ export async function getOwnerRentalRequest(
   rentalRequestId: string,
 ): Promise<OwnerRentalRequestDetail> {
   return request<OwnerRentalRequestDetail>(
-    `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}`,
+    `/api/v1/owner/rental-requests/${encodeURIComponent(rentalRequestId)}/proposal-context`,
   );
 }
 

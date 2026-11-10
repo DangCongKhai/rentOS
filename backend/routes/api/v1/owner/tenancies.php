@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\Api\V1\OwnerRentalRequestsController;
 use App\Http\Controllers\Api\V1\OwnerTenancyLifecycleController;
 use App\Http\Controllers\Api\V1\OwnerTenancyProposalsController;
 use App\Http\Controllers\Api\V1\TenancyTimelineController;
@@ -38,13 +37,4 @@ Route::middleware('auth:sanctum')
             '/owner/tenancies',
             [TenancyTimelineController::class, 'ownerIndex'],
         )->name('tenancies.index');
-        Route::get(
-            '/owner/rental-requests',
-            [OwnerRentalRequestsController::class, 'index'],
-        )->name('rental-requests.index');
-
-        Route::get(
-            '/owner/rental-requests/{rentalRequest}',
-            [OwnerRentalRequestsController::class, 'show'],
-        )->name('rental-requests.show');
     });

@@ -230,8 +230,8 @@ export function ListingsBrowser() {
       : `${body?.meta.total ?? 0} tin đăng`);
 
   return (
-    <div className="fixed inset-x-0 top-[75px] bottom-0 flex overflow-hidden bg-[#f0f4f7]">
-      <DiscoverySidebar active="search" />
+    <div className="fixed inset-x-0 top-[75px] bottom-0 flex flex-col overflow-hidden bg-[#f0f4f7] md:flex-row">
+      <DiscoverySidebar active="search" moveInDate={state.moveInDate} />
       <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         <div className="relative z-20 shrink-0 grid gap-4 px-4 pt-5 pb-4 lg:px-8">
           <ListingFilters

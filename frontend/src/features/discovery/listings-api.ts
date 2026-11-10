@@ -23,6 +23,7 @@ export class ListingsRequestError extends Error {
 
 export type ListingCard = {
   id: string;
+  property_id?: string;
   title: string;
   availability_label: string;
   available_unit_count: number;
@@ -90,6 +91,7 @@ export type PublicUnit = {
 
 export type ListingDetail = {
   id: string;
+  property_id?: string;
   title: string;
   description: string;
   availability_label: string;
