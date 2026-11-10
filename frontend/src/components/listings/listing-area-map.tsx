@@ -14,7 +14,13 @@ const pin = L.icon({
   shadowSize: [41, 41],
 });
 
-export function ListingAreaMap({ latitude, longitude }: { latitude: number; longitude: number }) {
+export function ListingAreaMap({
+  latitude,
+  longitude,
+}: {
+  latitude: number;
+  longitude: number;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -27,9 +33,12 @@ export function ListingAreaMap({ latitude, longitude }: { latitude: number; long
       scrollWheelZoom: false,
     });
     L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      attribution:
+        '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
     }).addTo(map);
-    L.marker([latitude, longitude], { icon: pin }).addTo(map).bindPopup("Vị trí gần đúng trong khu vực này.");
+    L.marker([latitude, longitude], { icon: pin })
+      .addTo(map)
+      .bindPopup("Vị trí gần đúng trong khu vực này.");
 
     const frame = requestAnimationFrame(() => {
       map.invalidateSize();
@@ -41,5 +50,7 @@ export function ListingAreaMap({ latitude, longitude }: { latitude: number; long
     };
   }, [latitude, longitude]);
 
-  return <div ref={containerRef} className="z-0 h-[280px] w-full rounded-2xl" />;
+  return (
+    <div ref={containerRef} className="z-0 h-[280px] w-full rounded-2xl" />
+  );
 }

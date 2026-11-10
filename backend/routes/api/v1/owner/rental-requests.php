@@ -6,5 +6,6 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:sanctum')->prefix('v1/owner/rental-requests')->name('api.v1.owner.rental-requests.')->group(function (): void {
     Route::get('/', [OwnerRentalRequestsController::class, 'index'])->name('index');
     Route::get('/{rentalRequest}', [OwnerRentalRequestsController::class, 'show'])->whereUuid('rentalRequest')->name('show');
+    Route::get('/{rentalRequest}/proposal-context', [OwnerRentalRequestsController::class, 'proposalContext'])->whereUuid('rentalRequest')->name('proposal-context');
     Route::post('/{rentalRequest}/reject', [OwnerRentalRequestsController::class, 'reject'])->whereUuid('rentalRequest')->name('reject');
 });

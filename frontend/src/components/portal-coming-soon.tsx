@@ -36,9 +36,7 @@ export function PortalComingSoon({
         <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200 mb-3">
           Tính năng sắp ra mắt
         </span>
-        <h2 className="text-xl font-bold text-slate-900 mb-2">
-          {pageTitle}
-        </h2>
+        <h2 className="text-xl font-bold text-slate-900 mb-2">{pageTitle}</h2>
         <p className="text-sm text-slate-600 leading-relaxed mb-6">
           {description}
         </p>
@@ -52,4 +50,3 @@ export function PortalComingSoon({
     </div>
   );
 }
-

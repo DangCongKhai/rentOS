@@ -5,7 +5,10 @@ export type Debounced<Args extends unknown[]> = ((...args: Args) => void) & {
   flush: () => void;
 };
 
-export function debounce<Args extends unknown[]>(fn: (...args: Args) => void, wait: number): Debounced<Args> {
+export function debounce<Args extends unknown[]>(
+  fn: (...args: Args) => void,
+  wait: number,
+): Debounced<Args> {
   let timer: ReturnType<typeof setTimeout> | undefined;
   let pending: Args | undefined;
 

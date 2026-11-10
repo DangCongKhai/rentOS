@@ -21,9 +21,13 @@ function ResetPasswordFormContent() {
     return (
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm leading-relaxed">
-          <p className="font-bold mb-1">Liên kết không hợp lệ hoặc thiếu thông tin</p>
+          <p className="font-bold mb-1">
+            Liên kết không hợp lệ hoặc thiếu thông tin
+          </p>
           <p>
-            Đường dẫn đặt lại mật khẩu không chứa mã token xác thực hoặc địa chỉ email hợp lệ. Vui lòng kiểm tra lại liên kết trong email hoặc gửi lại yêu cầu mới.
+            Đường dẫn đặt lại mật khẩu không chứa mã token xác thực hoặc địa chỉ
+            email hợp lệ. Vui lòng kiểm tra lại liên kết trong email hoặc gửi
+            lại yêu cầu mới.
           </p>
         </div>
         <Link
@@ -39,7 +43,9 @@ function ResetPasswordFormContent() {
   function validateClient(values: FormData): Record<string, string> {
     const errors: Record<string, string> = {};
     const password = String(values.get("password") ?? "");
-    const passwordConfirmation = String(values.get("password_confirmation") ?? "");
+    const passwordConfirmation = String(
+      values.get("password_confirmation") ?? "",
+    );
 
     if (!password) {
       errors.password = "Vui lòng nhập mật khẩu mới.";
@@ -79,7 +85,9 @@ function ResetPasswordFormContent() {
         token,
         email: emailParam,
         password: String(values.get("password") ?? ""),
-        password_confirmation: String(values.get("password_confirmation") ?? ""),
+        password_confirmation: String(
+          values.get("password_confirmation") ?? "",
+        ),
       });
       setSuccess(true);
     } catch (error) {
@@ -94,7 +102,7 @@ function ResetPasswordFormContent() {
           setFieldErrors(errorsObj);
           setErrorMessage(
             error.message ||
-              "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu liên kết mới."
+              "Liên kết đặt lại mật khẩu đã hết hạn hoặc không hợp lệ. Vui lòng yêu cầu liên kết mới.",
           );
         } else {
           setErrorMessage(error.message);
@@ -112,11 +120,14 @@ function ResetPasswordFormContent() {
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm leading-relaxed">
           <div className="flex items-center gap-2 font-bold mb-1">
-            <span aria-hidden="true" className="text-emerald-600">✓</span>
+            <span aria-hidden="true" className="text-emerald-600">
+              ✓
+            </span>
             <span>Đặt lại mật khẩu thành công</span>
           </div>
           <p>
-            Mật khẩu mới của bạn đã được cập nhật an toàn. Mọi phiên đăng nhập cũ trên các thiết bị khác đã được thu hồi.
+            Mật khẩu mới của bạn đã được cập nhật an toàn. Mọi phiên đăng nhập
+            cũ trên các thiết bị khác đã được thu hồi.
           </p>
         </div>
 
@@ -125,7 +136,9 @@ function ResetPasswordFormContent() {
           className="w-full min-h-[48px] inline-flex items-center justify-center gap-2 rounded-lg bg-[#3368a0] hover:bg-[#285584] text-white text-sm font-semibold shadow-sm transition-colors text-center"
         >
           <span>Đăng nhập bằng mật khẩu mới</span>
-          <span aria-hidden="true" className="text-base font-normal">&rarr;</span>
+          <span aria-hidden="true" className="text-base font-normal">
+            &rarr;
+          </span>
         </Link>
       </div>
     );
@@ -231,12 +244,19 @@ function ResetPasswordFormContent() {
         type="submit"
         disabled={busy}
       >
-        <span>{busy ? "Đang cập nhật mật khẩu…" : "Xác nhận đặt lại mật khẩu"}</span>
-        <span aria-hidden="true" className="text-base font-normal">&rarr;</span>
+        <span>
+          {busy ? "Đang cập nhật mật khẩu…" : "Xác nhận đặt lại mật khẩu"}
+        </span>
+        <span aria-hidden="true" className="text-base font-normal">
+          &rarr;
+        </span>
       </button>
 
       <p className="mt-6 text-center text-sm text-slate-600">
-        <Link href="/login" className="text-[#3368a0] font-semibold hover:underline">
+        <Link
+          href="/login"
+          className="text-[#3368a0] font-semibold hover:underline"
+        >
           &larr; Quay lại trang Đăng nhập
         </Link>
       </p>

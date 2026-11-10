@@ -22,7 +22,7 @@ type RentalArrangementStepProps = {
   onUpdateRoom: (
     index: number,
     patch: Partial<RoomDraft>,
-    customized?: boolean
+    customized?: boolean,
   ) => void;
   onApplyRoomToEmpty: (index: number) => void;
   onSetActiveUnit: (index: number) => void;
@@ -42,7 +42,9 @@ function ArrangementOption({
   onChange: () => void;
 }) {
   return (
-    <div className={`flex items-center gap-2 rounded-lg border bg-white p-3 ${checked ? "border-[#3368a0]" : "border-slate-200"}`}>
+    <div
+      className={`flex items-center gap-2 rounded-lg border bg-white p-3 ${checked ? "border-[#3368a0]" : "border-slate-200"}`}
+    >
       <label className="flex min-w-0 flex-1 cursor-pointer items-center gap-3">
         <input
           type="radio"
@@ -117,12 +119,7 @@ export function RentalArrangementStep({
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <label className="text-sm font-medium text-slate-700">
               Giá thuê tháng (₫)
-              <input
-                name="rent"
-                type="number"
-                min={1}
-                className={inputClass}
-              />
+              <input name="rent" type="number" min={1} className={inputClass} />
             </label>
             <label className="text-sm font-medium text-slate-700">
               Tiền đặt cọc (₫)
@@ -224,7 +221,7 @@ export function RentalArrangementStep({
                     onUpdateUnitDefaults(
                       Number(event.target.value) || 1,
                       unitPrefix,
-                      startNumber
+                      startNumber,
                     )
                   }
                   className={inputClass}
@@ -238,7 +235,7 @@ export function RentalArrangementStep({
                     onUpdateUnitDefaults(
                       unitCount,
                       event.target.value,
-                      startNumber
+                      startNumber,
                     )
                   }
                   className={inputClass}
@@ -253,7 +250,7 @@ export function RentalArrangementStep({
                     onUpdateUnitDefaults(
                       unitCount,
                       unitPrefix,
-                      Number(event.target.value) || 1
+                      Number(event.target.value) || 1,
                     )
                   }
                   className={inputClass}
@@ -321,7 +318,7 @@ export function RentalArrangementStep({
                           label: event.target.value,
                           labelEdited: true,
                         },
-                        false
+                        false,
                       )
                     }
                     className={inputClass}

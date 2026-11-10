@@ -86,7 +86,6 @@ function documentsFromCombinedForm(
   };
 }
 
-
 function AmenityFields({
   catalog,
   scope,
@@ -100,7 +99,9 @@ function AmenityFields({
 }) {
   const accepted = new Set(scopes ?? (scope ? [scope] : []));
   const entries = catalog.filter((item) =>
-    item.scopes.some((itemScope) => accepted.has(itemScope as "shared" | "unit")),
+    item.scopes.some((itemScope) =>
+      accepted.has(itemScope as "shared" | "unit"),
+    ),
   );
   const selected = new Set(
     Object.entries(value?.standard ?? {})
@@ -159,35 +160,87 @@ function WholeSpaceFields({ property }: { property: OwnerPropertyDetail }) {
     <>
       <label className="text-sm font-medium text-slate-700">
         Diện tích (m²)
-        <input name="area_m2" type="number" min="0.1" step="0.01" defaultValue={unit?.area_m2 ?? ""} className={fieldClass} />
+        <input
+          name="area_m2"
+          type="number"
+          min="0.1"
+          step="0.01"
+          defaultValue={unit?.area_m2 ?? ""}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Phòng ngủ
-        <input name="bedrooms" type="number" min="0" required defaultValue={unit?.bedrooms ?? 0} className={fieldClass} />
+        <input
+          name="bedrooms"
+          type="number"
+          min="0"
+          required
+          defaultValue={unit?.bedrooms ?? 0}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Phòng tắm
-        <input name="bathrooms" type="number" min="0" step="1" required defaultValue={unit?.bathrooms ?? 1} className={fieldClass} />
+        <input
+          name="bathrooms"
+          type="number"
+          min="0"
+          step="1"
+          required
+          defaultValue={unit?.bathrooms ?? 1}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Giá thuê tháng (VND)
-        <input name="advertised_monthly_rent" type="number" min="1" defaultValue={unit?.advertised_monthly_rent ?? ""} className={fieldClass} />
+        <input
+          name="advertised_monthly_rent"
+          type="number"
+          min="1"
+          defaultValue={unit?.advertised_monthly_rent ?? ""}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Tiền đặt cọc (VND)
-        <input name="deposit" type="number" min="0" defaultValue={unit?.deposit ?? ""} className={fieldClass} />
+        <input
+          name="deposit"
+          type="number"
+          min="0"
+          defaultValue={unit?.deposit ?? ""}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Thời hạn thuê tối thiểu (tháng)
-        <input name="minimum_rental_months" type="number" min="3" required defaultValue={unit?.minimum_rental_months ?? 3} className={fieldClass} />
+        <input
+          name="minimum_rental_months"
+          type="number"
+          min="3"
+          required
+          defaultValue={unit?.minimum_rental_months ?? 3}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700">
         Số người tối đa
-        <input name="max_occupants" type="number" min="1" defaultValue={unit?.max_occupants ?? ""} className={fieldClass} />
+        <input
+          name="max_occupants"
+          type="number"
+          min="1"
+          defaultValue={unit?.max_occupants ?? ""}
+          className={fieldClass}
+        />
       </label>
       <label className="text-sm font-medium text-slate-700 md:col-span-2">
         Mô tả căn
-        <textarea name="unit_description" rows={3} defaultValue={unit?.description ?? ""} className={fieldClass} />
+        <textarea
+          name="unit_description"
+          rows={3}
+          defaultValue={unit?.description ?? ""}
+          className={fieldClass}
+        />
       </label>
     </>
   );
@@ -329,9 +382,13 @@ export function PropertyEditor({
               area_m2: optionalNumber(form, "area_m2"),
               bedrooms: optionalNumber(form, "bedrooms") ?? 0,
               bathrooms: optionalNumber(form, "bathrooms") ?? 0,
-              advertised_monthly_rent: optionalNumber(form, "advertised_monthly_rent"),
+              advertised_monthly_rent: optionalNumber(
+                form,
+                "advertised_monthly_rent",
+              ),
               deposit: optionalNumber(form, "deposit"),
-              minimum_rental_months: optionalNumber(form, "minimum_rental_months") ?? 3,
+              minimum_rental_months:
+                optionalNumber(form, "minimum_rental_months") ?? 3,
               max_occupants: optionalNumber(form, "max_occupants"),
             }
           : {}),
@@ -391,7 +448,9 @@ export function PropertyEditor({
   const policy = property?.policies;
   const separate = property?.rental_arrangement === "SEPARATE_UNITS";
   const activeTab: WorkspaceTab =
-    property?.rental_arrangement === "WHOLE_SPACE" && tab === "units" ? "overview" : tab;
+    property?.rental_arrangement === "WHOLE_SPACE" && tab === "units"
+      ? "overview"
+      : tab;
 
   return (
     <section className="mx-auto w-full max-w-6xl px-1 py-4 sm:px-2 sm:py-6">
@@ -450,17 +509,21 @@ export function PropertyEditor({
               ["photos", "Hình ảnh"],
             ] as const
           )
-            .filter(([value]) => property.rental_arrangement !== "WHOLE_SPACE" || value !== "units")
+            .filter(
+              ([value]) =>
+                property.rental_arrangement !== "WHOLE_SPACE" ||
+                value !== "units",
+            )
             .map(([value, label]) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => openTab(value)}
-              className={`rounded-full px-4 py-2 text-sm font-semibold ${activeTab === value ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
-            >
-              {label}
-            </button>
-          ))}
+              <button
+                key={value}
+                type="button"
+                onClick={() => openTab(value)}
+                className={`rounded-full px-4 py-2 text-sm font-semibold ${activeTab === value ? "bg-[#3368a0] text-white" : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"}`}
+              >
+                {label}
+              </button>
+            ))}
         </nav>
       )}
 
@@ -562,13 +625,22 @@ export function PropertyEditor({
             <AmenityFields
               key={`shared-${property.content_revision}`}
               catalog={catalog}
-              scope={property.rental_arrangement === "WHOLE_SPACE" ? undefined : "shared"}
-              scopes={property.rental_arrangement === "WHOLE_SPACE" ? ["shared", "unit"] : undefined}
+              scope={
+                property.rental_arrangement === "WHOLE_SPACE"
+                  ? undefined
+                  : "shared"
+              }
+              scopes={
+                property.rental_arrangement === "WHOLE_SPACE"
+                  ? ["shared", "unit"]
+                  : undefined
+              }
               value={
                 property.rental_arrangement === "WHOLE_SPACE"
                   ? combinedAmenityValue(
                       property.shared_amenities,
-                      property.units.find((unit) => !unit.archived_at)?.amenities,
+                      property.units.find((unit) => !unit.archived_at)
+                        ?.amenities,
                     )
                   : property.shared_amenities
               }
@@ -757,18 +829,19 @@ function PropertyPhotos({
   const units = property.units.filter((unit) => !unit.archived_at);
   const separate =
     property.rental_arrangement === "SEPARATE_UNITS" && units.length > 0;
-  
+
   // Read initial scope and unitId from URL parameters
-  const initialScope = searchParams.get("photoScope") as "property" | "unit" | null;
+  const initialScope = searchParams.get("photoScope") as
+    "property" | "unit" | null;
   const initialUnitId = searchParams.get("unitId");
-  
+
   const [scope, setScope] = useState<"property" | "unit">(
     separate && initialScope === "unit" ? "unit" : "property",
   );
   const [activeUnitId, setActiveUnitId] = useState(
-    initialUnitId && units.some(u => u.id === initialUnitId)
+    initialUnitId && units.some((u) => u.id === initialUnitId)
       ? initialUnitId
-      : units[0]?.id ?? ""
+      : (units[0]?.id ?? ""),
   );
   const [pending, setPending] = useState<File[]>([]);
   const [dragOver, setDragOver] = useState(false);
@@ -871,7 +944,9 @@ function PropertyPhotos({
       ) ||
       media.length + pending.length > 20
     ) {
-      toast.error("Chọn ảnh JPG, PNG hoặc WEBP, mỗi ảnh không quá 8 MB; tổng tối đa 20 ảnh.");
+      toast.error(
+        "Chọn ảnh JPG, PNG hoặc WEBP, mỗi ảnh không quá 8 MB; tổng tối đa 20 ảnh.",
+      );
       return;
     }
     setBusy(true);
@@ -1024,7 +1099,10 @@ function PropertyPhotos({
             }}
             onDragLeave={(event) => {
               event.preventDefault();
-              if (event.currentTarget.contains(event.relatedTarget as Node | null)) return;
+              if (
+                event.currentTarget.contains(event.relatedTarget as Node | null)
+              )
+                return;
               setDragOver(false);
             }}
             onDrop={(event) => {
@@ -1053,23 +1131,21 @@ function PropertyPhotos({
                   className="sr-only"
                   disabled={busy}
                   onChange={(event) => {
-                    addPendingFiles(Array.from(event.currentTarget.files ?? []));
+                    addPendingFiles(
+                      Array.from(event.currentTarget.files ?? []),
+                    );
                     event.currentTarget.value = "";
                   }}
                 />
               </label>
               {pending.length > 0 && (
-                <button
-                  type="submit"
-                  disabled={busy}
-                  className={buttonClass}
-                >
+                <button type="submit" disabled={busy} className={buttonClass}>
                   {busy ? "Đang tải…" : `Tải ${pending.length} ảnh`}
                 </button>
               )}
             </div>
           </div>
-          
+
           {pending.length > 0 && (
             <div className="rounded-xl border border-slate-200 bg-white p-4">
               <div className="mb-3 flex items-center justify-between">
@@ -1107,7 +1183,7 @@ function PropertyPhotos({
                           type="button"
                           onClick={() =>
                             setPending((current) =>
-                              current.filter((_, i) => i !== index)
+                              current.filter((_, i) => i !== index),
                             )
                           }
                           disabled={busy}

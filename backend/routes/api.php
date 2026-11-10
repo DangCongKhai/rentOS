@@ -38,3 +38,4 @@ require base_path('routes/api/v1/owner/properties.php');
 require base_path('routes/api/v1/owner/listings.php');
 require base_path('routes/api/v1/owner/amenities.php');
 require base_path('routes/api/v1/owner/rental-requests.php');
+require base_path('routes/api/v1/owner/tenancies.php');

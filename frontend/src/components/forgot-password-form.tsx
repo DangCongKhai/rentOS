@@ -36,19 +36,23 @@ export function ForgotPasswordForm() {
       const response = await forgotPassword({ email });
       setSuccessMessage(
         response.message ||
-          "Hướng dẫn đặt lại mật khẩu đã được gửi đến hộp thư của bạn."
+          "Hướng dẫn đặt lại mật khẩu đã được gửi đến hộp thư của bạn.",
       );
     } catch (error) {
       if (error instanceof ApiError) {
         if (error.status === 429) {
-          setErrorMessage("Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại.");
+          setErrorMessage(
+            "Bạn thao tác quá nhanh. Vui lòng chờ 1 phút rồi thử lại.",
+          );
         } else if (error.errors?.email?.[0]) {
           setEmailError(error.errors.email[0]);
         } else {
           setErrorMessage(error.message);
         }
       } else {
-        setErrorMessage("Không thể kết nối máy chủ. Vui lòng kiểm tra lại kết nối mạng.");
+        setErrorMessage(
+          "Không thể kết nối máy chủ. Vui lòng kiểm tra lại kết nối mạng.",
+        );
       }
     } finally {
       setBusy(false);
@@ -60,12 +64,15 @@ export function ForgotPasswordForm() {
       <div className="space-y-4">
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm leading-relaxed">
           <div className="flex items-center gap-2 font-bold mb-1">
-            <span aria-hidden="true" className="text-emerald-600">✓</span>
+            <span aria-hidden="true" className="text-emerald-600">
+              ✓
+            </span>
             <span>Đã gửi hướng dẫn khôi phục</span>
           </div>
           <p>{successMessage}</p>
           <p className="mt-2 text-xs text-emerald-700">
-            Hãy kiểm tra hộp thư đến (và cả mục Spam/Thư rác) của bạn. Liên kết có hiệu lực trong vòng 60 phút.
+            Hãy kiểm tra hộp thư đến (và cả mục Spam/Thư rác) của bạn. Liên kết
+            có hiệu lực trong vòng 60 phút.
           </p>
         </div>
 
@@ -114,17 +121,23 @@ export function ForgotPasswordForm() {
         type="submit"
         disabled={busy}
       >
-        <span>{busy ? "Đang gửi yêu cầu…" : "Gửi liên kết đặt lại mật khẩu"}</span>
-        <span aria-hidden="true" className="text-base font-normal">&rarr;</span>
+        <span>
+          {busy ? "Đang gửi yêu cầu…" : "Gửi liên kết đặt lại mật khẩu"}
+        </span>
+        <span aria-hidden="true" className="text-base font-normal">
+          &rarr;
+        </span>
       </button>
 
       <p className="mt-6 text-center text-sm text-slate-600">
         Bạn đã nhớ mật khẩu?{" "}
-        <Link href="/login" className="text-[#3368a0] font-semibold hover:underline">
+        <Link
+          href="/login"
+          className="text-[#3368a0] font-semibold hover:underline"
+        >
           Đăng nhập ngay
         </Link>
       </p>
     </form>
   );
 }
-

@@ -123,71 +123,90 @@ export function ListingFilters({
           ) : null}
         </div>
         <div className="flex shrink-0 items-center gap-2">
-        <AnchoredMenu
-          open={panel === "price"}
-          selected={Boolean(state.minRent || state.maxRent)}
-          onToggle={() => togglePanel("price")}
-          onClose={() => setPanel(null)}
-          label={priceLabel(state)}
-          menuClassName="w-[360px]"
-        >
-          <PriceMenu
-            state={state}
-            onApply={(minRent, maxRent) => {
-              visit({ ...state, minRent, maxRent });
-              setPanel(null);
-            }}
-          />
-        </AnchoredMenu>
-        <AnchoredMenu
-          open={panel === "rooms"}
-          onToggle={() => togglePanel("rooms")}
-          onClose={() => setPanel(null)}
-          label={roomsLabel(state)}
-        >
-          <RoomsMenu
-            state={state}
-            onApply={(bedrooms, bathrooms) => {
-              visit({ ...state, bedrooms, bathrooms });
-              setPanel(null);
-            }}
-          />
-        </AnchoredMenu>
-        <AnchoredMenu
-          open={panel === "kind"}
-          onToggle={() => togglePanel("kind")}
-          onClose={() => setPanel(null)}
-          label={state.unitKind ? kindLabel : "Loại căn"}
-        >
-          <div className="grid gap-1 p-2">
-            {unitKinds.map((kind) => (
-              <button
-                key={kind.value || "any-kind"}
-                type="button"
-                aria-pressed={state.unitKind === kind.value}
-                className={`min-h-10 rounded-lg px-3 text-left text-sm ${state.unitKind === kind.value ? "bg-[#eaf1f7] font-semibold text-[#3368a0]" : "hover:bg-[#f0f4f7]"}`}
-                onClick={() => {
-                  visit({ ...state, unitKind: kind.value });
-                  setPanel(null);
-                }}
-              >
-                {kind.label}
-              </button>
-            ))}
-          </div>
-        </AnchoredMenu>
-        <button type="button" className="inline-flex h-11 items-center gap-2 rounded-full border border-[#c9d3e0] bg-white px-4 text-sm font-semibold whitespace-nowrap" onClick={onToggleFilters}>
-          <FilterIcon />
-          Bộ lọc
-          {filterCount > 0 ? <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#3368a0] px-1 text-xs text-white">{filterCount}</span> : null}
-        </button>
+          <AnchoredMenu
+            open={panel === "price"}
+            selected={Boolean(state.minRent || state.maxRent)}
+            onToggle={() => togglePanel("price")}
+            onClose={() => setPanel(null)}
+            label={priceLabel(state)}
+            menuClassName="w-[360px]"
+          >
+            <PriceMenu
+              state={state}
+              onApply={(minRent, maxRent) => {
+                visit({ ...state, minRent, maxRent });
+                setPanel(null);
+              }}
+            />
+          </AnchoredMenu>
+          <AnchoredMenu
+            open={panel === "rooms"}
+            onToggle={() => togglePanel("rooms")}
+            onClose={() => setPanel(null)}
+            label={roomsLabel(state)}
+          >
+            <RoomsMenu
+              state={state}
+              onApply={(bedrooms, bathrooms) => {
+                visit({ ...state, bedrooms, bathrooms });
+                setPanel(null);
+              }}
+            />
+          </AnchoredMenu>
+          <AnchoredMenu
+            open={panel === "kind"}
+            onToggle={() => togglePanel("kind")}
+            onClose={() => setPanel(null)}
+            label={state.unitKind ? kindLabel : "Loại căn"}
+          >
+            <div className="grid gap-1 p-2">
+              {unitKinds.map((kind) => (
+                <button
+                  key={kind.value || "any-kind"}
+                  type="button"
+                  aria-pressed={state.unitKind === kind.value}
+                  className={`min-h-10 rounded-lg px-3 text-left text-sm ${state.unitKind === kind.value ? "bg-[#eaf1f7] font-semibold text-[#3368a0]" : "hover:bg-[#f0f4f7]"}`}
+                  onClick={() => {
+                    visit({ ...state, unitKind: kind.value });
+                    setPanel(null);
+                  }}
+                >
+                  {kind.label}
+                </button>
+              ))}
+            </div>
+          </AnchoredMenu>
+          <button
+            type="button"
+            className="inline-flex h-11 items-center gap-2 rounded-full border border-[#c9d3e0] bg-white px-4 text-sm font-semibold whitespace-nowrap"
+            onClick={onToggleFilters}
+          >
+            <FilterIcon />
+            Bộ lọc
+            {filterCount > 0 ? (
+              <span className="inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-[#3368a0] px-1 text-xs text-white">
+                {filterCount}
+              </span>
+            ) : null}
+          </button>
         </div>
       </div>
       <div className="flex flex-wrap gap-2">
         {state.amenities.map((key) => {
-          const label = amenities.find((item) => item.key === key)?.label_vi ?? key;
+          const label =
+            amenities.find((item) => item.key === key)?.label_vi ?? key;
           return (
-            <button key={key} type="button" className="rounded-full bg-[#eaf1f7] px-3 py-1 text-sm" onClick={() => visit({ ...state, amenities: state.amenities.filter((item) => item !== key) })}>
+            <button
+              key={key}
+              type="button"
+              className="rounded-full bg-[#eaf1f7] px-3 py-1 text-sm"
+              onClick={() =>
+                visit({
+                  ...state,
+                  amenities: state.amenities.filter((item) => item !== key),
+                })
+              }
+            >
               {label} <span aria-hidden="true">×</span>
               <span className="sr-only">Bỏ {label}</span>
             </button>
@@ -237,7 +256,10 @@ function AnchoredMenu({
       const menu = menuRef.current;
       if (!rect || !menu) return;
       const width = menu.offsetWidth;
-      const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8));
+      const left = Math.max(
+        8,
+        Math.min(rect.left, window.innerWidth - width - 8),
+      );
       setBox({ top: rect.bottom + 8, left });
     }
     place();
@@ -253,7 +275,11 @@ function AnchoredMenu({
     if (!open) return;
     function onPointer(event: MouseEvent) {
       const target = event.target as Node;
-      if (rootRef.current?.contains(target) || menuRef.current?.contains(target)) return;
+      if (
+        rootRef.current?.contains(target) ||
+        menuRef.current?.contains(target)
+      )
+        return;
       onClose();
     }
     function onKey(event: KeyboardEvent) {
@@ -269,30 +295,54 @@ function AnchoredMenu({
 
   return (
     <div ref={rootRef} className="relative">
-      <button type="button" aria-expanded={open} onClick={onToggle} className={`inline-flex h-11 items-center gap-2 rounded-full border bg-white px-4 text-sm whitespace-nowrap ${open || selected ? "border-[#3368a0] text-[#3368a0]" : "border-[#e1e7ed]"}`}>
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={onToggle}
+        className={`inline-flex h-11 items-center gap-2 rounded-full border bg-white px-4 text-sm whitespace-nowrap ${open || selected ? "border-[#3368a0] text-[#3368a0]" : "border-[#e1e7ed]"}`}
+      >
         {label}
-        <span aria-hidden="true" className="text-xs">▾</span>
+        <span aria-hidden="true" className="text-xs">
+          ▾
+        </span>
       </button>
-      {open ? createPortal(
-        <div
-          ref={menuRef}
-          style={{ top: box?.top ?? 0, left: box?.left ?? 0, visibility: box ? "visible" : "hidden" }}
-          className={`fixed z-[60] overflow-hidden rounded-2xl border border-[#e1e7ed] bg-white shadow-[0_16px_40px_rgba(9,18,22,0.18)] ${menuClassName}`}
-        >
-          {children}
-        </div>,
-        document.body,
-      ) : null}
+      {open
+        ? createPortal(
+            <div
+              ref={menuRef}
+              style={{
+                top: box?.top ?? 0,
+                left: box?.left ?? 0,
+                visibility: box ? "visible" : "hidden",
+              }}
+              className={`fixed z-[60] overflow-hidden rounded-2xl border border-[#e1e7ed] bg-white shadow-[0_16px_40px_rgba(9,18,22,0.18)] ${menuClassName}`}
+            >
+              {children}
+            </div>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }
 
-function PriceMenu({ state, onApply }: { state: ListingSearchState; onApply: (minRent: string, maxRent: string) => void }) {
-  const [minText, setMinText] = useState(() => vndToMillionsInput(state.minRent));
-  const [maxText, setMaxText] = useState(() => vndToMillionsInput(state.maxRent));
+function PriceMenu({
+  state,
+  onApply,
+}: {
+  state: ListingSearchState;
+  onApply: (minRent: string, maxRent: string) => void;
+}) {
+  const [minText, setMinText] = useState(() =>
+    vndToMillionsInput(state.minRent),
+  );
+  const [maxText, setMaxText] = useState(() =>
+    vndToMillionsInput(state.maxRent),
+  );
   const minRent = millionsInputToVnd(minText);
   const maxRent = millionsInputToVnd(maxText);
-  const rangeError = minRent !== "" && maxRent !== "" && Number(maxRent) < Number(minRent);
+  const rangeError =
+    minRent !== "" && maxRent !== "" && Number(maxRent) < Number(minRent);
 
   return (
     <form
@@ -306,15 +356,31 @@ function PriceMenu({ state, onApply }: { state: ListingSearchState; onApply: (mi
       <p className="text-sm font-semibold text-[#091216]">Khoảng giá</p>
       <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-end gap-2">
         <MillionField label="Tối thiểu" value={minText} onChange={setMinText} />
-        <span className="pb-3 text-[#5b6676]" aria-hidden="true">–</span>
-        <MillionField label="Tối đa" value={maxText} onChange={setMaxText} invalid={rangeError} describedBy={rangeError ? "price-range-error" : undefined} />
+        <span className="pb-3 text-[#5b6676]" aria-hidden="true">
+          –
+        </span>
+        <MillionField
+          label="Tối đa"
+          value={maxText}
+          onChange={setMaxText}
+          invalid={rangeError}
+          describedBy={rangeError ? "price-range-error" : undefined}
+        />
       </div>
       {rangeError ? (
-        <p id="price-range-error" role="alert" className="text-sm font-medium text-[#c53636]">
+        <p
+          id="price-range-error"
+          role="alert"
+          className="text-sm font-medium text-[#c53636]"
+        >
           Giá tối đa đang nhỏ hơn giá tối thiểu
         </p>
       ) : null}
-      <button type="submit" disabled={rangeError} className="min-h-11 rounded-xl bg-[#3368a0] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50">
+      <button
+        type="submit"
+        disabled={rangeError}
+        className="min-h-11 rounded-xl bg-[#3368a0] font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+      >
         Xem kết quả
       </button>
     </form>
@@ -337,7 +403,9 @@ function MillionField({
   return (
     <label className="grid min-w-0 gap-1 text-xs font-medium text-[#5b6676]">
       {label} (triệu VNĐ)
-      <span className={`flex h-11 min-w-0 items-center gap-1 rounded-xl border bg-white px-3 ${invalid ? "border-[#c53636]" : "border-[#e1e7ed]"}`}>
+      <span
+        className={`flex h-11 min-w-0 items-center gap-1 rounded-xl border bg-white px-3 ${invalid ? "border-[#c53636]" : "border-[#e1e7ed]"}`}
+      >
         <input
           inputMode="decimal"
           value={value}
@@ -372,12 +440,25 @@ function RoomsMenu({
     >
       <CountRow label="Phòng ngủ" value={bedrooms} onChange={setBedrooms} />
       <CountRow label="Phòng tắm" value={bathrooms} onChange={setBathrooms} />
-      <button type="submit" className="min-h-11 rounded-xl bg-[#3368a0] font-semibold text-white">Xem kết quả</button>
+      <button
+        type="submit"
+        className="min-h-11 rounded-xl bg-[#3368a0] font-semibold text-white"
+      >
+        Xem kết quả
+      </button>
     </form>
   );
 }
 
-function CountRow({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+function CountRow({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+}) {
   return (
     <fieldset className="grid gap-2">
       <legend className="text-sm font-semibold text-[#091216]">{label}</legend>
@@ -531,8 +612,19 @@ function FilterDialog({
 
 function FilterIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M4 6h16M7 12h10M10 18h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M4 6h16M7 12h10M10 18h4"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
     </svg>
   );
 }

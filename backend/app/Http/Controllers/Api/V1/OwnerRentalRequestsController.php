@@ -81,6 +81,85 @@ class OwnerRentalRequestsController extends Controller
         return response()->noContent()->header('Cache-Control', 'private, no-store');
     }
 
+    #[Response(403, description: 'Tài khoản hoặc phiên không có quyền xem hộp thư.', type: 'array{message: string}')]
+    #[Response(404, description: 'Không tìm thấy yêu cầu thuộc bất động sản của chủ nhà.', type: 'array{message: string}')]
+    public function proposalContext(Request $request, string $rentalRequest): JsonResponse
+    {
+        Gate::authorize('viewOwnerInbox', RentalRequest::class);
+        /** @var User $owner */
+        $owner = $request->user();
+        $rentalRequestData = DB::table('rental_requests as requests')
+            ->join('listings', 'listings.id', '=', 'requests.listing_id')
+            ->join('properties', 'properties.id', '=', 'listings.property_id')
+            ->leftJoin('units as preferred_units', 'preferred_units.id', '=', 'requests.preferred_unit_id')
+            ->where('requests.id', $rentalRequest)
+            ->where('properties.owner_id', $owner->id)
+            ->select([
+                'requests.id',
+                'requests.status',
+                'requests.desired_move_in_date',
+                'requests.desired_end_date',
+                'requests.message',
+                'requests.contact_name',
+                'requests.contact_phone',
+                'requests.created_at',
+                'requests.closed_at',
+                'requests.outcome_reason',
+                'requests.preferred_unit_id',
+                'preferred_units.label as preferred_unit_label',
+                'listings.id as listing_id',
+                'listings.title as listing_title',
+                'properties.id as property_id',
+                'properties.name as property_name',
+                'properties.city',
+                'properties.policies',
+            ])
+            ->first();
+
+        abort_if($rentalRequestData === null, 404);
+
+        $unitRows = DB::table('units')
+            ->where('property_id', $rentalRequestData->property_id)
+            ->whereNull('archived_at')
+            ->orderBy('label')
+            ->get([
+                'id',
+                'label',
+                'operational_status',
+                'advertised_monthly_rent',
+                'deposit',
+                'minimum_rental_months',
+                'policy_overrides',
+            ]);
+        $overlappingUnitIds = DB::table('tenancies')
+            ->whereIn('unit_id', $unitRows->pluck('id'))
+            ->whereIn('status', ['PENDING_CONFIRMATION', 'CONFIRMED', 'ACTIVE'])
+            ->whereDate('blocked_start_date', '<=', $rentalRequestData->desired_end_date)
+            ->whereDate('blocked_end_date', '>=', $rentalRequestData->desired_move_in_date)
+            ->pluck('unit_id')
+            ->flip();
+        $units = $unitRows->map(static function (object $unit) use ($overlappingUnitIds): array {
+            return [
+                'id' => $unit->id,
+                'label' => $unit->label,
+                'operational_status' => $unit->operational_status,
+                'monthly_rent' => $unit->advertised_monthly_rent,
+                'deposit_amount' => $unit->deposit,
+                'minimum_rental_months' => $unit->minimum_rental_months,
+                'policy_overrides' => json_decode($unit->policy_overrides ?? '{}'),
+                'has_date_conflict' => $overlappingUnitIds->has($unit->id),
+            ];
+        });
+
+        return response()->json([
+            'data' => [
+                'request' => $rentalRequestData,
+                'property_policies' => json_decode($rentalRequestData->policies ?? '{}'),
+                'units' => $units,
+            ],
+        ])->header('Cache-Control', 'private, no-store');
+    }
+
     /** @return Builder<RentalRequest> */
     private function readQuery(User $owner): Builder
     {

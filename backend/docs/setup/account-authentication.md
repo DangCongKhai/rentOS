@@ -30,17 +30,17 @@ Registration creates the user unverified and authenticates the browser so the sa
 
 ## API contract
 
-| Method | Path | Access | Purpose |
-| --- | --- | --- | --- |
-| GET | `/sanctum/csrf-cookie` | Guest/session | Initialize browser CSRF cookie |
-| POST | `/register` | Guest + CSRF | Register, then create a browser session |
-| POST | `/login` | Guest + CSRF + throttle | Authenticate and rotate session ID |
-| POST | `/logout` | Browser session + CSRF | Invalidate current session |
-| POST | `/email/verification-notification` | Browser session + CSRF + throttle | Resend verification notice |
-| GET | `/email/verify/{id}/{hash}` | Browser session + signed URL + throttle | Verify email and redirect to allowlisted frontend URL |
-| GET | `/api/v1/me` | Sanctum browser session, or PAT with `account:read` | Return safe profile fields |
-| PATCH | `/api/v1/me` | Active browser session + CSRF; PAT-only denied | Update name and optional phone |
-| PUT | `/user/password` | Browser session + CSRF | Change password after checking current password |
+| Method | Path                               | Access                                              | Purpose                                               |
+| ------ | ---------------------------------- | --------------------------------------------------- | ----------------------------------------------------- |
+| GET    | `/sanctum/csrf-cookie`             | Guest/session                                       | Initialize browser CSRF cookie                        |
+| POST   | `/register`                        | Guest + CSRF                                        | Register, then create a browser session               |
+| POST   | `/login`                           | Guest + CSRF + throttle                             | Authenticate and rotate session ID                    |
+| POST   | `/logout`                          | Browser session + CSRF                              | Invalidate current session                            |
+| POST   | `/email/verification-notification` | Browser session + CSRF + throttle                   | Resend verification notice                            |
+| GET    | `/email/verify/{id}/{hash}`        | Browser session + signed URL + throttle             | Verify email and redirect to allowlisted frontend URL |
+| GET    | `/api/v1/me`                       | Sanctum browser session, or PAT with `account:read` | Return safe profile fields                            |
+| PATCH  | `/api/v1/me`                       | Active browser session + CSRF; PAT-only denied      | Update name and optional phone                        |
+| PUT    | `/user/password`                   | Browser session + CSRF                              | Change password after checking current password       |
 
 Password-reset routes are disabled. The user profile response omits password, remember token, admin privilege and account status.
 

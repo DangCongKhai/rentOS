@@ -1,0 +1,53 @@
+<?php
+
+namespace App\Http\Requests;
+
+class StoreTenancyProposalRequest extends OwnerProductRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        return parent::authorize();
+    }
+
+    protected function prepareForValidation(): void
+    {
+        $snapshot = $this->input('policies_snapshot');
+
+        if (! is_string($snapshot)) {
+            return;
+        }
+
+        try {
+            $decoded = json_decode($snapshot, true, 512, JSON_THROW_ON_ERROR);
+        } catch (\JsonException) {
+            return;
+        }
+
+        if (is_array($decoded)) {
+            $this->merge(['policies_snapshot' => $decoded]);
+        }
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, array<int, string>>
+     */
+    public function rules(): array
+    {
+        return [
+            'client_operation_id' => ['required', 'uuid'],
+            'unit_id' => ['required', 'uuid'],
+            'start_date' => ['required', 'date_format:Y-m-d'],
+            'end_date' => ['required', 'date_format:Y-m-d', 'after:start_date'],
+            'monthly_rent' => ['required', 'integer', 'min:1'],
+            'deposit_amount' => ['required', 'integer', 'min:0'],
+            'policies_snapshot' => ['required', 'array'],
+            'agreement_document' => ['prohibited'],
+            'signed_on' => ['nullable', 'date_format:Y-m-d'],
+        ];
+    }
+}
