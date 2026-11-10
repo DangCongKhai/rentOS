@@ -17,6 +17,7 @@ class RecordNotification
         string $body,
         string $resourceType,
         string $resourceId,
+        bool $sendEmail = false,
     ): string {
         if (! in_array($audience, ['ADMIN', 'TENANT', 'OWNER'], true)) {
             throw new InvalidArgumentException('Notification audience is not allowed.');
@@ -37,7 +38,9 @@ class RecordNotification
             'resource_id' => $resourceId,
             'created_at' => now(),
         ]);
-        DeliverNotification::dispatch($id);
+        if ($sendEmail) {
+            DeliverNotification::dispatch($id)->onConnection('database');
+        }
 
         return $id;
     }

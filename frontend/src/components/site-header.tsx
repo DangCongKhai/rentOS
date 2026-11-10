@@ -8,7 +8,15 @@ import { NotificationIcon } from "@/config/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useNotificationUnread } from "@/lib/notification-inbox";
 
-function NavLink({ href, active, children }: { href: string; active: boolean; children: string }) {
+function NavLink({
+  href,
+  active,
+  children,
+}: {
+  href: string;
+  active: boolean;
+  children: string;
+}) {
   return (
     <Link
       href={href}
@@ -63,8 +71,14 @@ export function SiteHeader() {
   }
 
   return (
-    <header className={`z-50 flex h-[75px] min-h-[75px] items-center justify-between gap-3 px-4 text-[#E4E9F0] transition-colors sm:gap-6 sm:px-6 lg:px-10 ${onHome ? "fixed inset-x-0 top-0" : "sticky top-0"} ${transparent ? "border-b border-transparent bg-transparent shadow-none" : "border-b border-white/10 bg-[#091216] shadow-sm"}`}>
-      <Link href="/" className="inline-flex items-center min-h-[44px] shrink-0" aria-label="rentOS - trang chủ">
+    <header
+      className={`z-50 flex h-[75px] min-h-[75px] items-center justify-between gap-3 px-4 text-[#E4E9F0] transition-colors sm:gap-6 sm:px-6 lg:px-10 ${onHome ? "fixed inset-x-0 top-0" : "sticky top-0"} ${transparent ? "border-b border-transparent bg-transparent shadow-none" : "border-b border-white/10 bg-[#091216] shadow-sm"}`}
+    >
+      <Link
+        href="/"
+        className="inline-flex items-center min-h-[44px] shrink-0"
+        aria-label="rentOS - trang chủ"
+      >
         <Image
           src="/images/rentos-logo.png"
           alt="rentOS"
@@ -74,9 +88,16 @@ export function SiteHeader() {
           className="w-[110px] sm:w-[120px] h-auto object-contain"
         />
       </Link>
-      <nav className="flex items-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-1" aria-label="Điều hướng chính">
-        <NavLink href="/listings" active={pathname.startsWith("/listings")}>Tìm nhà cho bạn</NavLink>
-        <NavLink href="/guide" active={pathname.startsWith("/guide")}>Hướng dẫn</NavLink>
+      <nav
+        className="flex items-center gap-4 sm:gap-6 lg:gap-8 overflow-x-auto py-1"
+        aria-label="Điều hướng chính"
+      >
+        <NavLink href="/listings" active={pathname.startsWith("/listings")}>
+          Tìm nhà cho bạn
+        </NavLink>
+        <NavLink href="/guide" active={pathname.startsWith("/guide")}>
+          Hướng dẫn
+        </NavLink>
         <Link
           href="/#cau-hoi"
           className="text-[15px] font-medium leading-[22.5px] text-[#E4E9F0] hover:text-[#8FBCD0] transition-colors whitespace-nowrap min-h-[44px] inline-flex items-center"
@@ -85,20 +106,33 @@ export function SiteHeader() {
             const section = document.getElementById("cau-hoi");
             if (!section) return;
             event.preventDefault();
-            const top = section.getBoundingClientRect().top + window.scrollY - 91;
+            const top =
+              section.getBoundingClientRect().top + window.scrollY - 91;
             window.scrollTo({ top, behavior: "smooth" });
             window.history.replaceState(null, "", "/#cau-hoi");
           }}
         >
           FAQ
         </Link>
-        <NavLink href="/tenant" active={pathname.startsWith("/tenant")}>Cổng cư dân</NavLink>
-        <NavLink href="/owner" active={pathname.startsWith("/owner")}>Cổng chủ nhà</NavLink>
+        <NavLink href="/tenant" active={pathname.startsWith("/tenant")}>
+          Cổng cư dân
+        </NavLink>
+        <NavLink href="/owner" active={pathname.startsWith("/owner")}>
+          Cổng chủ nhà
+        </NavLink>
       </nav>
       <div className="flex items-center gap-3 sm:gap-4 shrink-0">
         {/* Language Indicator */}
         <div className="hidden sm:flex items-center gap-1.5 text-white text-sm font-semibold select-none px-2 py-1">
-          <svg className="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="w-4 h-4 text-white"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <circle cx="12" cy="12" r="10" />
             <path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20" />
             <path d="M2 12h20" />
@@ -122,7 +156,9 @@ export function SiteHeader() {
               href="/register"
             >
               <span>Đăng ký</span>
-              <span aria-hidden="true" className="text-xs">↗</span>
+              <span aria-hidden="true" className="text-xs">
+                ↗
+              </span>
             </Link>
           </div>
         )}
@@ -175,7 +211,15 @@ export function SiteHeader() {
                 >
                   {initials}
                 </span>
-                <svg className="w-4 h-4 text-white shrink-0 opacity-80" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <svg
+                  className="w-4 h-4 text-white shrink-0 opacity-80"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
                   <path d="m4 6 4 4 4-4" />
                 </svg>
               </summary>

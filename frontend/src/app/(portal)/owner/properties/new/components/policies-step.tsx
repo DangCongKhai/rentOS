@@ -19,7 +19,9 @@ export function PoliciesStep({
     <div className="space-y-5">
       {rentalArrangement === "SEPARATE_UNITS" && (
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Quy định chung</h3>
+          <h3 className="text-sm font-semibold text-slate-800">
+            Quy định chung
+          </h3>
           <p className="mt-1 text-xs text-slate-500">
             Quy định thú cưng và hút thuốc được áp dụng cho mọi căn trừ khi thay
             đổi sau này.
@@ -75,8 +77,8 @@ export function PoliciesStep({
                 Nội quy riêng từng căn
               </h3>
               <p className="mt-1 text-xs text-slate-500">
-                Nội quy chung được kế thừa; chỉ nhập thêm điều khác biệt cho
-                căn đang chọn.
+                Nội quy chung được kế thừa; chỉ nhập thêm điều khác biệt cho căn
+                đang chọn.
               </p>
             </div>
             <span className="shrink-0 text-xs text-slate-500">

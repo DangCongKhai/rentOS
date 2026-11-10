@@ -28,7 +28,11 @@ function isIsoDate(value: string): boolean {
   const month = Number(match[2]);
   const day = Number(match[3]);
   const date = new Date(Date.UTC(year, month - 1, day));
-  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+  return (
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day
+  );
 }
 
 const DISPLAY_DATE = /^(\d{2})\/(\d{2})\/(\d{4})$/;
@@ -46,7 +50,9 @@ export function displayDateToIso(value: string): string | null {
   return isIsoDate(iso) ? iso : null;
 }
 
-export function parseListingSearchParams(params: URLSearchParams): ListingSearchState {
+export function parseListingSearchParams(
+  params: URLSearchParams,
+): ListingSearchState {
   const moveInDate = params.get("move_in_date") ?? "";
   if (moveInDate !== "" && !isIsoDate(moveInDate)) {
     throw new ListingSearchValidationError("Ngày nhận phòng không hợp lệ.");
@@ -63,13 +69,18 @@ export function parseListingSearchParams(params: URLSearchParams): ListingSearch
     bedrooms: params.get("bedrooms") ?? "",
     bathrooms: params.get("bathrooms") ?? "",
     occupants: params.get("occupants") ?? "",
-    amenities: [...params.getAll("amenities"), ...params.getAll("amenities[]")].filter((key) => key !== ""),
+    amenities: [
+      ...params.getAll("amenities"),
+      ...params.getAll("amenities[]"),
+    ].filter((key) => key !== ""),
     pets: params.get("pets") ?? "",
     page: Number.isInteger(page) && page > 0 ? page : 1,
   };
 }
 
-export function toListingSearchParams(state: ListingSearchState): URLSearchParams {
+export function toListingSearchParams(
+  state: ListingSearchState,
+): URLSearchParams {
   const params = new URLSearchParams();
   const location = state.location.trim().replace(/\s+/g, " ");
   if (location !== "") params.set("location", location);

@@ -35,34 +35,37 @@ export function ReviewStep({
   catalog,
   onNavigateToStep,
 }: ReviewStepProps) {
-  const { 
-    name, 
-    propertyType, 
-    description, 
-    city, 
-    ward, 
-    addressLine, 
-    pets, 
-    smoking, 
+  const {
+    name,
+    propertyType,
+    description,
+    city,
+    ward,
+    addressLine,
+    pets,
+    smoking,
     sharedRules,
     rent,
     area_m2,
     custom_amenities,
   } = formData;
-  
+
   // Validate recommended fields
   const warnings: Array<{ step: number; message: string }> = [];
-  
+
   if (!description) {
     warnings.push({ step: 0, message: "Bước 1: Thiếu mô tả chi tiết" });
   }
   if (!city || !ward) {
-    warnings.push({ step: 0, message: "Bước 1: Thiếu thông tin địa chỉ (tỉnh/phường)" });
+    warnings.push({
+      step: 0,
+      message: "Bước 1: Thiếu thông tin địa chỉ (tỉnh/phường)",
+    });
   }
   if (!addressLine) {
     warnings.push({ step: 0, message: "Bước 1: Thiếu địa chỉ cụ thể" });
   }
-  
+
   // Check rental arrangement details
   if (rentalArrangement === "WHOLE_SPACE") {
     if (!rent) {
@@ -87,32 +90,34 @@ export function ReviewStep({
       });
     }
   }
-  
+
   // Check amenities
   const propertyAmenityCount = sharedAmenityKeys.size;
-  const customAmenitiesCount = custom_amenities.split("\n").filter(Boolean).length;
+  const customAmenitiesCount = custom_amenities
+    .split("\n")
+    .filter(Boolean).length;
   if (propertyAmenityCount === 0 && customAmenitiesCount === 0) {
     warnings.push({ step: 2, message: "Bước 3: Chưa chọn tiện ích nào" });
   }
-  
+
   // Check rules
   const rulesCount = sharedRules.split("\n").filter(Boolean).length;
   if (rulesCount === 0 && rentalArrangement !== "WHOLE_SPACE") {
     warnings.push({ step: 3, message: "Bước 4: Chưa có nội quy chung" });
   }
-  
+
   const propertyTypeLabel: Record<string, string> = {
     HOUSE: "Nhà",
     APARTMENT: "Căn hộ",
     APARTMENT_BUILDING: "Tòa nhà căn hộ",
   };
-  
+
   const petsLabel: Record<string, string> = {
     NOT_ALLOWED: "Không cho phép",
     WITH_APPROVAL: "Cần phê duyệt",
     ALLOWED: "Được phép",
   };
-  
+
   const smokingLabel: Record<string, string> = {
     NOT_ALLOWED: "Không cho phép",
     OUTDOOR_ONLY: "Chỉ ngoài trời",
@@ -286,9 +291,7 @@ export function ReviewStep({
           onClick={() => onNavigateToStep(2)}
           className="mb-3 flex w-full items-center justify-between text-left hover:text-[#3368a0]"
         >
-          <h3 className="text-sm font-semibold text-slate-800">
-            3. Tiện ích
-          </h3>
+          <h3 className="text-sm font-semibold text-slate-800">3. Tiện ích</h3>
           <span className="text-xs text-[#3368a0]">Chỉnh sửa →</span>
         </button>
         <div className="space-y-2 text-sm">
@@ -334,7 +337,9 @@ export function ReviewStep({
           className="mb-3 flex w-full items-center justify-between text-left hover:text-[#3368a0]"
         >
           <h3 className="text-sm font-semibold text-slate-800">
-            {rentalArrangement === "WHOLE_SPACE" ? "4. Nội quy" : "4. Quy định và nội quy"}
+            {rentalArrangement === "WHOLE_SPACE"
+              ? "4. Nội quy"
+              : "4. Quy định và nội quy"}
           </h3>
           <span className="text-xs text-[#3368a0]">Chỉnh sửa →</span>
         </button>
@@ -353,7 +358,9 @@ export function ReviewStep({
           </div>
           <div className="flex justify-between">
             <span className="text-slate-600">
-              {rentalArrangement === "WHOLE_SPACE" ? "Nội quy:" : "Nội quy chung:"}
+              {rentalArrangement === "WHOLE_SPACE"
+                ? "Nội quy:"
+                : "Nội quy chung:"}
             </span>
             <span className="font-medium text-slate-900">
               {rulesCount > 0 ? (

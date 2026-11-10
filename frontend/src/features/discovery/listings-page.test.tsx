@@ -4,7 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ListingSearchResponse } from "./listings-api";
 
 const replace = vi.fn();
-let query = "location=H%E1%BA%A3i%20Ch%C3%A2u&max_rent=4000000&amenities=wifi&page=2";
+let query =
+  "location=H%E1%BA%A3i%20Ch%C3%A2u&max_rent=4000000&amenities=wifi&page=2";
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ replace }),
@@ -12,15 +13,19 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(query),
 }));
 
-const requests: Array<{ resolve: (value: ListingSearchResponse) => void; signal: AbortSignal }> = [];
+const requests: Array<{
+  resolve: (value: ListingSearchResponse) => void;
+  signal: AbortSignal;
+}> = [];
 
 vi.mock("./listings-api", () => ({
-  fetchAmenities: () => Promise.resolve({
-    data: [
-      { key: "wifi", scope: "PROPERTY", label_vi: "Wifi" },
-      { key: "washing_machine", scope: "UNIT", label_vi: "Máy giặt" },
-    ],
-  }),
+  fetchAmenities: () =>
+    Promise.resolve({
+      data: [
+        { key: "wifi", scope: "PROPERTY", label_vi: "Wifi" },
+        { key: "washing_machine", scope: "UNIT", label_vi: "Máy giặt" },
+      ],
+    }),
   fetchListings: (_params: URLSearchParams, signal: AbortSignal) =>
     new Promise<ListingSearchResponse>((resolve) => {
       requests.push({ resolve, signal });
@@ -70,7 +75,8 @@ describe("listings page", () => {
   beforeEach(() => {
     replace.mockReset();
     requests.length = 0;
-    query = "location=H%E1%BA%A3i%20Ch%C3%A2u&max_rent=4000000&amenities=wifi&page=2";
+    query =
+      "location=H%E1%BA%A3i%20Ch%C3%A2u&max_rent=4000000&amenities=wifi&page=2";
   });
 
   it("clears only the location and keeps the other filters", async () => {
@@ -78,7 +84,9 @@ describe("listings page", () => {
     render(<ListingsBrowser />);
     requests[0]?.resolve(card("Studio", "Còn trống"));
 
-    await user.click(await screen.findByRole("button", { name: "Xóa địa điểm" }));
+    await user.click(
+      await screen.findByRole("button", { name: "Xóa địa điểm" }),
+    );
 
     const href = String(replace.mock.calls[0]?.[0]);
     const next = new URL(href, "http://localhost").searchParams;
@@ -93,7 +101,9 @@ describe("listings page", () => {
     requests[0]?.resolve(card("Studio full nội thất", "Trống từ 02/05/2027"));
 
     expect(await screen.findByText("Trống từ 02/05/2027")).toBeTruthy();
-    expect(screen.getByRole("link", { name: /Studio full nội thất/ })).toBeTruthy();
+    expect(
+      screen.getByRole("link", { name: /Studio full nội thất/ }),
+    ).toBeTruthy();
   });
 
   it("ignores a slower response after a newer search starts", async () => {

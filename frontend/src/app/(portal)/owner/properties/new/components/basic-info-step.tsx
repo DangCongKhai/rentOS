@@ -1,12 +1,28 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { VietnamLocationPicker, type SelectedLocation } from "@/components/vietnam-location-picker";
-import { inputClass, textareaClass, selectClass, selectStyle } from "./shared/form-styles";
+import {
+  VietnamLocationPicker,
+  type SelectedLocation,
+} from "@/components/vietnam-location-picker";
+import {
+  inputClass,
+  textareaClass,
+  selectClass,
+  selectStyle,
+} from "./shared/form-styles";
 
-const emptyLocation: SelectedLocation = { city: "", ward: "", cities: [], wards: [] };
+const emptyLocation: SelectedLocation = {
+  city: "",
+  ward: "",
+  cities: [],
+  wards: [],
+};
 
-export function addressMismatch(address: string, location: SelectedLocation): string {
+export function addressMismatch(
+  address: string,
+  location: SelectedLocation,
+): string {
   const value = address.trim();
   if (value === "") return "";
   if (!location.city || !location.ward) {
@@ -80,14 +96,19 @@ export function BasicInfoStep() {
           onChange={(event) => {
             const nextAddress = event.target.value;
             setAddress(nextAddress);
-            event.target.setCustomValidity(addressMismatch(nextAddress, location));
+            event.target.setCustomValidity(
+              addressMismatch(nextAddress, location),
+            );
           }}
           aria-invalid={addressError !== ""}
           className={`${inputClass} ${addressError ? "border-rose-500 bg-rose-50" : ""}`}
           placeholder="Số nhà, tên đường"
         />
         {addressError ? (
-          <span role="alert" className="mt-1 block text-xs font-medium text-rose-700">
+          <span
+            role="alert"
+            className="mt-1 block text-xs font-medium text-rose-700"
+          >
             ❌ {addressError}
           </span>
         ) : null}

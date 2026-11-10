@@ -27,7 +27,9 @@ function listing(imageUrls: string[]): ListingCard {
 }
 
 function photoSrc(): string {
-  const image = screen.getByRole("img", { name: "Studio full nội thất gần biển Mỹ Khê" });
+  const image = screen.getByRole("img", {
+    name: "Studio full nội thất gần biển Mỹ Khê",
+  });
   return decodeURIComponent(image.getAttribute("src") ?? "");
 }
 
@@ -36,7 +38,12 @@ describe("listing card gallery", () => {
     const user = userEvent.setup();
     render(
       <ListingCardView
-        listing={listing(["/photos/house.webp", "/photos/living.webp", "/photos/kitchen.webp", "/photos/bath.webp"])}
+        listing={listing([
+          "/photos/house.webp",
+          "/photos/living.webp",
+          "/photos/kitchen.webp",
+          "/photos/bath.webp",
+        ])}
         href="/listings/listing-1"
       />,
     );
@@ -60,7 +67,12 @@ describe("listing card gallery", () => {
   it("advances one photo for every click in the same turn", () => {
     render(
       <ListingCardView
-        listing={listing(["/photos/house.webp", "/photos/living.webp", "/photos/kitchen.webp", "/photos/bath.webp"])}
+        listing={listing([
+          "/photos/house.webp",
+          "/photos/living.webp",
+          "/photos/kitchen.webp",
+          "/photos/bath.webp",
+        ])}
         href="/listings/listing-1"
       />,
     );
@@ -77,7 +89,12 @@ describe("listing card gallery", () => {
   });
 
   it("hides the controls when a listing has one photo", () => {
-    render(<ListingCardView listing={listing(["/photos/only.webp"])} href="/listings/listing-1" />);
+    render(
+      <ListingCardView
+        listing={listing(["/photos/only.webp"])}
+        href="/listings/listing-1"
+      />,
+    );
 
     expect(photoSrc()).toContain("/photos/only.webp");
     expect(screen.queryByRole("button", { name: "Ảnh sau" })).toBeNull();

@@ -29,8 +29,8 @@ export function AuthShell({
           marketingPanel
             ? "max-w-[960px] flex flex-col md:flex-row min-h-[610px]"
             : wide
-            ? "max-w-4xl"
-            : "max-w-md"
+              ? "max-w-4xl"
+              : "max-w-md"
         }`}
         aria-labelledby="auth-title"
       >
@@ -74,13 +74,18 @@ export function AuthShell({
             </div>
           </aside>
         )}
-        <div className={`p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white ${marketingPanel ? "flex-1 md:w-[508px]" : "flex-1"}`}>
+        <div
+          className={`p-8 sm:p-10 lg:p-12 flex flex-col justify-center bg-white ${marketingPanel ? "flex-1 md:w-[508px]" : "flex-1"}`}
+        >
           {eyebrow ? (
             <span className="block text-slate-400 text-[11px] font-bold tracking-wider uppercase mb-1.5">
               {eyebrow}
             </span>
           ) : null}
-          <h1 id="auth-title" className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2">
+          <h1
+            id="auth-title"
+            className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight mb-2"
+          >
             {title}
           </h1>
           <p className="text-slate-600 text-sm mb-6">{description}</p>
@@ -91,7 +96,13 @@ export function AuthShell({
   );
 }
 
-export function FormMessage({ message, error = false }: { message: string; error?: boolean }) {
+export function FormMessage({
+  message,
+  error = false,
+}: {
+  message: string;
+  error?: boolean;
+}) {
   return (
     <p
       className={`text-sm rounded-lg p-3 my-2 ${
@@ -113,4 +124,3 @@ export function FieldError({ message, id }: { message?: string; id?: string }) {
     </span>
   ) : null;
 }
-

@@ -61,6 +61,7 @@ class DecideListingReview
                 body: $body,
                 resourceType: 'listing',
                 resourceId: $listingId,
+                sendEmail: true,
             );
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(), 'actor_id' => $actor->id, 'action' => $action, 'client_operation_id' => $operationId,

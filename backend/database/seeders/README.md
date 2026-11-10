@@ -23,4 +23,12 @@ Development-only accounts use the password `password`:
 - Owners: Quoc Huy Le `owner1@rentos.test`, Thu Ha Nguyen `owner2@rentos.test`, Minh Khoa Pham `owner3@rentos.test`, Bao Ngoc Vo `owner4@rentos.test`, Duc Thinh Hoang `owner5@rentos.test`
 - Tenants: Lan Chi Dang `tenant1@example.com`, Hoang Nam Bui `tenant2@example.com`, Thanh Tam Ly `tenant3@example.com`, Gia Han Truong `tenant4@example.com`
 
+To create five pending RNT-05 rental requests for the first demo owner, run:
+
+```bash
+php artisan db:seed --class='Database\Seeders\Rnt05ProposalRequestsSeeder' --no-interaction
+```
+
+The seeder uses published listings from the baseline data and is safe to rerun; existing demo requests are skipped. If no baseline listing is available for `owner1@rentos.test`, run `BaselineSeeder` first. The five test tenants are `tenant.rnt05.1@rentos.test` through `tenant.rnt05.5@rentos.test`, all with the password `password`.
+
 Image sources, the `seed/` prefix, and rerun behavior are documented in the [media fixture setup](../../docs/setup/media-fixtures.md).

@@ -23,6 +23,7 @@ class PublicListingDetailResource extends JsonResource
 
         return [
             'id' => $this->id,
+            'property_id' => $this->property_id,
             'title' => $this->title,
             'description' => $this->description,
             'availability_label' => $summary['availability_label'],

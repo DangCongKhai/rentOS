@@ -10,7 +10,9 @@ describe("listing search form", () => {
 
     await user.type(screen.getByLabelText("Địa điểm"), "Hải Châu");
 
-    const href = screen.getByRole("link", { name: "Tìm nhà ngay!" }).getAttribute("href");
+    const href = screen
+      .getByRole("link", { name: "Tìm nhà ngay!" })
+      .getAttribute("href");
     const url = new URL(href ?? "", "http://localhost");
     expect(url.pathname).toBe("/listings");
     expect(url.searchParams.get("location")).toBe("Hải Châu");

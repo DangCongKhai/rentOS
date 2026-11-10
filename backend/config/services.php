@@ -46,6 +46,9 @@ return [
         ],
         'max_file_size_kilobytes' => (int) env('SUPABASE_STORAGE_MAX_FILE_SIZE_KILOBYTES', 10240),
         'max_media_per_property' => (int) env('SUPABASE_STORAGE_MAX_MEDIA_PER_PROPERTY', 20),
+        'contracts' => [
+            'confirmation_hours' => (int) env('TENANCY_CONFIRMATION_HOURS', 48),
+        ],
     ],
 
     'owner' => [

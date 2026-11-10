@@ -29,7 +29,7 @@ export function VerificationPanel() {
         setMessage(
           error instanceof ApiError && error.status === 401
             ? "Đăng nhập để xem trạng thái xác minh hoặc gửi lại liên kết."
-            : "Không thể kiểm tra trạng thái. Vui lòng tải lại trang để thử lại."
+            : "Không thể kiểm tra trạng thái. Vui lòng tải lại trang để thử lại.",
         );
       });
   }, []);
@@ -42,7 +42,11 @@ export function VerificationPanel() {
       await resendVerification();
       setMessage("Đã gửi lại email xác minh. Hãy kiểm tra hộp thư của bạn.");
     } catch (error) {
-      setMessage(error instanceof ApiError ? error.message : "Không thể gửi email lúc này.");
+      setMessage(
+        error instanceof ApiError
+          ? error.message
+          : "Không thể gửi email lúc này.",
+      );
       setIsError(true);
     } finally {
       setBusy(false);
@@ -55,10 +59,15 @@ export function VerificationPanel() {
     <div className="flex flex-col items-start gap-4">
       {isEmailVerified ? (
         <>
-          <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold" aria-hidden="true">
+          <div
+            className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xl font-bold"
+            aria-hidden="true"
+          >
             ✓
           </div>
-          <h2 className="text-xl font-bold text-slate-900">Email đã được xác minh</h2>
+          <h2 className="text-xl font-bold text-slate-900">
+            Email đã được xác minh
+          </h2>
           <p className="text-sm text-slate-600 leading-relaxed">
             {isVerifiedFromUrl
               ? "Chúc mừng! Địa chỉ email của bạn đã được xác minh thành công. Bạn có thể tiếp tục sử dụng tất cả các tính năng của rentOS."
@@ -73,12 +82,16 @@ export function VerificationPanel() {
         </>
       ) : email ? (
         <>
-          <div className="w-12 h-12 rounded-full bg-blue-50 text-[#3368a0] flex items-center justify-center text-xl font-bold" aria-hidden="true">
+          <div
+            className="w-12 h-12 rounded-full bg-blue-50 text-[#3368a0] flex items-center justify-center text-xl font-bold"
+            aria-hidden="true"
+          >
             ✉
           </div>
           <h2 className="text-xl font-bold text-slate-900">Kiểm tra hộp thư</h2>
           <p className="text-sm text-slate-600 leading-relaxed">
-            Chúng tôi đã gửi liên kết xác minh đến <strong>{email}</strong>. Mở liên kết để xác nhận địa chỉ email của bạn.
+            Chúng tôi đã gửi liên kết xác minh đến <strong>{email}</strong>. Mở
+            liên kết để xác nhận địa chỉ email của bạn.
           </p>
           <div className="flex flex-wrap items-center gap-3 pt-2">
             <button
@@ -89,7 +102,10 @@ export function VerificationPanel() {
             >
               {busy ? "Đang gửi…" : "Gửi lại email xác minh"}
             </button>
-            <Link className="text-sm font-semibold text-[#3368a0] hover:underline" href="/profile">
+            <Link
+              className="text-sm font-semibold text-[#3368a0] hover:underline"
+              href="/profile"
+            >
               Quay về hồ sơ &rarr;
             </Link>
           </div>
@@ -98,7 +114,11 @@ export function VerificationPanel() {
       ) : (
         <>
           <h2 className="text-xl font-bold text-slate-900">
-            {isError ? (needsLogin ? "Đăng nhập để tiếp tục" : "Chưa thể tải trạng thái") : "Đang kiểm tra trạng thái…"}
+            {isError
+              ? needsLogin
+                ? "Đăng nhập để tiếp tục"
+                : "Chưa thể tải trạng thái"
+              : "Đang kiểm tra trạng thái…"}
           </h2>
           {needsLogin && (
             <Link

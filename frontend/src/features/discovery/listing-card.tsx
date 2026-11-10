@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { ListingCard } from "./listings-api";
+import { FavouriteButton } from "./favourites-provider";
 
 const cardSizes = "(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw";
 
@@ -31,11 +32,13 @@ function photoUrls(listing: ListingCard): string[] {
   return listing.cover_url ? [listing.cover_url] : [];
 }
 
-export function ListingCardView({ listing, href }: { listing: ListingCard; href: string }) {
+export function ListingCardView({ listing, href, savedPage = false }: { listing: ListingCard; href: string; savedPage?: boolean }) {
   const urls = photoUrls(listing);
   const [index, setIndex] = useState(0);
   const [ready, setReady] = useState<Record<string, true>>({});
-  const place = [listing.property.ward, listing.property.city].filter(Boolean).join(", ");
+  const place = [listing.property.ward, listing.property.city]
+    .filter(Boolean)
+    .join(", ");
   const current = urls[index] ?? null;
   const showControls = urls.length > 1;
   const preloaded = preloadIndexes(index, urls.length);
@@ -45,15 +48,20 @@ export function ListingCardView({ listing, href }: { listing: ListingCard; href:
   }
 
   function markReady(url: string) {
-    setReady((currentReady) => (currentReady[url] ? currentReady : { ...currentReady, [url]: true }));
+    setReady((currentReady) =>
+      currentReady[url] ? currentReady : { ...currentReady, [url]: true },
+    );
   }
 
   return (
     <article className="overflow-hidden rounded-2xl border border-border-default bg-surface-card">
-      <div className="relative aspect-4/3 bg-surface-brand-soft">
+      <div className={`relative bg-surface-brand-soft ${savedPage ? "aspect-video" : "aspect-4/3"}`}>
         <Link href={href} className="relative block h-full">
           {current && !ready[current] ? (
-            <span className="absolute inset-0 z-[1] flex items-center justify-center bg-[#d9dde3] px-6 text-center text-sm text-[#3d4654]" aria-hidden="true">
+            <span
+              className="absolute inset-0 z-[1] flex items-center justify-center bg-[#d9dde3] px-6 text-center text-sm text-[#3d4654]"
+              aria-hidden="true"
+            >
               {listing.title}
             </span>
           ) : null}
@@ -75,9 +83,10 @@ export function ListingCardView({ listing, href }: { listing: ListingCard; href:
             );
           })}
         </Link>
-        <span className="z-[3] pointer-events-none absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-xs font-semibold text-heading">
+        <span className="z-[3] pointer-events-none absolute left-3 top-3 max-w-[calc(100%-5rem)] rounded-full bg-white px-3 py-1 text-xs font-semibold text-heading">
           {listing.available_unit_count > 0 ? `${listing.available_unit_count} căn còn trống` : listing.availability_label}
         </span>
+        <FavouriteButton propertyId={listing.property_id} className="absolute top-3 right-3 z-10" />
         {showControls ? (
           <>
             <button
@@ -103,13 +112,17 @@ export function ListingCardView({ listing, href }: { listing: ListingCard; href:
         ) : null}
       </div>
       <Link href={href} className="grid gap-1 p-4">
-        <p className="font-semibold text-heading">{formatRent(listing.rent_min, listing.rent_max)}</p>
+        <p className="font-semibold text-heading">
+          {formatRent(listing.rent_min, listing.rent_max)}
+        </p>
         <p className="text-sm text-secondary">
-          {kindLabels[listing.property.property_type] ?? listing.property.property_type}
+          {kindLabels[listing.property.property_type] ??
+            listing.property.property_type}
           {" · "}Tối thiểu {listing.minimum_rental_months} tháng
         </p>
         <h3 className="text-base font-medium text-primary">{listing.title}</h3>
         <p className="text-sm text-secondary">{place}</p>
+        {savedPage && <span className="mt-2 rounded-lg border border-border-default px-3 py-2.5 text-sm font-semibold text-link">→ Xem chi tiết căn hộ</span>}
       </Link>
     </article>
   );
@@ -127,7 +140,11 @@ function Chevron({ direction }: { direction: "left" | "right" }) {
   return (
     <svg viewBox="0 0 20 20" aria-hidden="true" className="h-5 w-5">
       <path
-        d={direction === "left" ? "M12.5 4.5 7 10l5.5 5.5" : "M7.5 4.5 13 10l-5.5 5.5"}
+        d={
+          direction === "left"
+            ? "M12.5 4.5 7 10l5.5 5.5"
+            : "M7.5 4.5 13 10l-5.5 5.5"
+        }
         fill="none"
         stroke="currentColor"
         strokeWidth="1.8"

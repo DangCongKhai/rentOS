@@ -116,23 +116,23 @@ Treat an existing shared or production database as forward-only:
 4. Use the direct endpoint with dedicated deployment credentials. Serialize deployments so only one migration job runs.
 5. Inspect before applying:
 
-   ```bash
-   composer install --no-dev --optimize-autoloader
-   php artisan config:clear
-   php artisan config:show database.default
-   php artisan config:show database.connections.pgsql
-   php artisan migrate:status
-   php artisan migrate --pretend
-   ```
+    ```bash
+    composer install --no-dev --optimize-autoloader
+    php artisan config:clear
+    php artisan config:show database.default
+    php artisan config:show database.connections.pgsql
+    php artisan migrate:status
+    php artisan migrate --pretend
+    ```
 
 6. Apply only the reviewed forward migrations:
 
-   ```bash
-   php artisan migrate --force
-   php artisan config:cache
-   php artisan queue:restart
-   php artisan migrate:status
-   ```
+    ```bash
+    php artisan migrate --force
+    php artisan config:cache
+    php artisan queue:restart
+    php artisan migrate:status
+    ```
 
 7. Verify application health and worker/scheduler health before completing deployment.
 

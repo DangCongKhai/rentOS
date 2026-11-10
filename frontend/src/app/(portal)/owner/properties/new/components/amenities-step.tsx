@@ -9,7 +9,9 @@ type AmenitiesStepProps = {
   catalog: AmenityCatalogEntry[];
   loadingCatalog: boolean;
   sharedAmenityKeys: Set<string>;
-  onSharedAmenityKeysChange: (keys: Set<string> | ((current: Set<string>) => Set<string>)) => void;
+  onSharedAmenityKeysChange: (
+    keys: Set<string> | ((current: Set<string>) => Set<string>),
+  ) => void;
   amenityScope: "property" | "unit";
   onAmenityScopeChange: (scope: "property" | "unit") => void;
   rentalArrangement: "WHOLE_SPACE" | "SEPARATE_UNITS";
@@ -25,13 +27,13 @@ export function AmenitiesStep({
   rentalArrangement,
 }: AmenitiesStepProps) {
   const [unitAmenityKeys, setUnitAmenityKeys] = useState<Set<string>>(
-    () => new Set()
+    () => new Set(),
   );
   const amenityEntries = catalog.filter((item) =>
-    item.scopes.includes("shared")
+    item.scopes.includes("shared"),
   );
   const unitAmenityEntries = catalog.filter(
-    (item) => item.scopes.includes("unit") && !sharedAmenityKeys.has(item.key)
+    (item) => item.scopes.includes("unit") && !sharedAmenityKeys.has(item.key),
   );
 
   function handleSharedAmenityChange(key: string, checked: boolean) {

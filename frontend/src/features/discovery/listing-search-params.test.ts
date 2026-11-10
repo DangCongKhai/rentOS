@@ -29,7 +29,10 @@ describe("listing search params", () => {
 
     expect(parseListingSearchParams(encoded)).toEqual(parsed);
     expect(encoded.get("location")).toBe("Hải Châu");
-    expect(encoded.getAll("amenities[]")).toEqual(["washing_machine", "parking"]);
+    expect(encoded.getAll("amenities[]")).toEqual([
+      "washing_machine",
+      "parking",
+    ]);
   });
 
   it("omits a blank location and clears only that filter", () => {
@@ -48,12 +51,20 @@ describe("listing search params", () => {
     expect(cleared.get("pets")).toBe("ALLOWED");
     expect(cleared.getAll("amenities")).toEqual(["wifi"]);
     expect(cleared.get("page")).toBe("1");
-    expect(parseListingSearchParams(new URLSearchParams("location=   ")).location).toBe("");
-    expect(toListingSearchParams(parseListingSearchParams(new URLSearchParams("location=   "))).has("location")).toBe(false);
+    expect(
+      parseListingSearchParams(new URLSearchParams("location=   ")).location,
+    ).toBe("");
+    expect(
+      toListingSearchParams(
+        parseListingSearchParams(new URLSearchParams("location=   ")),
+      ).has("location"),
+    ).toBe(false);
   });
 
   it("rejects an unparseable move-in date", () => {
-    expect(() => parseListingSearchParams(new URLSearchParams("move_in_date=not-a-date"))).toThrow(ListingSearchValidationError);
+    expect(() =>
+      parseListingSearchParams(new URLSearchParams("move_in_date=not-a-date")),
+    ).toThrow(ListingSearchValidationError);
   });
 
   it("converts a complete move-in date between dd/mm/yyyy and ISO", () => {

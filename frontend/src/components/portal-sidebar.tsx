@@ -47,7 +47,8 @@ export function PortalSidebar() {
         {/* Navigation Links */}
         <nav className="space-y-1.5" aria-label="Điều hướng các Cổng">
           {portalConfig.items.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname === item.href
+              || ((item.id === "tenant-requests" || item.id === "owner-requests") && pathname.startsWith(item.href + "/"));
             const Icon = item.icon;
             const badge = badgeFor(item);
 
@@ -91,7 +92,8 @@ export function PortalSidebar() {
             Một tài khoản, hai vai trò.
           </strong>
           <p className="text-[11px] text-[#aeb8c6] leading-relaxed mb-3">
-            Dễ dàng chuyển giữa tìm nhà và quản lý bất động sản cho thuê của bạn.
+            Dễ dàng chuyển giữa tìm nhà và quản lý bất động sản cho thuê của
+            bạn.
           </p>
           <Link
             href={portalConfig.roleSwitcher.targetHref}
@@ -144,7 +146,13 @@ export function PortalSidebar() {
           aria-expanded={mobileOpen}
           aria-label="Mở menu chuyển Cổng"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          >
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
@@ -152,7 +160,8 @@ export function PortalSidebar() {
           <span>Danh mục Cổng</span>
         </button>
         <span className="text-xs text-[#BCD0DB] font-medium">
-          {portalConfig.items.find((i) => i.href === pathname)?.name || portalConfig.sectionTitle}
+          {portalConfig.items.find((i) => i.href === pathname)?.name ||
+            portalConfig.sectionTitle}
         </span>
       </div>
 
@@ -172,7 +181,13 @@ export function PortalSidebar() {
                 className="p-2 text-[#BCD0DB] hover:text-white rounded-md hover:bg-white/10"
                 aria-label="Đóng menu"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <svg
+                  className="w-5 h-5"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
                   <line x1="18" y1="6" x2="6" y2="18" />
                   <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>

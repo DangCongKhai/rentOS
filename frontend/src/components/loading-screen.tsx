@@ -8,7 +8,10 @@ export function LoadingScreen({
   className?: string;
 }) {
   return (
-    <div className={`flex items-center justify-center px-6 ${className}`} role="status">
+    <div
+      className={`flex items-center justify-center px-6 ${className}`}
+      role="status"
+    >
       <p className="flex items-center gap-3 text-sm text-[#454e5c]">
         <span
           className="size-4 shrink-0 animate-spin rounded-full border-2 border-[#d5dee7] border-t-[#3368a0]"

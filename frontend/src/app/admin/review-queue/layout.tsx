@@ -5,6 +5,10 @@ export const metadata: Metadata = {
   title: "Hàng đợi kiểm duyệt — rentOS",
 };
 
-export default function ReviewQueueLayout({ children }: { children: ReactNode }) {
+export default function ReviewQueueLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
   return children;
 }
