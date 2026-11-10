@@ -6,12 +6,34 @@ import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { DateField } from "@/components/ui/date-field";
 import type { ListingDetail } from "@/features/discovery/listings-api";
 import { ApiError } from "@/lib/auth-api";
+import { useAuth } from "@/lib/auth-context";
 import { submitRentalRequest } from "@/lib/rental-requests-api";
-import { describeDuration, dong, minimumMonths, placeLine, rentBounds } from "./listing-format";
+import {
+  describeDuration,
+  dong,
+  meetsMinimumStay,
+  minimumMonths,
+  placeLine,
+  rentBounds,
+} from "./listing-format";
 
 const labelClass = "grid gap-1 text-sm font-medium text-heading";
 const controlClass = "w-full rounded-xl border border-border-default bg-surface-card px-4 text-base font-normal focus:border-action-primary focus:ring-4 focus:ring-action-primary/15 focus:outline-none aria-invalid:border-rose-400";
 const messageLimit = 500;
+const phoneDigitLimit = 15;
+
+function formatPhoneChunks(value: string): string {
+  const plus = value.trimStart().startsWith("+");
+  const digits = value.replace(/\D/g, "").slice(0, phoneDigitLimit);
+  if (plus && digits.length === 0) return "+";
+  const local = !plus && digits.startsWith("0") && digits.length <= 10;
+  const parts = local
+    ? [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 10)]
+    : digits.match(/.{1,3}/g) ?? [];
+  const chunks = parts.filter((part) => part.length > 0);
+  return `${plus ? "+" : ""}${chunks.join(" ")}`;
+}
+
 const nextSteps = [
   "Chủ nhà gọi điện trao đổi với bạn.",
   "Chủ nhà gửi đề xuất hợp đồng.",
@@ -30,12 +52,15 @@ export function RentalRequestForm({
   onCancel: () => void;
 }) {
   const router = useRouter();
+  const { user } = useAuth();
   const id = useId();
   const [errors, setErrors] = useState<Errors>({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState("");
   const lastAttempt = useRef<{ payload: string; operationId: string } | null>(null);
+  const [name, setName] = useState(isSignedIn ? user?.name ?? "" : "");
+  const [phone, setPhone] = useState("");
   const [message, setMessage] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
@@ -56,27 +81,34 @@ export function RentalRequestForm({
       return;
     }
 
-    const values = new FormData(event.currentTarget);
-    const name = String(values.get("contact_name") ?? "").trim();
-    const phone = String(values.get("contact_phone") ?? "").replace(/[\s().-]/g, "");
+    const trimmedName = name.trim();
+    const phoneDigits = phone.replace(/[\s().-]/g, "");
     const nextErrors: Errors = {};
 
-    if (!name) nextErrors.name = "Nhập họ và tên liên hệ.";
-    if (!phone) nextErrors.phone = "Nhập số điện thoại.";
-    else if (!/^\+?\d{8,15}$/.test(phone)) {
+    if (!trimmedName) nextErrors.name = "Nhập họ và tên liên hệ.";
+    if (!phoneDigits) nextErrors.phone = "Nhập số điện thoại.";
+    else if (!/^\+?\d{8,15}$/.test(phoneDigits)) {
       nextErrors.phone = "Nhập số điện thoại hợp lệ.";
     }
     if (!start) nextErrors.start = "Chọn ngày dọn vào mong muốn.";
     if (!end) nextErrors.end = "Chọn ngày kết thúc mong muốn.";
-    else if (start && end < start) nextErrors.end = "Ngày kết thúc phải từ ngày dọn vào trở đi.";
+    else if (start && end < start) {
+      nextErrors.end = "Ngày kết thúc phải từ ngày dọn vào trở đi.";
+    } else if (
+      start &&
+      minMonths > 0 &&
+      !meetsMinimumStay(start, end, minMonths)
+    ) {
+      nextErrors.end = `Thời gian thuê phải ít nhất ${minMonths} tháng.`;
+    }
 
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
     const input = {
       listing_id: listing.id,
-      contact_name: name,
-      contact_phone: phone,
+      contact_name: trimmedName,
+      contact_phone: phoneDigits,
       desired_move_in_date: start,
       desired_end_date: end,
       preferred_unit_id: unitId || null,
@@ -150,6 +182,8 @@ export function RentalRequestForm({
                 <input
                   name="contact_name"
                   autoComplete="name"
+                  value={name}
+                  onChange={(event) => setName(event.target.value)}
                   aria-invalid={Boolean(errors.name)}
                   aria-describedby={errors.name ? `${id}-name-error` : undefined}
                   className={`h-12 ${controlClass}`}
@@ -161,7 +195,12 @@ export function RentalRequestForm({
                 <input
                   name="contact_phone"
                   type="tel"
+                  inputMode="tel"
                   autoComplete="tel"
+                  value={phone}
+                  onChange={(event) => {
+                    setPhone(formatPhoneChunks(event.target.value));
+                  }}
                   aria-invalid={Boolean(errors.phone)}
                   aria-describedby={errors.phone ? `${id}-phone-hint ${id}-phone-error` : `${id}-phone-hint`}
                   className={`h-12 ${controlClass}`}
@@ -237,21 +276,96 @@ export function RentalRequestForm({
         </fieldset>
       </div>
 
-      <div className="grid shrink-0 gap-2 border-t border-border-default bg-surface-card px-4 py-3 sm:px-8 sm:py-4">
-        {submitError ? <p role="alert" className="text-sm text-rose-700">{submitError}</p> : null}
-        {submitted ? (
-          <p role="status" className="text-sm font-medium text-green-700">Đã gửi yêu cầu thuê.</p>
-        ) : null}
+      {submitted ? (
+        <SentPopup
+          phone={phone}
+          titleId={`${id}-sent-title`}
+          bodyId={`${id}-sent-body`}
+          onClose={onCancel}
+          onView={() => router.push("/tenant/requests")}
+        />
+      ) : (
+        <div className="grid shrink-0 gap-2 border-t border-border-default bg-surface-card px-4 py-3 sm:px-8 sm:py-4">
+          {submitError ? <p role="alert" className="text-sm text-rose-700">{submitError}</p> : null}
+          <div className="flex justify-end gap-3">
+            <button type="button" onClick={onCancel} disabled={submitting} className="h-12 rounded-xl px-4 text-sm font-semibold text-heading hover:bg-surface-app disabled:opacity-60">
+              Hủy
+            </button>
+            <button type="submit" disabled={submitting} className="h-12 rounded-xl bg-action-primary px-6 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-60">
+              {submitting ? "Đang gửi…" : "Gửi yêu cầu thuê"}
+            </button>
+          </div>
+        </div>
+      )}
+    </form>
+  );
+}
+
+function SentPopup({
+  phone,
+  titleId,
+  bodyId,
+  onClose,
+  onView,
+}: {
+  phone: string;
+  titleId: string;
+  bodyId: string;
+  onClose: () => void;
+  onView: () => void;
+}) {
+  const viewRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    viewRef.current?.focus();
+  }, []);
+
+  return (
+    <div
+      className={
+        "fixed inset-0 z-[95] flex items-center justify-center " +
+        "bg-surface-nav-dark/60 p-4"
+      }
+      onClick={(event) => event.stopPropagation()}
+    >
+      <div
+        role="alertdialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={bodyId}
+        className={
+          "grid w-full max-w-md gap-4 rounded-[20px] bg-surface-card " +
+          "p-6 shadow-[0_16px_48px_rgba(0,0,0,0.2)]"
+        }
+      >
+        <h3 id={titleId} className="text-xl font-semibold text-heading">
+          Đã gửi yêu cầu thuê
+        </h3>
+        <p id={bodyId} className="text-sm text-secondary">
+          Chủ nhà sẽ gọi vào số {phone}.
+        </p>
         <div className="flex justify-end gap-3">
-          <button type="button" onClick={onCancel} disabled={submitting} className="h-12 rounded-xl px-4 text-sm font-semibold text-heading hover:bg-surface-app disabled:opacity-60">
-            {submitted ? "Đóng" : "Hủy"}
+          <button
+            type="button"
+            onClick={onClose}
+            className="h-12 rounded-xl px-4 text-sm font-semibold text-heading hover:bg-surface-app"
+          >
+            Đóng
           </button>
-          <button type="submit" disabled={submitting || submitted} className="h-12 rounded-xl bg-action-primary px-6 text-sm font-semibold text-white hover:brightness-95 disabled:opacity-60">
-            {submitting ? "Đang gửi…" : submitted ? "Đã gửi" : "Gửi yêu cầu thuê"}
+          <button
+            ref={viewRef}
+            type="button"
+            onClick={onView}
+            className={
+              "h-12 rounded-xl bg-action-primary px-6 text-sm " +
+              "font-semibold text-white hover:brightness-95"
+            }
+          >
+            Xem yêu cầu
           </button>
         </div>
       </div>
-    </form>
+    </div>
   );
 }
 

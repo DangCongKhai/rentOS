@@ -4,7 +4,9 @@ namespace App\Actions\RentalRequests;
 
 use App\Models\Listing;
 use App\Models\Property;
+use App\Models\Unit;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Str;
@@ -60,10 +62,12 @@ class SubmitRentalRequest
             }
 
             $unitId = $attributes['preferred_unit_id'];
-            if ($unitId !== null && ! $property->units()->whereKey($unitId)->whereNull('archived_at')
-                ->where('is_marketed', true)->where('operational_status', 'READY')->lockForUpdate()->first()) {
-                throw ValidationException::withMessages(['preferred_unit_id' => 'Căn ưu tiên không hợp lệ cho tin đăng này.']);
-            }
+            $minimumMonths = $this->minimumRentalMonths($property, $unitId);
+            $this->assertMinimumStay(
+                $attributes['desired_move_in_date'],
+                $attributes['desired_end_date'],
+                $minimumMonths,
+            );
 
             $id = (string) Str::uuid();
             $inserted = DB::table('rental_requests')->insertOrIgnore([
@@ -101,5 +105,40 @@ class SubmitRentalRequest
 
             return ['id' => $id, 'status' => 'PENDING', 'created' => true];
         }, 3);
+    }
+
+    private function minimumRentalMonths(Property $property, ?string $unitId): int
+    {
+        $eligible = $property->units()
+            ->whereNull('archived_at')
+            ->where('is_marketed', true)
+            ->where('operational_status', 'READY');
+
+        if ($unitId !== null) {
+            $unit = $eligible->whereKey($unitId)->lockForUpdate()->first();
+            if (! $unit instanceof Unit) {
+                throw ValidationException::withMessages([
+                    'preferred_unit_id' => 'Căn ưu tiên không hợp lệ cho tin đăng này.',
+                ]);
+            }
+
+            return (int) $unit->minimum_rental_months;
+        }
+
+        return (int) $eligible->min('minimum_rental_months');
+    }
+
+    private function assertMinimumStay(string $start, string $end, int $months): void
+    {
+        if ($months < 1) {
+            return;
+        }
+
+        $earliest = CarbonImmutable::parse($start)->addMonthsNoOverflow($months)->subDay();
+        if (CarbonImmutable::parse($end)->lt($earliest)) {
+            throw ValidationException::withMessages([
+                'desired_end_date' => "Thời gian thuê phải ít nhất {$months} tháng.",
+            ]);
+        }
     }
 }

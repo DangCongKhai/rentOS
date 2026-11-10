@@ -134,6 +134,20 @@ export function dong(value: number): string {
   return `${amount(value)} ₫`;
 }
 
+export function meetsMinimumStay(
+  start: string,
+  end: string,
+  months: number,
+): boolean {
+  if (months <= 0) return true;
+  const earliest = addCalendarMonths(
+    new Date(`${start}T00:00:00Z`),
+    months,
+  );
+  earliest.setUTCDate(earliest.getUTCDate() - 1);
+  return new Date(`${end}T00:00:00Z`) >= earliest;
+}
+
 export function describeDuration(start: string, end: string): string {
   const first = new Date(`${start}T00:00:00Z`);
   const until = new Date(`${end}T00:00:00Z`);

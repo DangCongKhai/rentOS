@@ -113,6 +113,32 @@ class TenantRentalRequestsTest extends TestCase
         $this->assertDatabaseCount('notification_outbox', 0);
     }
 
+    public function test_rejects_a_stay_shorter_than_the_minimum(): void
+    {
+        $listing = PublicListingFixture::published([
+            'units' => [
+                ['minimum_rental_months' => 3],
+                ['label' => 'Studio 2', 'minimum_rental_months' => 6],
+            ],
+        ]);
+        $this->actingAs(User::factory()->create(), 'web');
+
+        $this->postJson(self::PATH, array_replace($this->payload($listing->listingId), [
+            'desired_end_date' => '2027-03-30',
+        ]))->assertUnprocessable()->assertJsonValidationErrors([
+            'desired_end_date' => 'Thời gian thuê phải ít nhất 3 tháng.',
+        ]);
+        $this->postJson(self::PATH, array_replace($this->payload($listing->listingId), [
+            'preferred_unit_id' => $listing->unitIds[1],
+            'desired_end_date' => '2027-06-29',
+        ]))->assertUnprocessable()->assertJsonValidationErrors([
+            'desired_end_date' => 'Thời gian thuê phải ít nhất 6 tháng.',
+        ]);
+
+        $this->assertDatabaseCount('rental_requests', 0);
+        $this->assertDatabaseCount('notification_outbox', 0);
+    }
+
     public function test_rejects_the_requesters_own_listing(): void
     {
         $listing = PublicListingFixture::published();
