@@ -13,22 +13,14 @@ export function DiscoverySidebar({ active, moveInDate }: { active: "search" | "s
         <span className={`flex h-11 w-[52px] items-center justify-center rounded-[14px] ${active === "search" ? "bg-[#eaf1f7] text-[#3368a0]" : "text-[#454e5c]"}`}>
           <SearchIcon />
         </span>
-        <span
-          className={`text-[13px] font-semibold ${active === "search" ? "text-[#3368a0]" : "text-[#454e5c]"}`}
-        >
-          Tìm kiếm
-        </span>
+        <span className={`text-[13px] font-semibold ${active === "search" ? "text-[#3368a0]" : "text-[#454e5c]"}`}>Tìm kiếm</span>
       </Link>
       <Link href={savedHref} className="flex w-[75px] flex-col items-center gap-1.5 py-3" aria-current={active === "saved" ? "page" : undefined}>
         <span className={`relative flex h-11 w-[52px] items-center justify-center rounded-[14px] ${active === "saved" ? "bg-[#eaf1f7] text-[#3368a0]" : "text-[#454e5c]"}`}>
           <HeartIcon filled={active === "saved"} />
           {count > 0 && <span aria-label={`${count} bất động sản đã lưu`} className="absolute top-0.5 right-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-red-700 px-1 text-xs font-bold text-white">{count}</span>}
         </span>
-        <span
-          className={`text-[13px] font-semibold ${active === "saved" ? "text-[#3368a0]" : "text-[#454e5c]"}`}
-        >
-          Yêu thích
-        </span>
+        <span className={`text-[13px] font-semibold ${active === "saved" ? "text-[#3368a0]" : "text-[#454e5c]"}`}>Yêu thích</span>
       </Link>
     </nav>
   );

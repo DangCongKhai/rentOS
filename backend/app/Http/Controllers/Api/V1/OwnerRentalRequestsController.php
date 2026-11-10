@@ -159,7 +159,6 @@ class OwnerRentalRequestsController extends Controller
             ],
         ])->header('Cache-Control', 'private, no-store');
     }
-
     /** @return Builder<RentalRequest> */
     private function readQuery(User $owner): Builder
     {
