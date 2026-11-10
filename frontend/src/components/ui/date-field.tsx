@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type InputHTMLAttributes,
+  type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
 
@@ -30,6 +31,7 @@ export function DateField({
   error,
   onValueChange,
   picker = false,
+  pickerIcon,
   ...props
 }: Omit<InputHTMLAttributes<HTMLInputElement>, "type" | "defaultValue"> & {
   name: string;
@@ -38,6 +40,7 @@ export function DateField({
   error?: string;
   onValueChange?: (iso: string) => void;
   picker?: boolean;
+  pickerIcon?: ReactNode;
 }) {
   if (picker) {
     return (
@@ -47,6 +50,7 @@ export function DateField({
         defaultValue={defaultValue}
         error={error}
         onValueChange={onValueChange}
+        icon={pickerIcon}
       />
     );
   }
@@ -120,12 +124,14 @@ function DatePicker({
   defaultValue = "",
   error,
   onValueChange,
+  icon,
 }: {
   name: string;
   label: string;
   defaultValue?: string;
   error?: string;
   onValueChange?: (iso: string) => void;
+  icon?: ReactNode;
 }) {
   const id = useId();
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -146,9 +152,11 @@ function DatePicker({
     function place() {
       const rect = buttonRef.current?.getBoundingClientRect();
       if (!rect) return;
-      const width = 292;
+      const width = Math.min(292, window.innerWidth - 16);
+      const height = panelRef.current?.offsetHeight ?? 0;
+      const top = rect.bottom + 8;
       setBox({
-        top: rect.bottom + 8,
+        top: Math.max(8, Math.min(top, window.innerHeight - height - 8)),
         left: Math.max(8, Math.min(rect.left, window.innerWidth - width - 8)),
       });
     }
@@ -203,13 +211,15 @@ function DatePicker({
         type="button"
         aria-haspopup="dialog"
         aria-expanded={open}
+        data-invalid={error ? "true" : undefined}
         aria-describedby={error ? `${id}-error` : undefined}
         onClick={() => setOpen((value) => !value)}
-        className="min-h-12 w-full rounded-xl border border-[#c9d3e0] bg-white px-3.5 text-left text-base font-normal"
+        className="flex min-h-12 w-full items-center justify-between gap-2 rounded-xl border border-border-default bg-surface-card px-4 text-left text-base font-normal focus:border-action-primary focus:ring-4 focus:ring-action-primary/15 focus:outline-none data-[invalid=true]:border-rose-400"
       >
         <span className={display ? "text-[#1b2430]" : "text-[#8b97a8]"}>
           {display || "dd/mm/yyyy"}
         </span>
+        {icon}
       </button>
       <input type="hidden" name={name} value={iso} />
       {open
@@ -218,7 +228,7 @@ function DatePicker({
               ref={panelRef}
               role="dialog"
               aria-label={label}
-              className="fixed z-[90] w-[292px] rounded-2xl border border-[#e1e7ed] bg-white p-3 shadow-[0_16px_40px_rgba(9,18,22,0.16)]"
+              className="fixed z-[90] max-h-[calc(100dvh-16px)] w-[292px] max-w-[calc(100vw-16px)] overflow-y-auto rounded-2xl border border-[#e1e7ed] bg-white p-3 shadow-[0_16px_40px_rgba(9,18,22,0.16)]"
               style={{ top: box.top, left: box.left }}
             >
               <div className="mb-2 flex items-center justify-between">

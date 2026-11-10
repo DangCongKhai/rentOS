@@ -2,9 +2,26 @@ import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ListingDetail } from "@/features/discovery/listings-api";
+import { submitRentalRequest } from "@/lib/rental-requests-api";
 import { ListingDetailView } from "./listing-detail";
 
 const push = vi.fn();
+
+vi.mock("@/lib/rental-requests-api", () => ({ submitRentalRequest: vi.fn() }));
+
+vi.mock("@/lib/auth-context", () => ({
+  useAuth: () => ({
+    user: {
+      id: "tenant-1",
+      name: "Mai Nguyễn",
+      email: "mai@example.com",
+      email_verified_at: null,
+      phone: null,
+      is_admin: false,
+    },
+    status: "authenticated",
+  }),
+}));
 
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push }),
@@ -68,6 +85,7 @@ describe("listing detail", () => {
 
   beforeEach(() => {
     push.mockReset();
+    vi.mocked(submitRentalRequest).mockReset();
   });
 
   it("separates shared laundry from an in-unit washing machine and keeps a held unit", async () => {
@@ -99,9 +117,88 @@ describe("listing detail", () => {
     const dialog = screen.getByRole("dialog", { name: "Gửi yêu cầu thuê" });
     await user.click(within(dialog).getByRole("button", { name: "Gửi yêu cầu thuê" }));
 
-    expect(within(dialog).getByRole("alert").textContent).toContain("Nhập số điện thoại.");
+    expect(within(dialog).getByText("Nhập số điện thoại.")).toBeTruthy();
+    expect(within(dialog).getByText("Chọn ngày kết thúc mong muốn.")).toBeTruthy();
     expect(fetchSpy).not.toHaveBeenCalled();
     fetchSpy.mockRestore();
+  });
+
+  it("validates dates, retries the same operation after a network error and confirms the API result", async () => {
+    const user = userEvent.setup();
+    const send = vi.mocked(submitRentalRequest);
+    send.mockRejectedValueOnce(new TypeError("Network error"))
+      .mockResolvedValueOnce({ id: "request-1", status: "PENDING" });
+    render(<ListingDetailView listing={listing} isSignedIn />);
+
+    await user.click(screen.getByRole("button", { name: "Gửi yêu cầu thuê" }));
+    const dialog = within(screen.getByRole("dialog", { name: "Gửi yêu cầu thuê" }));
+    const submit = dialog.getByRole("button", { name: "Gửi yêu cầu thuê" });
+    const name = dialog.getByRole("textbox", { name: /Họ và tên liên hệ/ });
+    expect(name).toHaveProperty("value", "Mai Nguyễn");
+    await user.clear(name);
+    await user.type(name, "Lan Trần");
+    const phone = dialog.getByRole("textbox", { name: /Số điện thoại/ });
+    await user.click(phone);
+    await user.paste("0901234567");
+    expect(phone).toHaveProperty("value", "090 123 4567");
+    const preferredUnit = dialog.getByRole("button", { name: /Căn ưu tiên/ });
+    expect(preferredUnit.textContent).toContain("Không ưu tiên");
+    expect(dialog.queryByRole("listbox")).toBeNull();
+
+    await user.click(preferredUnit);
+    await user.keyboard("{ArrowDown}{Enter}");
+    expect(preferredUnit.textContent).toContain("Phòng 1");
+    expect(dialog.queryByRole("listbox")).toBeNull();
+    expect(document.activeElement).toBe(preferredUnit);
+
+    await user.click(preferredUnit);
+    await user.keyboard("{Escape}");
+    expect(dialog.queryByRole("listbox")).toBeNull();
+    expect(preferredUnit.textContent).toContain("Phòng 1");
+    await user.type(dialog.getByRole("textbox", { name: "Lời nhắn (tùy chọn)" }), "Tôi muốn hẹn xem phòng.");
+
+    async function pickDate(label: string, day: number, monthsAhead = 0) {
+      await user.click(dialog.getByRole("button", { name: new RegExp(label) }));
+      const calendar = within(screen.getByRole("dialog", { name: label }));
+      for (let step = 0; step < monthsAhead; step += 1) {
+        await user.click(calendar.getByRole("button", { name: "Tháng sau" }));
+      }
+      await user.click(calendar.getByRole("button", { name: new RegExp(`^${day} tháng`) }));
+    }
+
+    await pickDate("Ngày dọn vào mong muốn", 2);
+    await pickDate("Ngày kết thúc mong muốn", 1);
+    await user.click(submit);
+    expect(dialog.getByText("Ngày kết thúc phải từ ngày dọn vào trở đi.")).toBeTruthy();
+    expect(send).not.toHaveBeenCalled();
+
+    await pickDate("Ngày kết thúc mong muốn", 4);
+    await user.click(submit);
+    expect(dialog.getByText("3 ngày")).toBeTruthy();
+    expect(dialog.getByText("Thời gian thuê phải ít nhất 3 tháng.")).toBeTruthy();
+    expect(send).not.toHaveBeenCalled();
+
+    await pickDate("Ngày kết thúc mong muốn", 1, 3);
+    await user.click(submit);
+    expect(dialog.getByText("3 tháng")).toBeTruthy();
+    expect(await dialog.findByText(/Chưa xác nhận được kết quả gửi/)).toBeTruthy();
+    expect(send).toHaveBeenCalledTimes(1);
+    expect(send).toHaveBeenCalledWith(expect.objectContaining({
+      listing_id: listing.id,
+      contact_name: "Lan Trần",
+      contact_phone: "0901234567",
+      preferred_unit_id: "unit-1",
+      message: "Tôi muốn hẹn xem phòng.",
+    }));
+
+    await user.click(submit);
+    const sent = await screen.findByRole("alertdialog", { name: "Đã gửi yêu cầu thuê" });
+    expect(sent.textContent).toContain("Chủ nhà sẽ gọi vào số 090 123 4567.");
+    expect(send).toHaveBeenCalledTimes(2);
+    expect(send.mock.calls[1][0]).toEqual(send.mock.calls[0][0]);
+
+    await user.click(within(sent).getByRole("button", { name: "Xem yêu cầu" }));
+    expect(push).toHaveBeenCalledWith("/tenant/requests");
   });
 
   it("sends a guest to login from the request form", async () => {
