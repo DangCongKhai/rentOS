@@ -41,6 +41,7 @@ class OwnerTenancyProposalsTest extends TestCase
             ->assertJsonPath('data.replayed', false);
 
         $tenancyId = $response->json('data.tenancy_id');
+        $contractId = $response->json('data.contract.id');
 
         $this->assertDatabaseHas('rental_requests', [
             'id' => $rentalRequestId,
@@ -65,9 +66,10 @@ class OwnerTenancyProposalsTest extends TestCase
             'entity_id' => $tenancyId,
             'action' => 'tenancy.proposed',
         ]);
-        $this->assertDatabaseHas('notification_outbox', [
+        $this->assertDatabaseHas('notifications', [
             'recipient_id' => $tenant->id,
-            'event_type' => 'tenancy.proposed',
+            'audience' => 'TENANT',
+            'event_key' => 'tenancy.proposed:'.$contractId,
         ]);
 
         $retryPayload = $this->proposalPayload($listing->unitIds[0], $operationId);
@@ -172,7 +174,7 @@ class OwnerTenancyProposalsTest extends TestCase
         $this->assertDatabaseCount('tenancies', 1);
         $this->assertDatabaseCount('tenancy_contracts', 1);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
 
     }

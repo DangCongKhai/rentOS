@@ -201,24 +201,11 @@ erDiagram
         uuid correlation_id  "Request or operation correlation UUID"
         timestamptz created_at  "Audit time in business transaction"
     }
-    notification_outbox {
-        uuid id PK "Outbox UUID"
-        text event_key UK "Stable unique domain event identity"
-        uuid recipient_id FK "Recipient profile"
-        text event_type  "Configured notification kind"
-        jsonb payload  "Safe resource references; no tokens/documents"
-        text status  "PENDING PROCESSING DELIVERED FAILED"
-        integer attempts  "Bounded retry count"
-        timestamptz next_attempt_at  "Retry due time"
-        timestamptz locked_until  "Worker claim lease; recover abandoned claims"
-        timestamptz delivered_at  "Delivery handling completed"
-        text last_error  "Redacted failure summary"
-        timestamptz created_at  "Record creation time in UTC"
-        timestamptz updated_at  "Last record update time in UTC"
-    }
     notifications {
         uuid id PK "Inbox UUID"
         uuid recipient_id FK "Only this user can read/mark read"
+        uuid actor_id FK "User who caused the event; null for a system event"
+        text audience  "ADMIN TENANT or OWNER portal context"
         text event_key  "Unique with recipient_id"
         text title  "Safe summary"
         text body  "Safe message"
@@ -299,6 +286,7 @@ erDiagram
     users ||--o{ favourite_properties : private_saves
     properties ||--o{ favourite_properties : saved_property
     users ||--o{ notifications : private_recipient
+    users ||--o{ notifications : caused_by
     tenancies ||--o| property_reviews : deferred_P2
     users o|--o{ sessions : authenticates
     users ||--o{ personal_access_tokens : tokenable_morph

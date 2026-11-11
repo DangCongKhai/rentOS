@@ -2,10 +2,12 @@
 
 namespace App\Actions\OwnerProperties;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Domain\Media\MarketedUnitPhotoQuery;
 use App\Models\Listing;
 use App\Models\Property;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -111,6 +113,7 @@ class ListingLifecycleService
             $listing->review_reason = null;
             $listing->save();
             $this->audit($owner->id, $listing, 'listing.submitted', $before, $this->snapshot($listing));
+            $this->notifyAdminsOfSubmission($owner, $listing);
 
             return $listing->refresh();
         });
@@ -319,6 +322,27 @@ class ListingLifecycleService
         if ($missing !== []) {
             throw ValidationException::withMessages($missing);
         }
+    }
+
+    private function notifyAdminsOfSubmission(
+        User $owner,
+        Listing $listing,
+    ): void {
+        $submittedAt = $listing->submitted_at;
+        $stamp = $submittedAt === null
+            ? '0'
+            : Carbon::parse($submittedAt)->utc()->format('YmdHisu');
+        $revision = (string) $listing->submitted_content_revision;
+        app(RecordNotification::class)->recordForAdmins(
+            eventKey: 'listing.submitted:'.$listing->id.':'
+                .$revision.':'.$stamp,
+            title: 'Có tin đăng chờ duyệt',
+            body: 'Chủ nhà vừa gửi tin "'.$listing->title
+                .'" để xét duyệt.',
+            resourceType: 'listing',
+            resourceId: $listing->id,
+            actorId: $owner->id,
+        );
     }
 
     /** @return array<string, mixed> */

@@ -78,8 +78,12 @@ class TenantRentalRequestsTest extends TestCase
         ]);
         $this->assertDatabaseCount('audit_logs', 1);
         $this->assertDatabaseHas('audit_logs', ['entity_id' => $id, 'actor_id' => $tenant->id, 'correlation_id' => $payload['client_operation_id']]);
-        $this->assertDatabaseCount('notification_outbox', 1);
-        $this->assertDatabaseHas('notification_outbox', ['recipient_id' => $listing->owner->id, 'event_key' => 'rental_request.submitted:'.$id]);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseHas('notifications', [
+            'recipient_id' => $listing->owner->id,
+            'audience' => 'OWNER',
+            'event_key' => 'rental_request.submitted:'.$id,
+        ]);
         $this->assertDatabaseCount('idempotency_records', 1);
         $this->assertDatabaseCount('tenancies', 0);
     }
@@ -110,7 +114,7 @@ class TenantRentalRequestsTest extends TestCase
             ]);
 
         $this->assertDatabaseCount('rental_requests', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
     }
 
     public function test_rejects_a_stay_shorter_than_the_minimum(): void
@@ -136,7 +140,7 @@ class TenantRentalRequestsTest extends TestCase
         ]);
 
         $this->assertDatabaseCount('rental_requests', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
     }
 
     public function test_rejects_the_requesters_own_listing(): void
@@ -239,7 +243,7 @@ class TenantRentalRequestsTest extends TestCase
             'expected_updated_at' => $request->updated_at->copy()->subSecond()->format('Y-m-d\TH:i:s.uP'),
         ]))->assertConflict();
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
 
         $this->postJson($url, $input)->assertNoContent();
         $this->postJson($url, array_replace($input, ['reason' => 'Thay đổi kế hoạch']))->assertNoContent();
@@ -255,9 +259,11 @@ class TenantRentalRequestsTest extends TestCase
             'actor_id' => $tenant->id, 'entity_id' => $request->id, 'action' => 'rental_request.withdrawn',
             'correlation_id' => $input['client_operation_id'],
         ]);
-        $this->assertDatabaseCount('notification_outbox', 1);
-        $this->assertDatabaseHas('notification_outbox', [
-            'recipient_id' => $listing->owner->id, 'event_key' => 'rental_request.withdrawn:'.$request->id,
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseHas('notifications', [
+            'recipient_id' => $listing->owner->id,
+            'audience' => 'OWNER',
+            'event_key' => 'rental_request.withdrawn:'.$request->id,
         ]);
         $this->assertDatabaseCount('idempotency_records', 1);
         $this->assertDatabaseCount('tenancies', 0);
@@ -299,7 +305,7 @@ class TenantRentalRequestsTest extends TestCase
         ])->assertConflict()->assertJsonPath('message', 'Chủ nhà đã gửi đề xuất. Hãy mở Căn hộ và hợp đồng để tiếp tục.');
         $this->assertDatabaseHas('rental_requests', ['id' => $request->id, 'status' => 'ACCEPTED']);
         $this->assertDatabaseHas('tenancies', ['rental_request_id' => $request->id, 'status' => 'PENDING_CONFIRMATION']);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
     }
 
     /** @return array<string, string> */

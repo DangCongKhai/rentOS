@@ -18,6 +18,12 @@ class AdminListingReviewsTest extends TestCase
 {
     use CreatesListingReviewPackages, RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['queue.default' => 'database']);
+    }
+
     protected function beforeRefreshingDatabase(): void
     {
         $this->assertReviewDatabaseIsIsolated();
@@ -39,7 +45,8 @@ class AdminListingReviewsTest extends TestCase
         $this->actingAs($member, 'web')->json($method, '/api/v1/admin/'.$path, [])->assertForbidden();
 
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
     }
 
     public static function protectedEndpoints(): array
@@ -160,10 +167,16 @@ class AdminListingReviewsTest extends TestCase
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'APPROVED', 'publication_status' => 'DRAFT', 'reviewed_by' => $admin->id, 'approved_content_revision' => 1]);
         $this->assertNotNull(DB::table('listings')->where('id', $package['listing_id'])->value('reviewed_at'));
         $this->assertDatabaseHas('audit_logs', ['entity_type' => 'listing', 'entity_id' => $package['listing_id'], 'action' => 'listing.approved', 'actor_id' => $admin->id]);
-        $this->assertDatabaseHas('notification_outbox', ['recipient_id' => $package['owner']->id, 'event_type' => 'listing.approved', 'status' => 'PENDING']);
+        $this->assertDatabaseHas('notifications', [
+            'recipient_id' => $package['owner']->id,
+            'audience' => 'OWNER',
+            'resource_type' => 'listing',
+            'resource_id' => $package['listing_id'],
+        ]);
         $this->assertDatabaseHas('idempotency_records', ['actor_id' => $admin->id, 'client_operation_id' => $payload['client_operation_id'], 'action' => 'listing.approve']);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
     }
 
     #[DataProvider('incompletePackages')]
@@ -178,7 +191,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'PENDING', 'reviewed_by' => null]);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
     }
 
@@ -204,7 +218,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'REJECTED', 'review_reason' => $payload['reason']]);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
     }
 
     #[DataProvider('invalidReasons')]
@@ -218,7 +233,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'PENDING', 'reviewed_by' => null]);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
     }
 
@@ -239,7 +255,8 @@ class AdminListingReviewsTest extends TestCase
         DB::statement('SET CONSTRAINTS ALL IMMEDIATE');
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'REJECTED', 'publication_status' => 'DRAFT', 'review_reason' => 'Bổ sung địa chỉ chính xác.', 'reviewed_by' => $admin->id]);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
@@ -254,7 +271,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'review_reason' => 'Sai địa chỉ']);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
     }
 
     public function test_same_operation_id_reused_for_another_listing_returns_409(): void
@@ -270,7 +288,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $second['listing_id'], 'moderation_status' => 'PENDING']);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
@@ -301,7 +320,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'APPROVED']);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
     }
 
     #[DataProvider('staleChanges')]
@@ -316,7 +336,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'PENDING', 'reviewed_by' => null]);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
     }
 
@@ -361,7 +382,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'DRAFT', 'reviewed_by' => null]);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
     }
 
     public function test_later_property_edits_retain_the_initial_approval_snapshot(): void
@@ -389,7 +411,8 @@ class AdminListingReviewsTest extends TestCase
 
         $this->postJson($this->detailPath($package['listing_id']).'/approve', $payload)->assertConflict();
 
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
     }
 
     public function test_forged_privileged_fields_return_422_without_writes(): void
@@ -422,7 +445,8 @@ class AdminListingReviewsTest extends TestCase
         $this->assertTrue($thrown);
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'PENDING', 'reviewed_by' => null, 'approved_content_revision' => null]);
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('jobs', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
     }
 

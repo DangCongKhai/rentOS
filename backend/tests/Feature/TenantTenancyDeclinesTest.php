@@ -77,9 +77,10 @@ class TenantTenancyDeclinesTest extends TestCase
             'entity_id' => $tenancy->id,
             'action' => 'tenancy.contract.declined',
         ]);
-        $this->assertDatabaseHas('notification_outbox', [
+        $this->assertDatabaseHas('notifications', [
             'recipient_id' => $tenancy->owner_id,
-            'event_type' => 'tenancy.contract.declined',
+            'audience' => 'OWNER',
+            'event_key' => 'tenancy.contract.declined:'.$contract->id,
         ]);
 
         $this->actingAs($tenant)->postJson($url, $payload)
@@ -93,7 +94,7 @@ class TenantTenancyDeclinesTest extends TestCase
             ->assertConflict();
 
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
@@ -137,7 +138,7 @@ class TenantTenancyDeclinesTest extends TestCase
             ->where('id', $contract->id)
             ->value('tenant_rejected_at'));
         $this->assertDatabaseCount('audit_logs', 0);
-        $this->assertDatabaseCount('notification_outbox', 0);
+        $this->assertDatabaseCount('notifications', 0);
         $this->assertDatabaseCount('idempotency_records', 0);
     }
 }

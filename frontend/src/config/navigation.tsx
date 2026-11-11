@@ -82,22 +82,25 @@ export function ContractsIcon({ className }: { className?: string }) {
   );
 }
 
-export function NotificationsIcon({ className }: { className?: string }) {
-  return (
-    <svg
-      className={className}
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+export function NotificationIcon({
+  className,
+  children,
+}: {
+  className?: string;
+  children?: React.ReactNode;
+}) {
+  const icon = (
+    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
       <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
     </svg>
   );
+  if (children == null) return icon;
+
+  return <span className="relative inline-flex">{icon}{children}</span>;
 }
+
+export const NotificationsIcon = NotificationIcon;
 
 export function ReportsIcon({ className }: { className?: string }) {
   return (

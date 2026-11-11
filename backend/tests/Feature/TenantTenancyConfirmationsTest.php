@@ -66,9 +66,10 @@ class TenantTenancyConfirmationsTest extends TestCase
             ->where('id', $contract->id)
             ->value('tenant_confirmed_at'));
 
-        $this->assertDatabaseHas('notification_outbox', [
+        $this->assertDatabaseHas('notifications', [
             'recipient_id' => $tenancy->owner_id,
-            'event_type' => 'tenancy.contract.confirmed',
+            'audience' => 'OWNER',
+            'event_key' => 'tenancy.contract.confirmed:'.$contract->id,
         ]);
 
         $this->actingAs($tenant)->postJson($url, $payload)
@@ -77,7 +78,7 @@ class TenantTenancyConfirmationsTest extends TestCase
             ->assertJsonPath('data.replayed', true);
 
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 }

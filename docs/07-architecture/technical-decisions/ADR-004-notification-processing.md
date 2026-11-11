@@ -4,7 +4,7 @@ Status: agreed project design; implementation unverified.
 
 ## Decision and reason
 
-Use database-backed Laravel Queue and workers for the MVP. Commit audit/outbox/replay with domain state and deliver after commit; deduplicate recipient/event keys, bound retries/backoff and recover abandoned leases. Scheduler handles due evaluations through the same domain actions. No Kafka/RabbitMQ or external queue platform is required.
+Use database-backed Laravel Queue and workers for the MVP. The committed jobs row is the delivery record. Commit the domain change, the audit row, the inbox row, and the jobs row together, then deliver after commit. Retry and dedupe are the job's tries plus the Resend idempotency key on notifications.event_key. There is no outbox lease and no notification sweep. Scheduler handles due evaluations through the same domain actions. No Kafka/RabbitMQ or external queue platform is required.
 
 ## Consequences and validation
 

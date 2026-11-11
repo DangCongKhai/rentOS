@@ -2,6 +2,7 @@
 
 namespace App\Actions\RentalRequests;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Listing;
 use App\Models\Property;
 use App\Models\Unit;
@@ -87,12 +88,16 @@ class SubmitRentalRequest
                 'after_values' => json_encode(['status' => 'PENDING'], JSON_THROW_ON_ERROR),
                 'correlation_id' => $operationId,
             ]);
-            DB::table('notification_outbox')->insert([
-                'event_key' => self::EVENT.':'.$id,
-                'recipient_id' => $property->owner_id,
-                'event_type' => self::EVENT,
-                'payload' => json_encode(['rental_request_id' => $id, 'listing_id' => $attributes['listing_id']], JSON_THROW_ON_ERROR),
-            ]);
+            app(RecordNotification::class)->record(
+                recipientId: $property->owner_id,
+                audience: 'OWNER',
+                eventKey: self::EVENT.':'.$id,
+                title: 'Có yêu cầu thuê mới',
+                body: 'Bạn vừa nhận một yêu cầu thuê mới.',
+                resourceType: 'rental_request',
+                resourceId: $id,
+                actorId: $tenant->id,
+            );
             DB::table('idempotency_records')->insert([
                 'actor_id' => $tenant->id,
                 'action' => self::EVENT,

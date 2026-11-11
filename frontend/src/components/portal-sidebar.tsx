@@ -4,10 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useNotificationInbox } from "@/lib/notification-inbox";
 import {
   HelpIcon,
   OWNER_PORTAL_CONFIG,
   TENANT_PORTAL_CONFIG,
+  type NavBadge,
+  type NavigationItem,
 } from "@/config/navigation";
 
 export function PortalSidebar() {
@@ -17,6 +20,19 @@ export function PortalSidebar() {
 
   const isOwnerView = pathname.startsWith("/owner");
   const portalConfig = isOwnerView ? OWNER_PORTAL_CONFIG : TENANT_PORTAL_CONFIG;
+  const inbox = useNotificationInbox(
+    user?.id,
+    isOwnerView ? "OWNER" : "TENANT",
+  );
+
+  function badgeFor(item: NavigationItem): NavBadge | undefined {
+    const isNotifications = item.id === "owner-notifications"
+      || item.id === "tenant-notifications";
+    if (!isNotifications) return item.badge;
+    if (inbox.unread < 1) return undefined;
+
+    return { count: inbox.unread, color: "blue" };
+  }
 
   const sidebarContent = (
     <div className="flex flex-col h-full justify-between p-4 sm:p-5 select-none bg-[#0e1a20] text-[#BCD0DB]">
@@ -34,6 +50,7 @@ export function PortalSidebar() {
             const isActive = pathname === item.href
               || ((item.id === "tenant-requests" || item.id === "owner-requests") && pathname.startsWith(item.href + "/"));
             const Icon = item.icon;
+            const badge = badgeFor(item);
 
             return (
               <Link
@@ -55,15 +72,13 @@ export function PortalSidebar() {
                   />
                   <span className="truncate">{item.name}</span>
                 </div>
-                {item.badge && (
+                {badge && (
                   <span
                     className={`text-[10px] font-bold px-2 py-0.5 rounded-full text-white shrink-0 ${
-                      item.badge.color === "orange"
-                        ? "bg-[#c2410c]"
-                        : "bg-[#3368a0]"
+                      badge.color === "orange" ? "bg-[#c2410c]" : "bg-[#3368a0]"
                     }`}
                   >
-                    {item.badge.count}
+                    {badge.count}
                   </span>
                 )}
               </Link>

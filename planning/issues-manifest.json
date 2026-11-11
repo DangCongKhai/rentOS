@@ -670,10 +670,9 @@
       "phase": 3,
       "owner": "Khai",
       "reviewer": "Kien",
-      "title": "Run background jobs, delete unreferenced photo files after retention and deliver notifications",
+      "title": "Deliver private notifications from committed events",
       "requirements": [
         "FR45",
-        "FR59",
         "FR73"
       ],
       "nfrs": [
@@ -692,28 +691,27 @@
       "publication": "Draft",
       "delivery_status": "Planned",
       "github_url": null,
-      "outcome": "Deliver private notifications through Laravel workers and delete stored photo files left by abandoned uploads or owner removals, only after the retention period and a final reference check.",
+      "outcome": "A worker delivers each committed domain event once per recipient, into a private inbox and as one email. Photo-file retention is not part of this outcome.",
       "backend": [
-        "Configure database-backed Laravel Queue, worker/scheduler startup and deployment/restart guidance; process transactional outbox with stable event/recipient keys, leases and bounded retries/backoff.",
-        "Implement private notification list/read API and authorized resource links; retain no tokens, private contracts or contact payloads in notification data.",
-        "Add a scheduled job that finds photo files uploaded but never attached to a property/unit, or removed by an owner. After the documented retention period, lock/recheck references and delete only unreferenced files from Storage. Preserve photos used by any property/unit, listing cover, retained contract/history or other protected record; contract documents are outside this deletion job. Retry failed deletions safely."
+        "Insert the inbox row and dispatch the deliver job in the same transaction as the domain write. Listing approve and reject use audience OWNER. Do not write notification_outbox.",
+        "Deliver the email from the jobs row with resend/resend-php and the notifications.event_key idempotency key. Document queue:work restart and failed_jobs. Do not add a notification sweep.",
+        "GET /api/v1/notifications?audience=OWNER|TENANT|ADMIN returns one page for the current user and that audience, plus unread_count. POST mark read sets read_at only when it is null. Another account receives 404. audience=ADMIN requires an admin."
       ],
       "frontend": [
-        "Build private notification inbox/badge/read states and deep-link navigation with reauthorization; clear cache on account switching.",
-        "Show upload failure/retry and photo-removal results on owner screens. Removing a photo from the screen is separate from the scheduled deletion of its unused Storage file; no separate photo-review or deletion dashboard is required."
+        "Replace the owner and tenant coming-soon notification pages and add an admin inbox. Each page and badge requests only its audience. A listing notice links to the owner listing route.",
+        "Clear held notification state when the account changes. Switching between the owner and tenant portals refetches the other audience and does not mix the lists."
       ],
       "acceptance": [
-        "A running worker delivers a committed event once per recipient; transaction rollback creates no delivered notification.",
-        "Duplicate/retried/crashed delivery recovers with no duplicate inbox entries; provider failure does not roll back committed business.",
-        "Only the recipient can list/read notifications or open an authorized target; repeated read is idempotent.",
-        "After the documented retention period, the job deletes an abandoned/unreferenced photo file; re-running is safe. A file still referenced, or referenced again before deletion, is preserved. Existing cover photos and contract/history records remain accessible.",
-        "The scheduler and worker actually run in the chosen environment and have documented restart/failed-job recovery.",
-        "Notification list/read states and owner photo upload/removal states show loading/failure/retry correctly and do not expose another account\u2019s data."
+        "A running worker delivers a committed event once per recipient. Rollback writes no inbox row, no jobs row, and no notification_outbox row.",
+        "A duplicate event_key does not create a second inbox row or a second job. A reserved job left by a dead worker becomes available after retry_after and still sends once.",
+        "A second run of the same job with the same key and body is one provider outcome. concurrent_idempotent_requests releases the job. invalid_idempotent_request moves it to failed_jobs and keeps the key.",
+        "Provider failure leaves the business row and the inbox row committed. Tries stay inside the 24-hour window, then the job is in failed_jobs.",
+        "Only the recipient can list and mark read. A repeated read does not change read_at. An owner list does not include that user's tenant or admin rows. A non-admin requesting ADMIN receives 403."
       ],
       "tests": [
-        "Unit/component tests for event mapping, payload redaction, inbox/read states and links.",
-        "Worker/DB integration tests for rollback, duplicate delivery, abandoned leases, retry and media-reference races.",
-        "Worker/Storage integration tests for an expired abandoned upload, removed unreferenced photo, still-referenced cover, retained-history reference, reattachment versus deletion, missing file and retry. Manually verify one delivered notification."
+        "Unit tests for event mapping, payload redaction, link shape, and audience on the notification writer.",
+        "PostgreSQL tests: rollback writes nothing; a duplicate event_key does not create a second inbox row; a second send with the same key is one fake-sender outcome; provider failure leaves the business row committed; only the recipient can list and read.",
+        "Manual check of one delivered notification on the owner, tenant, and admin inboxes, including mark read, the other portal staying empty, and a different account after sign-out."
       ],
       "boundaries": "NFR-02, NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; T6a, T3g, T4d\nDo not add Kafka/RabbitMQ or a separate queue platform to satisfy course async requirements. Scheduler-driven domain decisions remain in their owning feature actions.",
       "body_file": "issues/RNT-10.md"

@@ -51,9 +51,10 @@ class OwnerTenancyCloseTest extends TestCase
             'entity_id' => $case['tenancy']->id,
             'action' => 'tenancy.cancelled',
         ]);
-        $this->assertDatabaseHas('notification_outbox', [
+        $this->assertDatabaseHas('notifications', [
             'recipient_id' => $case['tenancy']->tenant_id,
-            'event_type' => 'tenancy.cancelled',
+            'audience' => 'TENANT',
+            'event_key' => 'tenancy.cancelled:'.$case['tenancy']->id,
         ]);
 
         $this->actingAs($case['listing']->owner)->postJson($url, $payload)

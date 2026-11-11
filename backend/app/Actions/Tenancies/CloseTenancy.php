@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tenancies;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
@@ -186,20 +187,23 @@ class CloseTenancy
                 'created_at' => $now,
             ]);
 
-            DB::table('notification_outbox')->insert([
-                'id' => (string) Str::uuid(),
-                'event_key' => 'tenancy.'.($transition === 'cancel' ? 'cancelled' : 'ended').':'.$tenancyId,
-                'recipient_id' => $tenancy->tenant_id,
-                'event_type' => 'tenancy.'.($transition === 'cancel' ? 'cancelled' : 'ended'),
-                'payload' => json_encode([
-                    'tenancy_id' => $tenancyId,
-                    'status' => $newStatus,
-                    'actual_ended_at' => $now->toISOString(),
-                    'reason' => $reason,
-                ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            $event = 'tenancy.'.($transition === 'cancel' ? 'cancelled' : 'ended');
+            $title = $transition === 'cancel'
+                ? 'Kỳ thuê đã bị hủy'
+                : 'Kỳ thuê đã kết thúc';
+            $body = $transition === 'cancel'
+                ? 'Chủ nhà đã hủy kỳ thuê.'
+                : 'Chủ nhà đã kết thúc kỳ thuê.';
+            app(RecordNotification::class)->record(
+                recipientId: $tenancy->tenant_id,
+                audience: 'TENANT',
+                eventKey: $event.':'.$tenancyId,
+                title: $title,
+                body: $body,
+                resourceType: 'tenancy',
+                resourceId: $tenancyId,
+                actorId: $owner->id,
+            );
 
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(),

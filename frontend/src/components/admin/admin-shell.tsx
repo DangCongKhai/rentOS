@@ -9,6 +9,7 @@ import { dashboardPreview } from "@/lib/admin-dashboard-preview";
 import { useAdminReviewPreview } from "@/lib/admin-review-store";
 import { adminPreviewMode } from "@/lib/admin-review-api";
 import { useAdminApi } from "./admin-api-provider";
+import { useNotificationInbox } from "@/lib/notification-inbox";
 import { getReviewQueue } from "@/lib/admin-review-queue";
 import { AdminIcon } from "./admin-icons";
 import "./admin.css";
@@ -22,6 +23,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const initial = Array.from(name.trim())[0]?.toLocaleUpperCase("vi") ?? "A";
   const pathname = usePathname();
   const isQueue = pathname.startsWith("/admin/review-queue");
+  const isNotifications = pathname.startsWith("/admin/notifications");
+  const inbox = useNotificationInbox(
+    user?.is_admin && !adminPreviewMode ? user.id : undefined,
+    "ADMIN",
+  );
   const { items, ready } = useAdminReviewPreview();
   const { dashboard } = useAdminApi();
   const queueCount = adminPreviewMode
@@ -180,6 +186,20 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span className="admin-count">
               {!adminPreviewMode || ready ? (queueCount ?? "…") : "…"}
             </span>
+          </Link>
+          <Link
+            href="/admin/notifications"
+            className={`admin-navItem ${isNotifications ? "admin-navActive" : ""}`}
+            aria-current={isNotifications ? "page" : undefined}
+            onClick={closeMenu}
+          >
+            <span className="admin-navIcon">
+              <AdminIcon name="bell" />
+            </span>
+            <span>Thông báo</span>
+            {inbox.unread > 0 && (
+              <span className="admin-count">{inbox.unread}</span>
+            )}
           </Link>
           <button
             type="button"

@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tenancies;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
@@ -145,18 +146,17 @@ class ConfirmTenancyContract
                 'created_at' => $now,
             ]);
 
-            DB::table('notification_outbox')->insert([
-                'id' => (string) Str::uuid(),
-                'event_key' => 'tenancy.contract.confirmed:'.$contractId,
-                'recipient_id' => $tenancy->owner_id,
-                'event_type' => 'tenancy.contract.confirmed',
-                'payload' => json_encode([
-                    'tenancy_id' => $tenancyId,
-                    'contract_id' => $contractId,
-                ], JSON_THROW_ON_ERROR),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            app(RecordNotification::class)->record(
+                recipientId: $tenancy->owner_id,
+                audience: 'OWNER',
+                eventKey: 'tenancy.contract.confirmed:'.$contractId,
+                title: 'Người thuê đã xác nhận hợp đồng',
+                body: 'Đề xuất kỳ thuê của bạn đã được người thuê xác nhận.',
+                resourceType: 'tenancy',
+                resourceId: $tenancyId,
+                actorId: $tenant->id,
+                sendEmail: true,
+            );
 
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(),

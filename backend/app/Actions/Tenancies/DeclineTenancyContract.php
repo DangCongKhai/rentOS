@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tenancies;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
@@ -153,19 +154,16 @@ class DeclineTenancyContract
                 'created_at' => $now,
             ]);
 
-            DB::table('notification_outbox')->insert([
-                'id' => (string) Str::uuid(),
-                'event_key' => 'tenancy.contract.declined:'.$contractId,
-                'recipient_id' => $tenancy->owner_id,
-                'event_type' => 'tenancy.contract.declined',
-                'payload' => json_encode([
-                    'tenancy_id' => $tenancyId,
-                    'contract_id' => $contractId,
-                    'reason' => $reason,
-                ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            app(RecordNotification::class)->record(
+                recipientId: $tenancy->owner_id,
+                audience: 'OWNER',
+                eventKey: 'tenancy.contract.declined:'.$contractId,
+                title: 'Người thuê đã từ chối đề xuất',
+                body: 'Người thuê đã từ chối đề xuất kỳ thuê của bạn.',
+                resourceType: 'tenancy',
+                resourceId: $tenancyId,
+                actorId: $tenant->id,
+            );
 
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(),

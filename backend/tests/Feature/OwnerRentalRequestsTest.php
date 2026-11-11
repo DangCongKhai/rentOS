@@ -109,11 +109,13 @@ class OwnerRentalRequestsTest extends TestCase
             'actor_id' => $listing->owner->id, 'entity_id' => $id, 'action' => 'rental_request.rejected',
             'reason' => trim($payload['reason']), 'correlation_id' => $payload['client_operation_id'],
         ]);
-        $this->assertDatabaseHas('notification_outbox', [
-            'recipient_id' => $tenant->id, 'event_key' => 'rental_request.rejected:'.$id,
+        $this->assertDatabaseHas('notifications', [
+            'recipient_id' => $tenant->id,
+            'audience' => 'TENANT',
+            'event_key' => 'rental_request.rejected:'.$id,
         ]);
         $this->assertDatabaseCount('audit_logs', 2);
-        $this->assertDatabaseCount('notification_outbox', 2);
+        $this->assertDatabaseCount('notifications', 2);
         $this->assertDatabaseCount('idempotency_records', 2);
         $this->assertDatabaseCount('tenancies', 0);
         Auth::forgetGuards();

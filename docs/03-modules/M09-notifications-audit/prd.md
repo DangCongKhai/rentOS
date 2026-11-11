@@ -16,7 +16,7 @@ Business audit history is committed with domain changes. A running worker delive
 
 **Priority:** P1 Should. **Actors:** System. **Delivery:** Primary: RNT-10.
 
-Write notification_outbox atomically with request/moderation/proposal/confirmation/renewal outcomes. Laravel queue workers deliver notifications after commit, with retry/event deduplication. Use database-backed Laravel Queue on Supabase PostgreSQL for MVP; no Kafka/RabbitMQ or viewing reminders.
+Write one notifications row, including audience ADMIN, TENANT, or OWNER, and one database jobs row atomically with request/moderation/proposal/confirmation/renewal outcomes. Laravel queue workers deliver the email after commit, with retry and event deduplication. Use database-backed Laravel Queue on Supabase PostgreSQL for MVP; no Kafka/RabbitMQ or viewing reminders.
 
 Acceptance: [4 cases for FR45](../../06-acceptance/test-scenarios.md#fr45); IDs FR45-AC01, FR45-AC02, FR45-AC03, FR45-AC04.
 

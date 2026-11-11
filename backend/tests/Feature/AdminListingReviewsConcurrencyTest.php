@@ -13,6 +13,12 @@ class AdminListingReviewsConcurrencyTest extends TestCase
 {
     use CreatesListingReviewPackages, DatabaseMigrations;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        config(['queue.default' => 'database']);
+    }
+
     protected function beforeRefreshingDatabase(): void
     {
         $this->assertReviewDatabaseIsIsolated();
@@ -39,13 +45,14 @@ class AdminListingReviewsConcurrencyTest extends TestCase
         $this->assertContains($listing->moderation_status, ['APPROVED', 'REJECTED']);
         $this->assertSame('DRAFT', $listing->publication_status);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
         $action = $listing->moderation_status === 'APPROVED' ? 'listing.approved' : 'listing.rejected';
         $reviewer = $listing->moderation_status === 'APPROVED' ? $approver->id : $rejecter->id;
         $this->assertSame($reviewer, $listing->reviewed_by);
         $this->assertDatabaseHas('audit_logs', ['entity_id' => $package['listing_id'], 'action' => $action, 'actor_id' => $reviewer]);
-        $this->assertDatabaseHas('notification_outbox', ['event_type' => $action, 'recipient_id' => $package['owner']->id]);
+        $this->assertDatabaseHas('notifications', ['audience' => 'OWNER', 'recipient_id' => $package['owner']->id]);
     }
 
     public function test_concurrent_identical_retries_replay_one_committed_outcome(): void
@@ -62,7 +69,8 @@ class AdminListingReviewsConcurrencyTest extends TestCase
         $this->assertSame([200, 200], array_column($results, 'status'));
         $this->assertDatabaseHas('listings', ['id' => $package['listing_id'], 'moderation_status' => 'APPROVED', 'publication_status' => 'DRAFT']);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
+        $this->assertDatabaseCount('jobs', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 

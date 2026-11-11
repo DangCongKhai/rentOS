@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tenancies;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
@@ -215,20 +216,17 @@ class CorrectTenancyProposal
                     'created_at' => $now,
                 ]);
 
-                DB::table('notification_outbox')->insert([
-                    'id' => (string) Str::uuid(),
-                    'event_key' => 'tenancy.contract.corrected:'.$contractId,
-                    'recipient_id' => $tenancy->tenant_id,
-                    'event_type' => 'tenancy.contract.corrected',
-                    'payload' => json_encode([
-                        'tenancy_id' => $tenancyId,
-                        'contract_id' => $contractId,
-                        'supersedes_contract_id' => $previousContract->id,
-                        'confirmation_expires_at' => $expiresAt->toISOString(),
-                    ], JSON_THROW_ON_ERROR),
-                    'created_at' => $now,
-                    'updated_at' => $now,
-                ]);
+                app(RecordNotification::class)->record(
+                    recipientId: $tenancy->tenant_id,
+                    audience: 'TENANT',
+                    eventKey: 'tenancy.contract.corrected:'.$contractId,
+                    title: 'Đề xuất kỳ thuê đã được điều chỉnh',
+                    body: 'Chủ nhà đã gửi phiên bản đề xuất cập nhật.',
+                    resourceType: 'tenancy',
+                    resourceId: $tenancyId,
+                    actorId: $owner->id,
+                    sendEmail: true,
+                );
 
                 DB::table('idempotency_records')->insert([
                     'id' => (string) Str::uuid(),

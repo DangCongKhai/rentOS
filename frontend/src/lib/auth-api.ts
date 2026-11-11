@@ -325,10 +325,19 @@ async function executeFetch(
   });
 }
 
-export async function request<T>(
+type ApiDocument = {
+  message?: string;
+  errors?: FieldErrors;
+  data?: unknown;
+  unread_count?: number;
+  meta?: NotificationPageMeta;
+  two_factor?: boolean;
+};
+
+async function requestDocument(
   path: string,
   init: RequestInit = {},
-): Promise<T> {
+): Promise<ApiDocument | undefined> {
   const method = (init.method ?? "GET").toUpperCase();
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -360,15 +369,10 @@ export async function request<T>(
   }
 
   if (response.status === 204) {
-    return undefined as T;
+    return undefined;
   }
 
-  const payload = (await response.json().catch(() => ({}))) as {
-    message?: string;
-    errors?: FieldErrors;
-    data?: T;
-    two_factor?: boolean;
-  };
+  const payload = (await response.json().catch(() => ({}))) as ApiDocument;
 
   if (!response.ok) {
     const defaultMessage =
@@ -385,6 +389,15 @@ export async function request<T>(
       payload.message ?? defaultMessage,
       payload.errors ?? {},
     );
+  }
+
+  return payload;
+}
+
+export async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const payload = await requestDocument(path, init);
+  if (payload === undefined) {
+    return undefined as T;
   }
 
   return (payload.data ?? payload) as T;
@@ -860,6 +873,67 @@ export async function updateOwnerUnitGallery(
       method: "PUT",
       body: JSON.stringify(input),
     },
+  );
+}
+
+export type NotificationAudience = "ADMIN" | "TENANT" | "OWNER";
+
+export type InboxNotification = {
+  id: string;
+  actor_id: string | null;
+  audience: NotificationAudience;
+  title: string;
+  body: string;
+  resource_type: string | null;
+  resource_id: string | null;
+  read_at: string | null;
+  created_at: string;
+};
+
+export type NotificationPageMeta = {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+};
+
+export type NotificationPage = {
+  data: InboxNotification[];
+  unread_count: number;
+  meta: NotificationPageMeta;
+};
+
+export async function listNotifications(
+  audience: NotificationAudience,
+  page = 1,
+): Promise<NotificationPage> {
+  const params = new URLSearchParams({
+    audience,
+    page: String(page),
+  });
+  const payload = await requestDocument(
+    `/api/v1/notifications?${params.toString()}`,
+  );
+  const data = Array.isArray(payload?.data) ? payload.data : [];
+
+  return {
+    data: data as InboxNotification[],
+    unread_count: payload?.unread_count ?? 0,
+    meta: payload?.meta ?? {
+      current_page: page,
+      last_page: 1,
+      per_page: 20,
+      total: data.length,
+    },
+  };
+}
+
+export async function markNotificationRead(
+  id: string,
+): Promise<InboxNotification> {
+  return request<InboxNotification>(
+    `/api/v1/notifications/${id}/read`,
+    { method: "POST", body: "{}" },
   );
 }
 

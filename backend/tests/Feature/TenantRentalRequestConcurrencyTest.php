@@ -28,7 +28,7 @@ class TenantRentalRequestConcurrencyTest extends TestCase
 
     #[TestWith([true, [200, 201]])]
     #[TestWith([false, [201, 409]])]
-    public function test_competing_requests_commit_one_request_and_outbox_event(bool $sameOperation, array $expectedStatuses): void
+    public function test_competing_requests_commit_one_request_and_notification(bool $sameOperation, array $expectedStatuses): void
     {
         $listing = PublicListingFixture::published();
         $tenant = User::factory()->create();
@@ -52,7 +52,7 @@ class TenantRentalRequestConcurrencyTest extends TestCase
         $this->assertDatabaseHas('rental_requests', ['tenant_id' => $tenant->id, 'listing_id' => $listing->listingId, 'status' => 'PENDING']);
         $this->assertDatabaseCount('rental_requests', 1);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
@@ -76,7 +76,7 @@ class TenantRentalRequestConcurrencyTest extends TestCase
         $this->assertSame([204, 409], $statuses);
         $this->assertDatabaseHas('rental_requests', ['id' => $request->id, 'status' => 'WITHDRAWN', 'outcome_reason' => null]);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 
@@ -105,11 +105,12 @@ class TenantRentalRequestConcurrencyTest extends TestCase
         $this->assertDatabaseHas('audit_logs', [
             'entity_id' => $item->id, 'action' => $event, 'actor_id' => $withdrawWon ? $tenant->id : $listing->owner->id,
         ]);
-        $this->assertDatabaseHas('notification_outbox', [
-            'event_key' => $event.':'.$item->id, 'recipient_id' => $withdrawWon ? $listing->owner->id : $tenant->id,
+        $this->assertDatabaseHas('notifications', [
+            'event_key' => $event.':'.$item->id,
+            'recipient_id' => $withdrawWon ? $listing->owner->id : $tenant->id,
         ]);
         $this->assertDatabaseCount('audit_logs', 1);
-        $this->assertDatabaseCount('notification_outbox', 1);
+        $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
 

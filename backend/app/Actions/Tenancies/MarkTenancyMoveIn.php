@@ -2,6 +2,7 @@
 
 namespace App\Actions\Tenancies;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\Property;
 use App\Models\Unit;
 use App\Models\User;
@@ -134,18 +135,16 @@ class MarkTenancyMoveIn
                 'created_at' => $now,
             ]);
 
-            DB::table('notification_outbox')->insert([
-                'id' => (string) Str::uuid(),
-                'event_key' => 'tenancy.moved_in:'.$tenancyId,
-                'recipient_id' => $tenancy->tenant_id,
-                'event_type' => 'tenancy.moved_in',
-                'payload' => json_encode([
-                    'tenancy_id' => $tenancyId,
-                    'moved_in_at' => $now->toISOString(),
-                ], JSON_THROW_ON_ERROR),
-                'created_at' => $now,
-                'updated_at' => $now,
-            ]);
+            app(RecordNotification::class)->record(
+                recipientId: $tenancy->tenant_id,
+                audience: 'TENANT',
+                eventKey: 'tenancy.moved_in:'.$tenancyId,
+                title: 'Kỳ thuê đã bắt đầu',
+                body: 'Chủ nhà đã ghi nhận ngày nhận nhà.',
+                resourceType: 'tenancy',
+                resourceId: $tenancyId,
+                actorId: $owner->id,
+            );
 
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(),

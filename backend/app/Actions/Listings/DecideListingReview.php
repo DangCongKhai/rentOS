@@ -2,13 +2,17 @@
 
 namespace App\Actions\Listings;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 class DecideListingReview
 {
-    public function __construct(private ReadListingReviewPackage $packages) {}
+    public function __construct(
+        private ReadListingReviewPackage $packages,
+        private RecordNotification $notifications,
+    ) {}
 
     public function handle(User $actor, string $listingId, bool $approve, array $input): array
     {
@@ -45,12 +49,21 @@ class DecideListingReview
                 'after_values' => json_encode(['moderation_status' => $status, 'publication_status' => $package['publication_status'], 'submitted_content_revision' => $package['submitted_content_revision'], 'approved_content_revision' => $approve ? $package['property']['content_revision'] : null], JSON_THROW_ON_ERROR),
                 'reason' => $reason, 'correlation_id' => $operationId, 'created_at' => $now,
             ]);
-            DB::table('notification_outbox')->insert([
-                'id' => (string) Str::uuid(), 'event_key' => $event.':'.$listingId.':'.$operationId,
-                'recipient_id' => $package['owner']['id'], 'event_type' => $event,
-                'payload' => json_encode(['listing_id' => $listingId, 'title' => $package['title'], 'reason' => $reason], JSON_THROW_ON_ERROR),
-                'created_at' => $now, 'updated_at' => $now,
-            ]);
+            $title = $approve ? 'Tin đăng đã được phê duyệt' : 'Tin đăng bị từ chối';
+            $body = $approve
+                ? 'Tin đăng "'.$package['title'].'" đã được phê duyệt.'
+                : 'Tin đăng "'.$package['title'].'" bị từ chối. Lý do: '.$reason;
+            $this->notifications->record(
+                recipientId: $package['owner']['id'],
+                audience: 'OWNER',
+                eventKey: $event.':'.$listingId.':'.$operationId,
+                title: $title,
+                body: $body,
+                resourceType: 'listing',
+                resourceId: $listingId,
+                actorId: $actor->id,
+                sendEmail: true,
+            );
             DB::table('idempotency_records')->insert([
                 'id' => (string) Str::uuid(), 'actor_id' => $actor->id, 'action' => $action, 'client_operation_id' => $operationId,
                 'request_hash' => $requestHash, 'result_resource_type' => 'listing', 'result_ids' => '{'.$listingId.'}',

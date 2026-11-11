@@ -6,6 +6,7 @@ type IconName =
   | "queue"
   | "flag"
   | "list"
+  | "bell"
   | "exit"
   | "back"
   | "menu"
@@ -37,6 +38,12 @@ const paths: Record<IconName, React.ReactNode> = {
   list: (
     <>
       <path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1" />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9" />
+      <path d="M10 21a2 2 0 0 0 4 0" />
     </>
   ),
   exit: (

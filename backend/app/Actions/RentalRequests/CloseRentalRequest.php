@@ -2,6 +2,7 @@
 
 namespace App\Actions\RentalRequests;
 
+use App\Actions\Notifications\RecordNotification;
 use App\Models\RentalRequest;
 use App\Models\User;
 use Illuminate\Support\Carbon;
@@ -73,12 +74,22 @@ class CloseRentalRequest
                 'reason' => $reason,
                 'correlation_id' => $operationId,
             ]);
-            DB::table('notification_outbox')->insert([
-                'event_key' => $event.':'.$id,
-                'recipient_id' => $recipientId,
-                'event_type' => $event,
-                'payload' => json_encode(['rental_request_id' => $id, 'listing_id' => $request->listing_id], JSON_THROW_ON_ERROR),
-            ]);
+            $title = $rejecting
+                ? 'Yêu cầu thuê đã bị từ chối'
+                : 'Yêu cầu thuê đã được rút';
+            $body = $rejecting
+                ? 'Chủ nhà đã từ chối yêu cầu thuê của bạn.'
+                : 'Người thuê đã rút yêu cầu thuê.';
+            app(RecordNotification::class)->record(
+                recipientId: (string) $recipientId,
+                audience: $rejecting ? 'TENANT' : 'OWNER',
+                eventKey: $event.':'.$id,
+                title: $title,
+                body: $body,
+                resourceType: 'rental_request',
+                resourceId: $id,
+                actorId: $user->id,
+            );
             DB::table('idempotency_records')->insert([
                 'actor_id' => $user->id,
                 'action' => $event,

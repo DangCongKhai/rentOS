@@ -1,6 +1,6 @@
 "use client";
 
-import Link from "next/link";
+import { notFound } from "next/navigation";
 import {
   createContext,
   useCallback,
@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { ApiError } from "@/lib/auth-api";
 import {
   adminPreviewMode,
   getAdminDashboard,
@@ -22,11 +21,13 @@ type AdminApiContext = {
   revision: number;
   refresh: () => void;
 };
+
 const Context = createContext<AdminApiContext>({
   dashboard: null,
   revision: 0,
   refresh: () => {},
 });
+
 export function useAdminApi() {
   return useContext(Context);
 }
@@ -40,18 +41,24 @@ export function AdminApiProvider({ children }: { children: ReactNode }) {
     error: Error | null;
   } | null>(null);
   const refresh = useCallback(() => setRevision((value) => value + 1), []);
+
   useEffect(() => {
-    if (adminPreviewMode || status !== "authenticated" || !user) return;
+    if (adminPreviewMode || status !== "authenticated" || !user?.is_admin) {
+      return;
+    }
     const controller = new AbortController();
     const accountId = user.id;
     getAdminDashboard(controller.signal)
       .then((data) => {
-        if (!controller.signal.aborted)
+        if (!controller.signal.aborted) {
           setState({ accountId, data, error: null });
+        }
       })
-      .catch((error) => {
-        if (!controller.signal.aborted)
-          setState({ accountId, data: null, error });
+      .catch((error: unknown) => {
+        if (controller.signal.aborted) return;
+        const failure =
+          error instanceof Error ? error : new Error("Request failed.");
+        setState({ accountId, data: null, error: failure });
       });
     window.addEventListener("focus", refresh);
     return () => {
@@ -59,54 +66,29 @@ export function AdminApiProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("focus", refresh);
     };
   }, [user, status, revision, refresh]);
-  const current = state?.accountId === user?.id ? state : null;
-  if (adminPreviewMode)
+
+  if (adminPreviewMode) {
     return (
       <Context.Provider value={{ dashboard: null, revision, refresh }}>
         {children}
       </Context.Provider>
     );
-  if (status === "loading" || (status === "authenticated" && !current))
-    return (
-      <main className="admin-reviewLoading" role="status">
-        Đang kiểm tra quyền quản trị…
-      </main>
-    );
-  const error = current?.error;
-  if (status !== "authenticated" || error || !current?.data) {
-    const permission = error instanceof ApiError && error.status === 403;
-    return (
-      <main className="admin-queueEmpty">
-        <h1>
-          {permission
-            ? "Bạn không có quyền truy cập quản trị"
-            : status === "guest" ||
-                (error instanceof ApiError && error.status === 401)
-              ? "Vui lòng đăng nhập để tiếp tục"
-              : "Không thể tải dữ liệu quản trị"}
-        </h1>
-        <p>
-          {permission
-            ? "Chỉ tài khoản admin đang hoạt động và đã xác minh email mới được truy cập."
-            : "Phiên đăng nhập hoặc kết nối API chưa sẵn sàng."}
-        </p>
-        <Link href="/login" className="admin-queueClear">
-          Đăng nhập
-        </Link>{" "}
-        <Link href="/" className="admin-queueClear">
-          Về trang chủ
-        </Link>
-        {status === "authenticated" && (
-          <button type="button" className="admin-queueClear" onClick={refresh}>
-            Thử lại
-          </button>
-        )}
-      </main>
-    );
   }
+
+  if (status !== "loading" && !user?.is_admin) {
+    notFound();
+  }
+
+  const current = state?.accountId === user?.id ? state : null;
+  if (current?.error || (current && !current.data)) {
+    notFound();
+  }
+
+  const dashboard = current?.data ?? null;
+
   return (
-    <Context.Provider value={{ dashboard: current.data, revision, refresh }}>
-      {children}
+    <Context.Provider value={{ dashboard, revision, refresh }}>
+      {dashboard ? children : <div hidden>{children}</div>}
     </Context.Provider>
   );
 }

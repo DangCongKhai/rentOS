@@ -80,7 +80,7 @@ class OwnerTenancyCorrectionsTest extends TestCase
             ->assertJsonPath('data.replayed', true);
 
         $this->assertDatabaseCount('audit_logs', 2);
-        $this->assertDatabaseCount('notification_outbox', 2);
+        $this->assertDatabaseCount('notifications', 2);
         $this->assertDatabaseCount('idempotency_records', 2);
         $this->assertDatabaseCount('tenancy_contracts', 2);
     }
