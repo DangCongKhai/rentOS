@@ -1,0 +1,12 @@
+.git
+.github
+**/.env
+**/.env.*
+**/node_modules
+**/.next
+**/vendor
+backend
+supabase
+planning
+agent-transcripts
+**/.DS_Store
