@@ -1,0 +1,139 @@
+@import "../../../design/tokens/rentos-tokens.css";
+@import "tailwindcss";
+
+@theme {
+  --font-sans: var(--font-sans);
+  --font-ui-alt: var(--font-ui-alt);
+  --font-serif-display: var(--font-serif-display);
+  --font-mono: var(--font-mono);
+
+  /* Brand Palette */
+  --color-rentos-philadelphia: var(--rentos-philadelphia);
+  --color-rentos-placid: var(--rentos-placid);
+  --color-rentos-cherub: var(--rentos-cherub);
+  --color-rentos-black-steel: var(--rentos-black-steel);
+  --color-rentos-full-white: var(--rentos-full-white);
+  --color-rentos-sky: var(--rentos-sky);
+
+  /* Product Blues & Navies */
+  --color-blue-600: var(--blue-600);
+  --color-blue-700: var(--blue-700);
+  --color-navy-800: var(--navy-800);
+  --color-navy-850: var(--navy-850);
+  --color-navy-900: var(--navy-900);
+
+  /* Neutrals & Inks */
+  --color-ink-1: var(--ink-1);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-ink-5: var(--ink-5);
+  --color-ink-6: var(--ink-6);
+
+  --color-line-1: var(--line-1);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
+  --color-line-4: var(--line-4);
+
+  /* Semantic Surfaces */
+  --color-surface-app: var(--surface-app);
+  --color-surface-card: var(--surface-card);
+  --color-surface-nav-dark: var(--surface-nav-dark);
+  --color-surface-sidebar: var(--surface-sidebar);
+  --color-surface-brand-soft: var(--surface-brand-soft);
+
+  /* Semantic Typography Colors (Clean standard Tailwind naming) */
+  --color-primary: var(--text-primary);
+  --color-heading: var(--text-heading);
+  --color-secondary: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-on-dark: var(--text-on-dark);
+  --color-on-dark-muted: var(--text-on-dark-muted);
+  --color-link: var(--text-link);
+
+  /* Aliases with text-* prefix for backward compatibility */
+  --color-text-primary: var(--text-primary);
+  --color-text-heading: var(--text-heading);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-muted: var(--text-muted);
+  --color-text-on-dark: var(--text-on-dark);
+  --color-text-on-dark-muted: var(--text-on-dark-muted);
+  --color-text-link: var(--text-link);
+
+  /* Semantic Borders */
+  --color-border-default: var(--border-default);
+  --color-border-strong: var(--border-strong);
+
+  /* Semantic Actions */
+  --color-action-primary: var(--action-primary);
+  --color-action-secondary: var(--action-secondary);
+  --color-action-soft: var(--action-soft);
+
+  /* Radii */
+  --radius-xs: var(--radius-xs);
+  --radius-sm: var(--radius-sm);
+  --radius-md: var(--radius-md);
+  --radius-lg: var(--radius-lg);
+  --radius-xl: var(--radius-xl);
+  --radius-pill: var(--radius-pill);
+  --radius-panel: var(--radius-panel);
+
+  /* Elevation */
+  --shadow-card: var(--shadow-card);
+}
+
+@layer base {
+  :root {
+    color-scheme: light;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background-color: var(--surface-app);
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: var(--font-sans);
+    color: var(--text-primary);
+    background-color: var(--surface-app);
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input {
+    font: inherit;
+  }
+
+  button {
+    cursor: pointer;
+  }
+
+  button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--blue-600);
+    outline-offset: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto;
+    transition-duration: 0.01ms;
+  }
+}

@@ -1,0 +1,83 @@
+/* rentOS design tokens — source: Figma "rentOS Design (AWDesign)".
+   Import once in backend/frontend/src/index.css:  @import '../../../design/tokens/rentos-tokens.css';
+   (or copy this file into src/styles/). Do not hard-code hex values in components — use these variables. */
+
+/* Webfonts — loaded from Google Fonts (no font binaries in the Figma source).
+   Liberation Mono is not on Google Fonts; Cousine (metric-compatible, same design lineage) is aliased below. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,600&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&family=Reddit+Sans:wght@500&family=Jura:wght@700&family=Cousine:wght@400;700&family=Roboto:wght@400&display=swap');
+@font-face{font-family:"Liberation Mono";font-weight:400;src:local("Liberation Mono"),local("Cousine")}
+@font-face{font-family:"Liberation Mono";font-weight:700;src:local("Liberation Mono Bold"),local("Cousine Bold")}
+:root{
+--font-sans:"Inter",system-ui,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+--font-ui-alt:"Plus Jakarta Sans","Inter",system-ui,sans-serif;
+--font-serif-display:"Playfair Display",Georgia,serif;
+--font-mono:"Liberation Mono","Cousine",ui-monospace,Menlo,monospace;
+--font-numeric-display:"Reddit Sans","Inter",system-ui,sans-serif;
+--font-annotation:"Jura","Inter",sans-serif;
+}
+
+/* rentOS brand + product tokens — values from the Figma "Colour Palette" / "Type Hierarchy" sections
+   and the most-used fills in the product frames. Figma Variables (iOS/M3 library) live in fig-tokens.css. */
+:root{
+/* Brand palette (named in the brand guideline) */
+--rentos-philadelphia:#3368A0;   /* rgb(51,104,160) primary actions, logo */
+--rentos-placid:#66A3BF;         /* rgb(102,163,191) secondary highlights */
+--rentos-cherub:#8FBCD0;         /* rgb(143,188,208) subtle bg, cards, info panels */
+--rentos-black-steel:#091216;    /* rgb(9,18,22) main text, dark navbar/sidebar, footer */
+--rentos-full-white:#FFFFFF;
+--rentos-sky:#A3C6D9;            /* light button fill (Buttons frame) */
+/* Product blues */
+--blue-600:rgb(27,107,198);      /* links, active nav, selected states */
+--blue-700:rgb(0,97,148);
+--navy-900:rgb(16,35,55);        /* headings on light */
+--navy-850:rgb(18,33,41);        /* tenant sidebar */
+--navy-800:rgb(38,60,73);        /* sidebar active pill */
+/* Neutrals */
+--ink-1:rgb(9,18,22);
+--ink-2:rgb(25,28,30);
+--ink-3:rgb(63,72,80);
+--ink-4:rgb(82,99,108);
+--ink-5:rgb(102,123,145);
+--ink-6:rgb(117,117,117);
+--line-1:rgb(169,184,191);
+--line-2:rgb(188,208,219);
+--line-3:rgb(220,229,234);
+--line-4:rgb(228,235,241);
+--surface-0:#FFFFFF;
+--surface-1:rgb(241,246,248);    /* app canvas (tenant dashboard) */
+--surface-2:rgb(233,238,243);
+--surface-3:rgb(239,246,251);
+--surface-brand-soft:rgb(232,242,247);
+/* Semantic */
+--success:rgb(19,164,122);
+--success-soft:rgba(19,164,122,0.1);
+/* Typography scale (Type Hierarchy section) */
+--type-h1-size:56px;--type-h1-lh:64px;--type-h1-weight:800;--type-h1-track:-0.04em;
+--type-h2-size:40px;--type-h2-lh:48px;--type-h2-weight:700;--type-h2-track:-0.04em;
+--type-h3-size:36px;--type-h3-lh:42px;--type-h3-weight:700;--type-h3-track:-0.04em;
+--type-h4-size:28px;--type-h4-lh:36px;--type-h4-weight:600;--type-h4-track:-0.02em;
+--type-sub-size:24px;--type-sub-lh:32px;--type-sub-weight:400;--type-sub-track:-0.04em;
+--type-body-size:14px;--type-body-lh:20px;
+--type-small-size:12px;--type-caption-size:11px;--type-eyebrow-size:10px;--type-eyebrow-track:0.1em;
+/* Radii */
+--radius-xs:4px;--radius-sm:6px;--radius-md:8px;--radius-lg:10px;--radius-xl:12px;--radius-pill:50px;--radius-panel:48px;
+/* Shadow */
+--shadow-card:0 1px 3px rgba(0,0,0,0.05);
+/* Semantic aliases */
+--text-primary:var(--ink-1);
+--text-heading:var(--navy-900);
+--text-secondary:var(--ink-4);
+--text-muted:var(--ink-5);
+--text-on-dark:#FFFFFF;
+--text-on-dark-muted:var(--line-2);
+--text-link:var(--blue-600);
+--surface-app:var(--surface-1);
+--surface-card:var(--surface-0);
+--surface-nav-dark:var(--rentos-black-steel);
+--surface-sidebar:var(--navy-850);
+--border-default:var(--line-3);
+--border-strong:var(--line-1);
+--action-primary:var(--rentos-philadelphia);
+--action-secondary:var(--rentos-placid);
+--action-soft:var(--rentos-sky);
+}

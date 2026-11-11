@@ -1,0 +1,293 @@
+erDiagram
+    direction TB
+    users {
+        uuid id PK "Laravel Authenticatable user UUID. Domain rows reference this id."
+        text name  "Display name."
+        text email UK "Normalized lowercase login email."
+        timestamptz email_verified_at  "Set only by valid Laravel email verification."
+        varchar255 password  "Laravel Hash password hash; hidden from every Resource/log."
+        varchar100 remember_token  "Laravel remember credential; remember-me disabled initially; rotate on password reset."
+        text phone  "Optional contact number; not OTP ownership verification."
+        boolean is_admin  "Trusted server-managed moderation privilege."
+        text account_status  "ACTIVE or SUSPENDED."
+        timestamptz created_at  "Account creation time."
+        timestamptz updated_at  "Account update time."
+    }
+    properties {
+        uuid id PK "Application UUID"
+        uuid owner_id FK "Authorized manager profile; MVP one owner"
+        uuid client_operation_id  "Idempotent create key scoped to owner"
+        text name  "Property name"
+        text property_type  "HOUSE APARTMENT APARTMENT_BUILDING"
+        text rental_arrangement  "WHOLE_SPACE or SEPARATE_UNITS"
+        text address_line  "Street and building address; may be null in incomplete draft, required at listing submission/publication"
+        text ward  "Optional local ward"
+        text city  "City; may be null in incomplete draft, required at listing submission/publication"
+        text description  "Shared property description; may be null in incomplete draft, required at listing submission/publication"
+        jsonb shared_amenities  "Shared property facilities. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}},custom:"
+        jsonb policies  "schema_version defaults pets/smoking and shared_rules"
+        integer content_revision  "Increment on property/unit/media/policy content writes; initial listing stale-review guard"
+        numeric latitude  "Optional geocoding latitude -90 to90"
+        numeric longitude  "Optional longitude -180 to180"
+        timestamptz archived_at  "Archive instead of destructive delete"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+    }
+    units {
+        uuid id PK "Stable unit UUID"
+        uuid property_id FK "Parent property"
+        uuid client_operation_id  "Per-preview-row idempotency UUID; unique with property_id, including bulk rows"
+        text label  "Room S201 or Entire property; normalized label unique per property"
+        text unit_kind  "ROOM STUDIO APARTMENT HOUSE"
+        text description  "Unit specific description; may be null in incomplete draft, required at listing submission/publication"
+        text floor  "Flexible floor label"
+        numeric area_m2  "Positive floor area; may be null in incomplete draft, required at listing submission/publication"
+        integer bedrooms  "Nonnegative; room/studio may use0"
+        numeric bathrooms  "Nonnegative count"
+        text bathroom_arrangement  "PRIVATE or SHARED"
+        jsonb amenities  "Features inside the individual unit. Controlled JSONB {schema_version:1,standard:{catalog_key:{enabled:boolean,details?:text}"
+        numeric advertised_monthly_rent  "Positive NUMERIC(14,0) VND; not agreed contract rent; may be null in incomplete draft, required at listing submission/publica"
+        numeric deposit  "Nonnegative NUMERIC(14,0) VND; may be null in incomplete draft, required at listing submission/publication"
+        integer minimum_rental_months  "At least3"
+        integer max_occupants  "Positive occupancy limit; may be null in incomplete draft, required at listing submission/publication"
+        text operational_status  "READY MAINTENANCE RETIRED"
+        boolean is_marketed  "Explicit owner advertising choice; enable only with complete required unit data"
+        jsonb policy_overrides  "Allowed enum overrides and additional_rules"
+        timestamptz archived_at  "Preserve historical references"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+    }
+    property_media {
+        uuid id PK "Photo UUID; no review or replacement-chain state"
+        uuid property_id FK "Parent property"
+        uuid unit_id FK "Optional unit in same property"
+        uuid uploaded_by FK "Authorized uploader"
+        uuid client_operation_id  "Uploader scoped submission key"
+        text storage_path UK "Unique object path; no overwriting referenced bytes"
+        text caption  "Owner caption; plain text, audited"
+        integer sort_order  "Gallery order"
+        boolean is_selected_for_listing  "Display intent independent of approval"
+        timestamptz purged_at  "Storage file deletion confirmed"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+        timestamptz deleted_at  "Soft removal; hidden from gallery; retention starts"
+        text sha256  "Hash of completed image bytes for audit integrity"
+        text mime_type  "Validated decoded image media type"
+        bigint size_bytes  "Positive completed file byte count"
+    }
+    listings {
+        uuid id PK "Listing UUID"
+        uuid property_id FK "One nonarchived listing per property"
+        uuid client_operation_id  "Property scoped create identity"
+        text title  "Public title"
+        text description  "Advertisement copy"
+        uuid cover_media_id FK "Selected nondeleted same-property shared media; required to publish"
+        text moderation_status  "DRAFT PENDING APPROVED REJECTED"
+        text publication_status  "DRAFT PUBLISHED HIDDEN"
+        integer submitted_revision  "Listing revision awaiting review"
+        timestamptz submitted_at  "Review request time"
+        uuid reviewed_by FK "Admin reviewer"
+        timestamptz reviewed_at  "Decision time"
+        text review_reason  "Required rejection or suspension reason"
+        timestamptz archived_at  "Historical listing"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+        integer submitted_content_revision  "Property content_revision captured at initial submission"
+        integer approved_content_revision  "Historical revision initially approved; later edits need not equal it"
+        timestamptz admin_suspended_at  "Admin restriction independent of initial approval and owner publication"
+        uuid admin_suspended_by FK "Suspending admin profile"
+        text suspension_reason  "Required while admin-suspended"
+    }
+    rental_requests {
+        uuid id PK "Enquiry UUID"
+        uuid listing_id FK "Source listing"
+        uuid tenant_id FK "Authenticated prospect"
+        uuid preferred_unit_id FK "Optional preference in listing property"
+        uuid client_operation_id  "Tenant scoped create identity"
+        date desired_move_in_date  "Preference not contractual start"
+        text message  "Enquiry text"
+        text status  "PENDING ACCEPTED REJECTED WITHDRAWN; ACCEPTED means tenancy proposal committed"
+        text outcome_reason  "Required rejection/automatic closure explanation"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+        text contact_name  "Private submitted contact snapshot"
+        text contact_phone  "Private normalized phone snapshot; no OTP verification"
+        date desired_end_date  "Inclusive end of requested period; required to assess actual availability"
+        timestamptz availability_checked_at  "Last due15-day evaluation timestamp"
+        timestamptz closed_at  "Terminal request transition time"
+    }
+    tenancies {
+        uuid id PK "Tenancy UUID"
+        uuid unit_id FK "Exact allocated unit"
+        uuid tenant_id FK "Primary tenant matches original enquiry"
+        uuid rental_request_id FK,UK "One result per accepted enquiry"
+        uuid client_operation_id  "Owner scoped record action identity"
+        text status  "PENDING_CONFIRMATION AWAITING_REVISION CONFIRMED ACTIVE EXPIRED CANCELLED ENDED"
+        timestamptz actual_ended_at  "Actual move-out/end or cancellation action"
+        text end_reason  "Required when ending/cancelling"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+        uuid owner_id FK "Manager party snapshot for contract confirmation"
+        date confirmed_start_date  "Projection: first mutually confirmed segment start"
+        date confirmed_end_date  "Projection: last mutually confirmed consecutive segment end"
+        date blocked_start_date  "Blocking envelope start, includes proposed original/confirmed span"
+        date blocked_end_date  "Blocking envelope end, includes pending renewal extension"
+        uuid pending_contract_id FK "Current unconfirmed version in same tenancy; composite FK"
+        uuid latest_confirmed_contract_id FK "Latest mutually confirmed segment version in same tenancy"
+        timestamptz confirmation_expires_at  "Server deadline for current pending version only"
+        timestamptz moved_in_at  "Owner-reported actual move-in event time"
+    }
+    tenancy_renewal_requests {
+        uuid id PK "Renewal request UUID"
+        uuid tenancy_id FK "Existing CONFIRMED or ACTIVE continuing tenancy"
+        uuid client_operation_id  "Tenancy scoped submission identity"
+        date requested_end_date  "Proposed later end date"
+        numeric proposed_monthly_rent  "Positive NUMERIC(14,0) VND"
+        text message  "Tenant explanation"
+        text status  "PENDING ACCEPTED REJECTED CANCELLED"
+        uuid reviewed_by FK "Owner for rejection; acceptance derives from final mutual confirmation"
+        timestamptz reviewed_at  "Outcome time"
+        text review_reason  "Required for rejection"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+    }
+    tenancy_contracts {
+        uuid id PK "Immutable version UUID"
+        uuid tenancy_id FK "Parent continuous tenancy"
+        integer version_number  "Monotonic per tenancy; unique with tenancy_id"
+        text type  "ORIGINAL or RENEWAL; corrections preserve type"
+        uuid renewal_request_id FK "For RENEWAL segment and corrections; many versions may share request"
+        uuid supersedes_contract_id FK "Previous unconfirmed version in same tenancy/segment; no confirmed amendment MVP"
+        uuid basis_contract_id FK "Confirmed preceding segment for renewal; null for original"
+        date start_date  "Inclusive segment start; renewal starts prior confirmed end+1"
+        date end_date  "Inclusive segment end"
+        numeric monthly_rent  "NUMERIC(14,0) positive VND applicable to this segment"
+        numeric deposit_amount  "NUMERIC(14,0) nonnegative agreed deposit; do not double-charge on renewal"
+        jsonb policies_snapshot  "Required actually negotiated resolved policies snapshot"
+        text document_path UK "Private unique immutable object path; protect bytes from overwrite/delete"
+        text document_sha256  "SHA256 of exact stored document bytes"
+        date signed_on  "Optional owner-reported offline signing date, not platform verified"
+        uuid created_by FK "Owner creating and explicitly acknowledging proposal"
+        timestamptz created_at  "Version inserted time in UTC"
+        timestamptz owner_confirmed_at  "Explicit owner acknowledgement of this exact contract UUID and document hash; set at proposal submission; never rewritten"
+        timestamptz tenant_confirmed_at  "Tenant acknowledgement of this exact contract UUID/hash; write once from null; excludes rejection"
+        timestamptz tenant_rejected_at  "Tenant decline of this exact contract; write once from null; excludes confirmation"
+        text tenant_rejection_reason  "Required when tenant declines; written with tenant_rejected_at and never rewritten"
+    }
+    listing_reports {
+        uuid id PK "Report UUID"
+        uuid listing_id FK "Reported advertisement"
+        uuid reporter_id FK "Authenticated reporter"
+        uuid client_operation_id  "Reporter scoped submission key"
+        text reason_code  "FRAUD MISLEADING HARMFUL OTHER"
+        text description  "Reporter explanation"
+        text status  "OPEN REVIEWING RESOLVED DISMISSED"
+        text resolution_summary  "Sanitized reporter-visible outcome"
+        text internal_notes  "Admin only investigation details"
+        uuid reviewed_by FK "Admin deciding"
+        timestamptz reviewed_at  "Decision time"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+    }
+    audit_logs {
+        uuid id PK "Audit UUID"
+        uuid actor_id FK "Null for explicit system action"
+        text entity_type  "Allowlisted table/resource kind"
+        uuid entity_id  "Polymorphic UUID validated by backend; not a SQL FK"
+        text action  "Transition/action name"
+        jsonb before_values  "Minimal safe prior values"
+        jsonb after_values  "Minimal safe resulting values"
+        text reason  "Decision or operation reason"
+        uuid correlation_id  "Request or operation correlation UUID"
+        timestamptz created_at  "Audit time in business transaction"
+    }
+    notifications {
+        uuid id PK "Inbox UUID"
+        uuid recipient_id FK "Only this user can read/mark read"
+        uuid actor_id FK "User who caused the event; null for a system event"
+        text audience  "ADMIN TENANT or OWNER portal context"
+        text event_key  "Unique with recipient_id"
+        text title  "Safe summary"
+        text body  "Safe message"
+        text resource_type  "Authorized application link kind"
+        uuid resource_id  "Target resource UUID; backend checks access"
+        timestamptz read_at  "First read time"
+        timestamptz created_at  "Inbox creation time"
+    }
+    property_reviews {
+        uuid id PK "Review UUID"
+        uuid tenancy_id FK,UK "One review per tenancy; property/tenant derived"
+        integer rating  "1 to5"
+        text comment  "Escaped plain text"
+        text review_status  "PENDING APPROVED REJECTED"
+        uuid reviewed_by FK "Admin reviewer"
+        timestamptz reviewed_at  "Decision time"
+        text review_reason  "Required on rejection/removal"
+        timestamptz created_at  "Record creation time in UTC"
+        timestamptz updated_at  "Last record update time in UTC"
+    }
+    idempotency_records {
+        uuid id PK "Operation record UUID"
+        uuid actor_id FK "Verified caller; replay must reauthorize current access"
+        text action  "Allowlisted action name; unique with actor and operation UUID"
+        uuid client_operation_id  "Client generated stable write retry UUID"
+        text request_hash  "Server SHA256 of canonical original payload including parent UUID"
+        text result_resource_type  "Result entity kind or bulk unit result"
+        uuid result_ids  "One or more resulting UUIDs; no signed links or secret response bodies"
+        integer response_status  "Original successful HTTP status"
+        timestamptz created_at  "Commit time; retention must respect supported retry window"
+    }
+    personal_access_tokens {
+        bigint id PK "Sanctum token ID; users/profile reference remains UUID."
+        varchar255 tokenable_type  "Fixed allowed App\Models\User morph type/alias; use HasApiTokens on users."
+        uuid tokenable_id FK "UUID of users.id; uuidMorphs-compatible; fixed user model and explicit integrity enforcement."
+        varchar255 name  "Validated user-assigned token label, max 100 characters."
+        char64 token UK "SHA-256 token hash; plaintext returned only at issuance, never stored/logged."
+        text abilities  "JSON-serialized allowed subset of account:read, favourites:read, favourites:write; no wildcard/admin permissions."
+        timestamptz last_used_at  "Updated by Sanctum when used."
+        timestamptz expires_at  "Required expiry chosen from 1/7/30 days; default 30 days (configurable project default)."
+        timestamptz created_at  "Framework creation time."
+        timestamptz updated_at  "Framework update time."
+    }
+    favourite_properties {
+        uuid user_id PK,FK "References users.id."
+        uuid property_id PK,FK "References properties.id; composite PK/UNIQUE(user_id,property_id)."
+        timestamptz created_at  "First save time; repeat intended-state save does not duplicate row."
+    }
+    sessions {
+        varchar255 id PK "Laravel session ID; rotate on login."
+        uuid user_id FK "Nullable for guest CSRF sessions; references users.id."
+        varchar45 ip_address  "Session metadata; restrict retention/access."
+        text user_agent  "Session metadata; never treated as identity."
+        text payload  "Framework session payload; confidential, not exposed or logged."
+        integer last_activity  "Unix timestamp; session lifetime/pruning."
+    }
+    password_reset_tokens {
+        text email PK "Normalized user email used by Laravel password broker."
+        varchar255 token  "Hashed one-time password-reset token; never serialize/log."
+        timestamptz created_at  "Password broker token expiry/throttle timestamp."
+    }
+
+    users ||--o{ properties : owns
+    properties ||--o{ units : contains
+    properties ||--o{ property_media : photos
+    units o|--o{ property_media : unit_photos
+    properties ||--o{ listings : advertises
+    users ||--o{ rental_requests : applies
+    listings ||--o{ rental_requests : receives
+    rental_requests ||--o| tenancies : proposal_outcome
+    units ||--o{ tenancies : dated_relationship
+    users ||--o{ tenancies : tenant
+    tenancies ||--o{ tenancy_contracts : immutable_versions
+    tenancies ||--o{ tenancy_renewal_requests : renewal_discussion
+    tenancy_renewal_requests o|--o{ tenancy_contracts : proposed_segment
+    listings ||--o{ listing_reports : reported
+    users ||--o{ listing_reports : reports
+    users ||--o{ favourite_properties : private_saves
+    properties ||--o{ favourite_properties : saved_property
+    users ||--o{ notifications : private_recipient
+    users ||--o{ notifications : caused_by
+    tenancies ||--o| property_reviews : deferred_P2
+    users o|--o{ sessions : authenticates
+    users ||--o{ personal_access_tokens : tokenable_morph
+    users ||--o| password_reset_tokens : email_lookup

@@ -35,4 +35,35 @@ return [
         ],
     ],
 
+    'supabase' => [
+        'url' => env('SUPABASE_URL'),
+        'service_role_key' => env('SUPABASE_SERVICE_ROLE_KEY'),
+        'storage' => [
+            'bucket' => env('SUPABASE_STORAGE_BUCKET', 'property-media'),
+            'fixture_directory' => database_path('seeders/fixtures/media'),
+            'connect_timeout' => 5,
+            'timeout' => 30,
+        ],
+        'max_file_size_kilobytes' => (int) env('SUPABASE_STORAGE_MAX_FILE_SIZE_KILOBYTES', 10240),
+        'max_media_per_property' => (int) env('SUPABASE_STORAGE_MAX_MEDIA_PER_PROPERTY', 20),
+        'contracts' => [
+            'confirmation_hours' => (int) env('TENANCY_CONFIRMATION_HOURS', 48),
+        ],
+    ],
+
+    'owner' => [
+        'require_verified_email' => (bool) env('OWNER_REQUIRE_VERIFIED_EMAIL', true),
+    ],
+
+    'tinhthanhpho' => [
+        'url' => env('TINHTHANHPHO_API_URL', 'https://www.tinhthanhpho.com/api/v1'),
+    ],
+
+    'nominatim' => [
+        'enabled' => (bool) env('NOMINATIM_ENABLED', true),
+        'url' => env('NOMINATIM_URL', 'https://nominatim.openstreetmap.org/search'),
+        'user_agent' => env('NOMINATIM_USER_AGENT', 'rentOS/1.0 (property geocoding)'),
+        'timeout' => (int) env('NOMINATIM_TIMEOUT', 5),
+    ],
+
 ];

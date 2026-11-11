@@ -1,0 +1,2449 @@
+{
+  "schema_version": 4,
+  "project": "rentOS",
+  "prepared_date": "2026-10-23",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "source_of_truth": {
+    "functional_requirements": "https://docs.google.com/spreadsheets/d/1w33EYYbyNxTfkC-yxoUO5PwWIAbBhakI/edit?usp=drivesdk&ouid=106252598381185742228&rtpof=true&sd=true",
+    "tasks": "https://docs.google.com/spreadsheets/d/1KGFVfL88V_y3_pbkqb4at4xT3FxdkfP4DcFGV8bICm4/edit"
+  },
+  "counts": {
+    "issues": 16,
+    "requirements": 83,
+    "acceptance_specifications": 343,
+    "active_P0_P1": 74,
+    "deferred_P2": 8,
+    "scope_rules_P3": 1
+  },
+  "members": {
+    "Khai": {
+      "github_handle": null,
+      "issues": [
+        "RNT-01",
+        "RNT-06",
+        "RNT-10",
+        "RNT-13"
+      ]
+    },
+    "Kien": {
+      "github_handle": null,
+      "issues": [
+        "RNT-02",
+        "RNT-05",
+        "RNT-09",
+        "RNT-14"
+      ]
+    },
+    "Hien": {
+      "github_handle": null,
+      "issues": [
+        "RNT-03",
+        "RNT-08",
+        "RNT-11",
+        "RNT-15"
+      ]
+    },
+    "Tri": {
+      "github_handle": null,
+      "issues": [
+        "RNT-04",
+        "RNT-07",
+        "RNT-12",
+        "RNT-16"
+      ]
+    }
+  },
+  "phases": [
+    {
+      "phase": 1,
+      "title": "Shared setup, accounts, properties and admin approval",
+      "issues": [
+        "RNT-01",
+        "RNT-02",
+        "RNT-03",
+        "RNT-04"
+      ]
+    },
+    {
+      "phase": 2,
+      "title": "Listing browsing, rental requests, contracts and reports",
+      "issues": [
+        "RNT-05",
+        "RNT-06",
+        "RNT-07",
+        "RNT-08"
+      ]
+    },
+    {
+      "phase": 3,
+      "title": "Renewals, automatic rules, background jobs and monitoring",
+      "issues": [
+        "RNT-09",
+        "RNT-10",
+        "RNT-11",
+        "RNT-12"
+      ]
+    },
+    {
+      "phase": 4,
+      "title": "Final testing, fixes and submission",
+      "issues": [
+        "RNT-13",
+        "RNT-14",
+        "RNT-15",
+        "RNT-16"
+      ]
+    }
+  ],
+  "topological_order": [
+    "RNT-01",
+    "RNT-03",
+    "RNT-04",
+    "RNT-02",
+    "RNT-06",
+    "RNT-07",
+    "RNT-08",
+    "RNT-05",
+    "RNT-12",
+    "RNT-10",
+    "RNT-09",
+    "RNT-14",
+    "RNT-11",
+    "RNT-13",
+    "RNT-15",
+    "RNT-16"
+  ],
+  "testing_policy": {
+    "required": [
+      "unit",
+      "frontend component",
+      "Laravel API/PostgreSQL integration",
+      "manual changed-screen checks"
+    ],
+    "automated_browser_E2E_required": false,
+    "typescript_generator_implementation_required": false
+  },
+  "issues": [
+    {
+      "key": "RNT-01",
+      "phase": 1,
+      "owner": "Khai",
+      "reviewer": "Kien",
+      "title": "Set up database, seed data, Telescope, Scramble and CI",
+      "requirements": [
+        "FR44",
+        "FR74",
+        "FR75",
+        "FR76"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-06",
+        "NFR-07",
+        "NFR-05"
+      ],
+      "depends_on": [],
+      "publication": {
+        "state": "Published",
+        "github_url": "https://github.com/ndrhmdk/rentOS/issues/97"
+      },
+      "delivery_status": "Planned",
+      "github_url": "https://github.com/ndrhmdk/rentOS/issues/97",
+      "outcome": "Khai sets up the Laravel and Supabase foundation: connection docs, MVP tables and constraints, demo seed data, local Telescope, API docs, and basic CI. Authentication stays in RNT-03.",
+      "backend": [
+        "Configure the direct PostgreSQL connection for migrations, local/hosted environment templates, SSL and separate deploy/runtime credentials. Application tables live in the existing public schema. Use the direct endpoint only when the runner has connectivity; document an explicit session-pooler fallback if IPv6/IPv4 constraints prevent it. Do not silently use transaction pooling for migrations.",
+        "Publish shared schema, API error/pagination conventions and revision/idempotency/lock-order helpers early. Configure required Scramble API documentation for Laravel Resources/FormRequests; this is distinct from future TypeScript generator setup.",
+        "Write AGENTS.md: coding conventions, allowed architecture, unit/component/API integration expectations; no automated browser suite required, real PostgreSQL concurrency tests, migration safety and the exact checks AI must pass before reporting completion.",
+        "Own CI/CD configuration: PR lint/static/type/build and frontend/backend tests against disposable PostgreSQL/Supabase; reviewed main merges deploy matching code and serialized migrations after checks pass. Separate PR/deploy credentials, protect secrets, and provide worker/scheduler, failure and restore guidance.",
+        "Write TYPESCRIPT_STRATEGY.md only for future Resources/FormRequests -> OpenAPI -> TypeScript setup. Include rationale, prerequisites, proposed commands, inference limits, maintenance and future CI drift checking. Do not install/configure/run the TypeScript generator or require generated artifacts in this issue.",
+        "Requirement mapping: FR44 sets up API documentation; each endpoint owner maintains their documentation. FR74/FR75 establish shared retry, revision, transaction, audit and database safeguards here; every state-changing feature must apply and test them. FR76 is the written list of excluded MVP features, not an implementation deliverable.",
+        "Install a Laravel-compatible Telescope version, publish its provider/config/assets/migrations and configure storage on the application PostgreSQL connection. Enable request, exception, query and job watchers needed for development; configure query thresholds, filtering and scheduled telescope:prune retention. Document reproducible installation and environment settings.",
+        "Create every approved MVP domain/support table plus Laravel users, sessions, password_reset_tokens and UUID-compatible personal_access_tokens in the public schema. Domain foreign keys reference users.id. HasApiTokens belongs to the users Authenticatable model. Supabase supplies PostgreSQL/Storage only. Preserve all rental constraints; P2 reviews stay deferred.",
+        "Install/configure Fortify (web guard, headless forms, registration/password reset/email verification) and Sanctum (statefulApi middleware, abilities aliases). Configure database sessions, exact stateful frontend host:port list, explicit credentialed CORS and Laravel CSRF validation. Do not exempt api/* or login from CSRF.",
+        "Publish tested localhost and HTTPS sibling-subdomain environment templates. Include session cookie domain/Secure/HttpOnly/SameSite, mail/reset/verification URLs and allowed redirects. Unrelated default frontend/API domains require a tested same-origin proxy or shared-parent domain before release.",
+        "Create deterministic users/profile seeders with Laravel password hashes and verified fixture timestamps, plus browser-session and scoped/expired/revoked PAT test factories. Do not call Supabase Auth or reseed hosted production.",
+        "If existing accounts/data exist, provide a reviewed migration/backfill plan preserving UUIDs and references, verify account ownership and force Laravel password reset where necessary; invalidate legacy credentials and remove old auth.users FK/bridge only after backfill checks. Never copy unknown provider hashes blindly or delete domain records.",
+        "Keep Telescope local by default. Any enabled nonlocal dashboard uses a tested Laravel session and restricted viewTelescope gate; deny guests/ordinary users. Filter passwords, reset links, cookies, CSRF values, token secrets/hashes, contacts and contract data. Pruning is separate from immutable business audits."
+      ],
+      "frontend": [
+        "Establish the supported Next.js app, design tokens, typed fetch client, TanStack Query providers and common error/loading/empty components while preserving implemented UI/assets.",
+        "Provide one credentialed browser API client with JSON Accept and X-XSRF-TOKEN support, TanStack Query boundaries and explicit response types. Document 401/419 recovery without blind write retries. Hien owns account forms and token settings in RNT-03; TypeScript generator setup remains documentation only."
+      ],
+      "acceptance": [
+        "A fresh local Supabase environment builds the complete MVP schema and deterministic representative seeds from committed scripts.",
+        "PostgreSQL independently rejects overlapping blocked periods, inconsistent references and term/document mutation; adjacent periods are allowed and first legitimate confirmation metadata writes are allowed.",
+        "The browser cannot bypass Laravel through unintended Data API grants or access a private bucket; users/profile UUID links resolve without any Supabase Auth dependency.",
+        "All four teammates can pull the checkpoint and run migrations locally; configuration does not pretend search_path creates/moves existing tables.",
+        "A single owner, Khai, delivers migrations/seeds, connection instructions, coding/LLM rules, CI/CD and TypeScript setup documentation in this grouped issue.",
+        "PR CI fails on deliberate backend/frontend test and lint/typecheck errors; failed checks or migrations block hosted deployment. Main deployment is serialized and never resets/reseeds production.",
+        "AGENTS.md names required checks and per-feature tests; another member reproduces local setup using documented commands.",
+        "TypeScript strategy documents future setup accurately; acceptance requires no installed TS generator, generated types or generated-file drift gate. Existing frontend typecheck/build and actual response tests remain required.",
+        "Closing RNT-01 proves shared safeguards and setup only. It does not claim all feature-specific FR74/FR75 scenarios are complete; those belong to the feature owners. FR76 is recorded as a project scope rule.",
+        "Fresh and upgrade migrations create Sanctum token storage compatible with UUID profile IDs. API tokens and their hashes are not exposed through the Supabase Data API or logs; local/CI token fixtures support ability/expiry/revocation tests.",
+        "A teammate follows setup instructions and sees a controlled local request, exception, query and queued-job record in Telescope. Scheduled pruning removes expired diagnostic entries without touching business audit/history data.",
+        "Shared/deployed Telescope access is disabled or explicitly restricted; guest/ordinary-user access is denied in non-local tests. Representative captured entries contain no session/CSRF/reset/API-token secrets, passwords, private contacts or contract payloads.",
+        "Fresh migrations and existing-data upgrade retain domain UUID links and create Laravel credential/session/reset/PAT storage; no browser login creates a PAT.",
+        "Local and deployment configuration exercises a session request with valid CSRF and denies a missing/mismatched-CSRF write; test harness does not silently bypass CSRF. Credentialed origins are explicit; secrets stay server-side."
+      ],
+      "tests": [
+        "Real PostgreSQL integration tests for migration rebuild/upgrade, constraints, concurrent overlap/uniqueness and rollback invariants.",
+        "Configuration/client component tests for shared error handling; smoke-test the frontend/backend scaffold without transferring feature tests from their owners.",
+        "Exercise CI intentional-failure blocking and disposable migration/seed rebuild; record actual results and direct-connection preflight. Verify setup docs by a teammate walkthrough.",
+        "Configuration/integration tests for Telescope migration/storage, environment enable/disable, non-local access denial, filtering/redaction and scheduled pruning; record a short manual local-dashboard verification. No E2E suite required.",
+        "Configuration and HTTP integration checks for Fortify routes, session rotation, CSRF enforcement, exact CORS/stateful domains, private auth tables and deterministic auth fixtures; Hien owns full account/token feature tests."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-06, NFR-07, NFR-05; T1a, T1b, T1c, T1d, T3a, T3g, T4c, T4d, T2a, T2b, T3c, T4b, T5a\nKhai is the sole initial shared-setup owner. Kien reviews. Other members consume the early schema/convention checkpoint and own their complete feature slices/tests; later feature schema changes use reviewed additive migrations. Hien owns authentication/profile implementation. RNT-13 tests and improves Khai\u2019s pipeline rather than assigning setup to another member. Future TypeScript generation is documentation only. Khai owns initial Telescope configuration (T5a). Tri uses that setup for diagnostics, correlation and real alert delivery in RNT-12; Telescope itself is not the alert-delivery implementation.\nAuthentication update: Khai owns package/schema/shared-client setup; Hien owns FR01/02/04/05/43/49/89/90 implementation. All members use and test browser CSRF on their forms; no extra micro-issues.",
+      "body_file": "issues/RNT-01.md",
+      "body": "<!-- rentos-backlog-v2: RNT-01 -->\n\n# RNT-01: Set up database, seed data, Telescope, Scramble and CI\n\n## Outcome\n\nKhai sets up the shared Laravel/Supabase foundation so teammates can migrate, seed, and start feature work. Authentication (Fortify and Sanctum) belongs to RNT-03.\n\n## Ownership and order\n\n- Phase 1.\n- Implementation: **Khai**.\n- Reviewer: **Kien**.\n- Prerequisites: None.\n- GitHub: https://github.com/ndrhmdk/rentOS/issues/97\n\n## Scope\n\n- Document how to connect Laravel to a local or personal remote Supabase Postgres database.\n- Create the current MVP tables and useful constraints. Later feature owners add additive migrations only when a feature needs a schema change.\n- Seed key tables for local testing: about 10 users and at least 20 properties, with units and listings. Do not reseed production.\n- Install Telescope for local debugging and document how to open it.\n- Install Scramble and write `TYPESCRIPT_STRATEGY.md` for a later OpenAPI-to-TypeScript step. Do not run a type generator now.\n- Write short `backend/AGENTS.md` and `frontend/AGENTS.md`. Tests should cover feature and business behavior, not setup configuration.\n- Add a basic CI workflow that runs frontend lint/typecheck/build and backend tests.\n\n## Out of scope\n\n- Fortify, Sanctum, CSRF, CORS, and session-cookie setup. Those belong to RNT-03.\n- Feature screens and feature business rules.\n- Deploy pipelines.\n- Generated TypeScript clients.\n\n## Done when\n\n- [ ] A teammate can copy the env example, migrate, and seed a personal Supabase or local Postgres database.\n- [ ] Seed data includes about 10 users and at least 20 properties with units and listings.\n- [ ] Telescope is installed and documented for local use.\n- [ ] Scramble is installed and the TypeScript strategy is documented.\n- [ ] Frontend and backend agent docs say to test feature behavior.\n- [ ] CI runs the frontend checks and backend tests.\n\nRNT-01 is a planning key, not a GitHub issue number.\n"
+    },
+    {
+      "key": "RNT-02",
+      "phase": 1,
+      "owner": "Kien",
+      "reviewer": "Khai",
+      "title": "Manage properties, units, photos, amenities and owner listings",
+      "requirements": [
+        "FR07",
+        "FR08",
+        "FR09",
+        "FR41",
+        "FR50",
+        "FR51",
+        "FR52",
+        "FR55",
+        "FR56",
+        "FR57",
+        "FR60",
+        "FR61",
+        "FR87",
+        "FR10",
+        "FR11",
+        "FR12",
+        "FR17",
+        "FR18"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-03",
+        "RNT-04"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Owners create and edit properties, units, photos and amenities, then separately create, submit and publish their rental listings.",
+      "backend": [
+        "Implement own-property/unit CRUD and archive, WHOLE_SPACE automatic unit and separate/bulk units with unique labels and independent READY/MAINTENANCE/RETIRED operational state.",
+        "Implement actual Supabase Storage upload initiation/completion, byte/MIME/size/count validation, same-property unit linkage, selected photos/cover/reordering and immutable object paths. Persist only completed uploads; audit resource changes atomically.",
+        "Implement property policy defaults/shared_rules and unit overrides/additional_rules. Amenities use code-managed canonical catalog/scopes and JSONB schema_version/standard/custom; NFC/trim/whitespace and local case-fold dedup preserve accents and never create global custom keys.",
+        "Implement listing draft/edit, complete first-package submission, publication/hide/archive and one current listing per property. Reuse existing property/unit/media/policy data.",
+        "Centralize public visibility: initial approval, owner publication, no suspension/archive and valid resources. After initial approval, valid content edits are direct and audited; before approval, edits invalidate submitted revisions."
+      ],
+      "frontend": [
+        "Build owner property and unit create/edit/archive screens, bulk preview/editor, photos upload/reorder/remove and policy/amenity forms.",
+        "Keep property creation separate from listing creation; support incomplete drafts, responsive layouts, upload progress, field/revision errors and shared versus private amenity labels.",
+        "Build separate owner listing draft, submit and publication controls after property/unit management; show independent review and publication states."
+      ],
+      "acceptance": [
+        "Creating a WHOLE_SPACE property saves exactly one auto-unit atomically; draft incompleteness is allowed until listing submission.",
+        "Foreign references, duplicate labels, stale updates and forged owners fail; bulk/create retries do not duplicate properties and units.",
+        "Operational status never substitutes for date-based availability and cannot erase active agreement history.",
+        "Only completed valid media in the same property scope can be selected; cover replacement remains valid; no image approval/replacement-status workflow exists.",
+        "Unknown standard amenity keys/bad JSON types fail; custom spelling does not fragment global filters; current advertising edits never mutate agreed contract snapshots.",
+        "The actual Storage API success and redacted failure path are demonstrated and every successful change has the expected audit outcome.",
+        "Creating property never automatically submits/publishes a listing; incomplete draft saves but cannot pass complete submission/publication checks.",
+        "First admin approval is required once; later valid edits do not request reapproval and cannot clear admin suspension.",
+        "Property creation and listing creation use separate screens and actions. An owner can hide/archive their listing; an admin suspension cannot be cleared by editing or publishing it."
+      ],
+      "tests": [
+        "Unit tests for normalization, policy resolution, term validation and form interactions.",
+        "PostgreSQL/API integration tests for ownership, scope, bulk rollback/idempotency, stale edits and archive/allocation races.",
+        "Frontend component tests for property/unit/photo forms and a real Storage success/failure integration check; manually check changed owner screens.",
+        "API/component tests and manual UI checks for separate listing create/edit/submit/publish/hide/archive actions, one current listing per property, missing submission fields and updates without reapproval. Integrate first-publication approval with Tri\u2019s RNT-04; complete the owner journey using real APIs."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-07; T3f, T4a, T3g, T4d\nKien owns property/unit/photo management and owner listing creation/publication. Keep Create property and Create listing as separate flows/screens. Tri owns admin approval (RNT-04); Khai owns public landing/search/detail pages and their APIs (RNT-06). Scheduled deletion of unreferenced photo files after retention belongs to RNT-10.",
+      "body_file": "issues/RNT-02.md"
+    },
+    {
+      "key": "RNT-03",
+      "phase": 1,
+      "owner": "Hien",
+      "reviewer": "Kien",
+      "title": "Implement account forms, session login, CSRF protection and API-token settings",
+      "requirements": [
+        "FR01",
+        "FR02",
+        "FR04",
+        "FR05",
+        "FR06",
+        "FR43",
+        "FR49",
+        "FR89",
+        "FR90"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Users register, verify email, sign in and recover access through Fortify; Next.js uses Sanctum browser sessions with CSRF. Users separately create and revoke scoped personal API tokens in Settings > API tokens.",
+      "backend": [
+        "Implement Fortify registration/login/logout, signed email verification, password-broker recovery and current-user/profile APIs with users/profile atomic creation and normalized email uniqueness. Only Laravel owns passwords; keep is_admin server-controlled and verified/active-account checks current.",
+        "Use auth:sanctum and Policies for private APIs. Browser writes use Laravel CSRF; enforce session-only mode for token management, admin and all private routes outside the approved PAT matrix. Do not infer authorization from tokenCan for first-party sessions.",
+        "Implement GET/POST /api/v1/account/api-tokens and DELETE /api/v1/account/api-tokens/{id}, using browser-session-only authentication, verification, active-account checks and current-user scoping. Mutations require CSRF and recent password confirmation. Add form validation and rate limits.",
+        "Allow only account:read, favourites:read and favourites:write; expose the mapping in OpenAPI. Validate token name and expiry choices 1/7/30 days (proposed configurable default 30). Return plaintext once on create with no-store, store SHA-256 hash, and list metadata only. Never cache a creation secret for idempotent replay.",
+        "Revoke tokens by deleting the current user\u2019s selected row. Ordinary browser logout invalidates only its session. Successful password reset/change or account suspension invalidates all sessions and PATs and rotates remember credentials; explicitly integrate these hooks rather than assuming Fortify does everything.",
+        "Add audit events for token creation/revocation/security actions containing actor, token id, abilities, expiry and outcome only. Configure diagnostic/request redaction; schedule expired-token pruning. Real enforcement must reject expiry before pruning.",
+        "Use Laravel mail/verification/reset routes with allowlisted Next.js URLs. With Fortify views disabled, configure password.reset URL generation and verification redirect; never reflect arbitrary return URLs. Reset redemption requires a valid reset token, not an existing browser login."
+      ],
+      "frontend": [
+        "Implement separate Next.js register/login/email-verification/forgot-password/reset-password/profile screens. Initialize CSRF before browser auth, use cookies and X-XSRF-TOKEN, show 422 field errors and 401/403/419/429 feedback. Keep tenant/owner navigation and normal-user admin denial.",
+        "Add Settings > API tokens: name field, approved ability checkboxes, expiry selector, recent-password-confirmation form, one-time secret display/copy, and metadata list with revoke confirmation. Explain that logout does not revoke these tokens. Clear the one-time secret on leaving; do not persist it in localStorage or TanStack caches.",
+        "Handle session expiry by clearing/cancelling account-private queries; retain safe unsent form input and ask for explicit resubmission after recovery. Do not automatically replay contract/favourite/other writes after an ambiguous network failure.",
+        "Give a cookie-free curl/Postman example for /api/v1/me and favourites. Demonstrate read-only success, denied write, explicit revoke and subsequent 401; public listing access needs no token."
+      ],
+      "acceptance": [
+        "Every FR01/02/04/05/43/49/89/90 acceptance specification is implemented and tested within its scope; one Laravel user/profile identity can both rent and own.",
+        "Browser login regenerates its session and creates zero personal tokens. Protected browser forms succeed with matching CSRF and fail without/mismatched CSRF before data/audit/outbox mutation.",
+        "Verified active users can create a named finite-lived allowed-scope PAT after recent password confirmation, see plaintext once, list metadata and revoke their own token. Foreign token IDs, wildcard/admin scopes and PAT-only management requests are denied.",
+        "Cookie-free real bearer calls enforce the documented scope matrix, current account and resource Policies; expired/revoked tokens return 401, missing ability returns 403. Personal tokens cannot invoke admin or session-only routes.",
+        "Ordinary logout invalidates the current browser session, while separately created PATs remain valid until explicit revocation/expiry. Reset or suspension invalidates all sessions/tokens; the UI states the difference.",
+        "Localhost and deployed sibling-domain flows pass the configuration checks; 419 recovery does not silently duplicate writes. Tokens, hashes, cookies, CSRF values, passwords and reset links do not enter logs/Telescope/caches.",
+        "Scramble documents session/CSRF and bearer paths separately. Evidence demonstrates the teacher\u2019s CSRF/server-validation and Sanctum token-management/permission criteria without requiring an automated browser suite."
+      ],
+      "tests": [
+        "Unit tests for normalized registration, validation, permitted scopes/expiry, account checks and token metadata serialization; frontend component tests for login, 419 recovery, create/copy-once/revoke and account switching.",
+        "API/PostgreSQL tests for user/profile atomicity, real login session rotation/logout, valid/missing/mismatched CSRF, protected writes and role/resource denial. Explicitly disable the Laravel testing CSRF bypass in a dedicated harness; merely enabling middleware is insufficient.",
+        "Real PAT issuance and cookie-free bearer tests for hash storage, ability denial, expiry, revocation, foreign token IDs, session-only routes, password-reset/suspension revocation and redaction. Do not substitute Sanctum::actingAs for all token integration tests.",
+        "Manual screen and deployed-origin checks plus curl/Postman demonstration with both success and denied token operations; no mandatory E2E automation."
+      ],
+      "boundaries": "Hien owns frontend + backend + tests for the complete account/token feature. Khai supplies initial Fortify/Sanctum/schema/CORS/client/Telescope setup in RNT-01. Admin account restrictions must call the shared session/token revocation service. Each feature owner applies CSRF and Policies; approved PAT endpoints are limited to current-user and favourites APIs.",
+      "body_file": "issues/RNT-03.md"
+    },
+    {
+      "key": "RNT-04",
+      "phase": 1,
+      "owner": "Tri",
+      "reviewer": "Khai",
+      "title": "Admin reviews and approves listings before first publication",
+      "requirements": [
+        "FR13",
+        "FR14",
+        "FR15"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-03"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Admins inspect the complete first listing package and approve or reject the exact submitted content safely.",
+      "backend": [
+        "Implement protected admin queue/detail and approve/reject endpoints using Hien\u2019s authentication/Policies and Khai\u2019s revision helpers. Return listing, property, units, selected photos and policies as one package.",
+        "Lock and check expected listing/content revisions; require rejection reason; atomically persist review/audit/outbox outcomes. Seed pending/approved/rejected/stale examples independently of the owner UI.",
+        "Maintain the Resource/FormRequest/OpenAPI contract and pagination/filter rules. Khai reviews privilege and locking decisions; Tri owns the implementation and tests."
+      ],
+      "frontend": [
+        "Build admin queue/filter/pagination, package detail, approval confirmation and required-reason rejection form.",
+        "Cover keyboard access, loading/empty/error/403 states, 409 reload and 422 field feedback; integrate real local endpoints after fixture layout work."
+      ],
+      "acceptance": [
+        "Admin can review a seeded complete package and commit approve or reject with a reason through the UI.",
+        "A normal user cannot read the queue/detail or invoke the actions by calling the API directly.",
+        "An owner content edit after submission makes the old admin decision fail with 409 and requires reloading current content.",
+        "Duplicate or competing decisions cannot create contradictory transitions or duplicated audit/outbox results.",
+        "No property-review queue, photo-review queue or changes-requested MVP state is introduced.",
+        "UI sends the loaded revision, disables duplicate submission and handles server validation; fixture-only screenshots do not satisfy completion."
+      ],
+      "tests": [
+        "Unit/component tests for required-reason forms, pagination and reload/error behavior.",
+        "PostgreSQL/API integration tests for privilege, stale approval, duplicate decisions and transaction rollback.",
+        "Manually check admin approval/rejection against seeded listing data; automate the action/authorization assertions at API level."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-07; T4a, T3g, T4d\nTri works both frontend and backend with Khai as reviewer. Owner listing submission/publication is RNT-06; Tri can finish against deterministic fixtures before that UI exists.",
+      "body_file": "issues/RNT-04.md"
+    },
+    {
+      "key": "RNT-05",
+      "phase": 2,
+      "owner": "Kien",
+      "reviewer": "Khai",
+      "title": "Create tenancy proposals and confirm the same contract version",
+      "requirements": [
+        "FR30",
+        "FR33",
+        "FR34",
+        "FR35",
+        "FR42",
+        "FR66",
+        "FR67",
+        "FR71",
+        "FR80",
+        "FR81",
+        "FR82",
+        "FR86"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-06",
+        "RNT-07"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "An owner turns a pending rental request into a reserved tenancy, and both parties manage the same immutable contract version through confirmation, correction and lifecycle actions.",
+      "backend": [
+        "Create original tenancy, immutable tenancy_contracts row, explicit owner acknowledgement, finite blocked interval and ACCEPTED rental request in one transaction. Enforce minimum original term of 3 calendar months, positive rent and nonnegative deposit; snapshot agreed policies.",
+        "Privately stage/validate document, store immutable path/hash, authorize per-party download and verify current UUID/hash/revision/server deadline on tenant confirmation or rejection. Embedded confirmation metadata is write-once.",
+        "Decline releases hold to AWAITING_REVISION; correction appends a fresh version and reacquires dates. Implement owner move-in, eligible cancellation and actual ending with history/audit preserved and common lock order."
+      ],
+      "frontend": [
+        "Build owner proposal/document form and tenant/owner tenancy dashboards with current terms, pending deadline, immutable version timeline and private document viewer.",
+        "Build exact-version confirm/decline, correction, move-in/cancel/end controls with explicit acknowledgement, conflict recovery and clear proposed versus agreed terms."
+      ],
+      "acceptance": [
+        "Proposal success commits contract, tenancy, hold and rental request acceptance together; overlap failure leaves the rental request PENDING and no partial proposal.",
+        "Pending rental requests have no standalone Accept action; pending-confirmation tenancies reserve dates and adjacent bookings still work.",
+        "Only the correct tenant can confirm/decline the exact current UUID/hash before deadline; competing decisions and stale versions cannot overwrite history.",
+        "Same retry key/payload replays original success; a new attempt to create another original proposal for an accepted rental request returns a conflict.",
+        "Correction creates a new immutable row with fresh confirmations; existing agreed terms/documents remain unchanged.",
+        "Move-in requires mutual confirmation and the relevant start condition; an agreed end date does not automatically prove physical move-out.",
+        "Private documents, contacts and hashes/links are only disclosed through the authorized participant contract, with no secret payload in public caches/logs."
+      ],
+      "tests": [
+        "Unit tests for agreed-term/date/version/state validation and full frontend form/action states.",
+        "Independent PostgreSQL transaction tests for overlap/adjacency, rollback, confirm-versus-decline/cancel and correction reacquisition.",
+        "API integration tests for owner proposal and tenant decline/correct/confirm/lifecycle actions, plus manual checks of changed forms. Use real PostgreSQL for exclusion constraints."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-07; T4a, T3g, T4d\nUse tenancy_contracts only; no contract_versions or contract_confirmations tables. Shared database/revision helpers belong to RNT-01; authentication middleware belongs to RNT-03; original/renewal scheduled expiry is finalized in RNT-09.",
+      "body_file": "issues/RNT-05.md"
+    },
+    {
+      "key": "RNT-06",
+      "phase": 2,
+      "owner": "Khai",
+      "reviewer": "Kien",
+      "title": "Build the landing page, browse/search listings and view listing details",
+      "requirements": [
+        "FR19",
+        "FR20",
+        "FR21",
+        "FR40",
+        "FR77"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-02",
+        "RNT-03",
+        "RNT-04"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Visitors use the landing page to browse public rental listings, search by location and dates, filter results and view listing details and available units.",
+      "backend": [
+        "Implement public search/detail Resources with text/address, price/capacity/canonical amenity filters on the SAME eligible unit for the WHOLE interval. Compute eligible counts/rent ranges from READY operational state and blocking tenancy dates; bounded pagination/eager loading.",
+        "Implement server-side location search over existing property address/locality fields (address, ward, district, city where stored). Trim/collapse whitespace and match case-insensitively while preserving Vietnamese text. Combine location AND all selected filters; date/unit criteria must match the same unit for the entire interval. Bind query parameters; keep counts/pagination consistent.",
+        "Use one public visibility rule shared with owner listing publication and admin suspension; return only safe public fields. Kien owns listing write endpoints in RNT-02."
+      ],
+      "frontend": [
+        "Build the public landing page, navigation, search entry and listing cards. Link Manage rentals to the signed-in owner area and preserve compatible existing design/assets.",
+        "Build responsive public search/filter/cards/details and eligible unit selector with clear loading/empty/error states, preserved filter URLs and accessible navigation.",
+        "Add a labeled location input/filter to public discovery; preserve location with other filters/date range in URL state and pagination. Show selected location, clear/reset and loading/error/no-results states on desktop."
+      ],
+      "acceptance": [
+        "Owner-hidden/archived/suspended/unapproved content is excluded from public routes, and restore does not automatically republish an owner-hidden listing.",
+        "A unit must satisfy all selected filters and be available for the entire interval; different units cannot jointly satisfy one filter result.",
+        "Adjacent bookings remain eligible, while overlapping reservations/confirmed periods and maintenance/retired units are excluded.",
+        "Displayed availability counts and price range are based on the filtered eligible set, not all units or a permanent RENTED flag.",
+        "Searching a stored district/ward/address returns only matching public properties. Leading/trailing whitespace and letter case do not change results; blank location removes only the location condition.",
+        "Location AND price/amenity/unit/date filters are applied together. A property in the right district with no same-unit full-interval match is excluded; hidden listings remain excluded.",
+        "Location persists across pagination/reload/back navigation; clearing it preserves other filters, and unknown locations show an empty state. MVP scope is address/locality search, without GPS, maps, radius or geocoding.",
+        "The landing page and listing search/detail pages work on mobile and desktop with actual Laravel data, loading/error/no-results states and keyboard-accessible controls."
+      ],
+      "tests": [
+        "Unit/component tests for landing-page search, filters, cards, date selection, location input and navigation.",
+        "PostgreSQL/API tests for public visibility/privacy, full-period availability, same-unit filters, counts/prices and pagination.",
+        "Manual UI check: landing page -> location/date search -> filtered results -> listing detail. Unapproved, hidden, archived or suspended listings never appear.",
+        "Location normalization/query tests plus API/component tests and manual UI checks for address/ward/district/city match, wrong locality, empty/unknown input, Vietnamese text, parameter binding, combined same-unit/full-date filters and URL/pagination/reset behavior."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-07; T3e, T4a, T3g, T4d\nKhai owns the complete browsing frontend/API/tests. Kien owns owner listing create/edit/submit/publish actions in RNT-02; Tri owns admin approval in RNT-04. Location means stored address/ward/district/city search; maps/GPS/radius/geocoding stay deferred. Browsing creates no reservation. RNT-11 improves search performance and applies the 15-day rule.",
+      "body_file": "issues/RNT-06.md"
+    },
+    {
+      "key": "RNT-07",
+      "phase": 2,
+      "owner": "Tri",
+      "reviewer": "Khai",
+      "title": "Submit/manage rental requests and save favourite properties",
+      "requirements": [
+        "FR25",
+        "FR26",
+        "FR27",
+        "FR28",
+        "FR29",
+        "FR31",
+        "FR32",
+        "FR88"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-03",
+        "RNT-06"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "A tenant saves properties and submits a pending rental request; owners discuss offline and manage the rental-request list without premature acceptance.",
+      "backend": [
+        "Implement authenticated rental request submit/own list/withdraw and owner rental-request list/reject with contact snapshots, complete desired start/end, same-property preferred-unit scope, one pending tenant/listing request, reasons and audit.",
+        "Keep requests PENDING throughout offline discussion; only RNT-05 proposal transaction marks ACCEPTED. Rental requests and favourites allocate no properties and units.",
+        "Implement private favourite_properties PUT/DELETE/list/count/ids with actor from the Sanctum-authenticated profile, unique user/property pair, first-save 201/repeat 200 and repeated DELETE 204; unavailable targets return safe generic placeholders and remain removable."
+      ],
+      "frontend": [
+        "Build rental request form, tenant request dashboard, owner rental-request list and reject/withdraw controls with reason/conflict feedback.",
+        "Build persistent property hearts, private badge and paginated saved list; guest login prompt without queued save; serialize per-property intended-state writes and reconcile failures/account switches."
+      ],
+      "acceptance": [
+        "A valid rental request stores private contact snapshots and full interval, remains PENDING and does not reserve the preferred unit.",
+        "Duplicate submit, stale withdrawal/reject and foreign-user contact access are rejected consistently; owner discussion never requires clicking Accept.",
+        "Heart state survives reload, one user/property relation exists under repeated/concurrent saves and intended DELETE is idempotent even when the target becomes hidden.",
+        "Hidden/suspended/archived saved targets disclose no title/photo/address/moderation reason; date unavailability alone does not delete the save.",
+        "Out-of-order/network responses and account switches cannot show stale hearts or another user\u2019s private list.",
+        "Request status and private count/list reconcile with server state; badge counts stored relations including placeholders as a documented proposed default."
+      ],
+      "tests": [
+        "Unit/component tests for rental request validation, heart intent serialization, error recovery and guest/account-switch behavior.",
+        "PostgreSQL/API tests for duplicate pending rental requests, ownership, reject/withdraw races, unique favourite saves and hidden-content privacy.",
+        "API integration tests for saved property, rental request and owner request-list actions; manually check changed screens and confirm there is no standalone Accept action or reservation on request submission."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-07; T3c, T3e, T4a, T3g, T4d\nAudit already-implemented favourites code and retain compatible work. Rebuild tasks from requirements rather than recreating deleted issue references.",
+      "body_file": "issues/RNT-07.md"
+    },
+    {
+      "key": "RNT-08",
+      "phase": 2,
+      "owner": "Hien",
+      "reviewer": "Khai",
+      "title": "Report listings and let admins investigate, hide or restore them",
+      "requirements": [
+        "FR38",
+        "FR39",
+        "FR72",
+        "FR78"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-04",
+        "RNT-06"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Authenticated users report listings, and admins investigate and hide harmful content using reasoned, audited decisions.",
+      "backend": [
+        "Implement reporter submit/own outcomes, required category/reason, throttling and unique live report; reporter can see only sanitized own outcomes.",
+        "Implement admin report queue/detail/OPEN-REVIEWING-RESOLVED-DISMISSED actions and separate suspend/restore actions with protected Policies, expected revisions, reason/audit/outbox and public-cache invalidation hooks.",
+        "Keep suspension independent of first approval and owner publication; no automatic takedown based only on report count. Coordinate state changes through shared locking/actions."
+      ],
+      "frontend": [
+        "Build report modal and reporter list, admin investigation/filter/detail and reasoned resolve/dismiss/suspend/restore forms.",
+        "Show status/reason appropriately for reporter versus admin; preserve entered text on failures and handle 403/409/422/429, loading/empty/retry and keyboard focus."
+      ],
+      "acceptance": [
+        "Guest and forged reporter/admin requests fail; duplicate live reports and rate-limit cases have clear feedback.",
+        "Only admins inspect private investigation detail and perform decisions; reporter sees only their own sanitized outcome.",
+        "Admin suspension removes public eligibility immediately across routes; owner edits cannot restore visibility.",
+        "Restore clears the admin restriction explicitly but does not republish owner-hidden content.",
+        "Competing/stale decisions commit one consistent outcome and audit/outbox; reason is required for rejection/suspension and terminal decisions.",
+        "No image-status moderation, property-review queue or report-count-only takedown is introduced."
+      ],
+      "tests": [
+        "Unit/component tests for all report/reason forms, pagination, status rendering and failure states.",
+        "PostgreSQL/API tests for privacy, rate limit, unique live report, stale decisions and owner-edit versus suspension race.",
+        "API integration tests for report/investigate/suspend/restore and public visibility; manually check reporter/admin forms and status feedback."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-07; T3c, T4a, T3g, T4d\nTri owns both layers and writes all relevant tests; Khai reviews privilege and transaction rules. Do not split admin backend into another member\u2019s implementation issue.",
+      "body_file": "issues/RNT-08.md"
+    },
+    {
+      "key": "RNT-09",
+      "phase": 3,
+      "owner": "Kien",
+      "reviewer": "Khai",
+      "title": "Request tenancy renewals, add contract versions and release expired reservations",
+      "requirements": [
+        "FR68",
+        "FR69",
+        "FR70",
+        "FR83",
+        "FR84"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-05",
+        "RNT-10"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "A tenancy continues through new immutable renewal segments; failed/expired negotiations release only the temporary reservation they own.",
+      "backend": [
+        "Implement one pending renewal request, tenant withdrawal/owner reasoned rejection, owner consecutive RENEWAL proposals and corrections; versions reference the same tenancy and exact basis contract.",
+        "Reserve only the extension while keeping confirmed occupancy/current agreed terms; accept renewal request only after exact mutual version confirmation. Many unconfirmed corrections may share renewal_request_id.",
+        "Implement scheduled/action-triggered expiry with exact current-version/deadline lock recheck, configured proposed 48h default and idempotent recovery. Original expired proposals become terminal; renewal expiry restores confirmed span and leaves negotiation pending."
+      ],
+      "frontend": [
+        "Build tenant renewal modal/list and owner proposal/correction actions within the existing tenancy history; label current agreement versus pending extension.",
+        "Display deadlines, expired/declined recovery and conflict messages without overwriting current rent or end date."
+      ],
+      "acceptance": [
+        "Renewal negotiation stays PENDING until final mutual acknowledgement; no replacement of the current agreement row occurs.",
+        "Confirmed/active occupancy remains protected while an extension is awaiting confirmation.",
+        "A future conflicting booking prevents an extension; adjacent consecutive periods succeed.",
+        "Expired/rejected/withdrawn renewal work releases only unconfirmed extension dates; agreed occupancy and immutable terms remain.",
+        "A stale/repeated expiry job cannot expire a newer proposal; confirmation at or after deadline fails and the confirm/expiry race has one result.",
+        "UI shows correct current/pending history and can recover through a new permitted version without reusing old confirmations."
+      ],
+      "tests": [
+        "Unit/component tests for renewal dates, state transitions, labels and failure recovery.",
+        "Independent PostgreSQL tests for renewal overlap, projection invariants, correction chains and exact-deadline/expiry races.",
+        "Worker/scheduler retry integration tests and API tests for renewal request/proposal/confirmation/expiry; manually check owner/tenant status labels."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-06, NFR-07; T6a, T4a, T3g, T4d\nNo confirmed mid-term amendment or legal e-signature engine. Use the worker/scheduler delivery contract from RNT-10.",
+      "body_file": "issues/RNT-09.md"
+    },
+    {
+      "key": "RNT-10",
+      "phase": 3,
+      "owner": "Khai",
+      "reviewer": "Kien",
+      "title": "Deliver private notifications from committed events",
+      "requirements": [
+        "FR45",
+        "FR73"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-05",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-02",
+        "RNT-05",
+        "RNT-08"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "A worker delivers each committed domain event once per recipient, into a private inbox and as one email. Photo-file retention is not part of this outcome.",
+      "backend": [
+        "Insert the inbox row and dispatch the deliver job in the same transaction as the domain write. Listing approve and reject use audience OWNER. Do not write notification_outbox.",
+        "Deliver the email from the jobs row with resend/resend-php and the notifications.event_key idempotency key. Document queue:work restart and failed_jobs. Do not add a notification sweep.",
+        "GET /api/v1/notifications?audience=OWNER|TENANT|ADMIN returns one page for the current user and that audience, plus unread_count. POST mark read sets read_at only when it is null. Another account receives 404. audience=ADMIN requires an admin."
+      ],
+      "frontend": [
+        "Replace the owner and tenant coming-soon notification pages and add an admin inbox. Each page and badge requests only its audience. A listing notice links to the owner listing route.",
+        "Clear held notification state when the account changes. Switching between the owner and tenant portals refetches the other audience and does not mix the lists."
+      ],
+      "acceptance": [
+        "A running worker delivers a committed event once per recipient. Rollback writes no inbox row, no jobs row, and no notification_outbox row.",
+        "A duplicate event_key does not create a second inbox row or a second job. A reserved job left by a dead worker becomes available after retry_after and still sends once.",
+        "A second run of the same job with the same key and body is one provider outcome. concurrent_idempotent_requests releases the job. invalid_idempotent_request moves it to failed_jobs and keeps the key.",
+        "Provider failure leaves the business row and the inbox row committed. Tries stay inside the 24-hour window, then the job is in failed_jobs.",
+        "Only the recipient can list and mark read. A repeated read does not change read_at. An owner list does not include that user's tenant or admin rows. A non-admin requesting ADMIN receives 403."
+      ],
+      "tests": [
+        "Unit tests for event mapping, payload redaction, link shape, and audience on the notification writer.",
+        "PostgreSQL tests: rollback writes nothing; a duplicate event_key does not create a second inbox row; a second send with the same key is one fake-sender outcome; provider failure leaves the business row committed; only the recipient can list and read.",
+        "Manual check of one delivered notification on the owner, tenant, and admin inboxes, including mark read, the other portal staying empty, and a different account after sign-out."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; T6a, T3g, T4d\nDo not add Kafka/RabbitMQ or a separate queue platform to satisfy course async requirements. Scheduler-driven domain decisions remain in their owning feature actions.",
+      "body_file": "issues/RNT-10.md"
+    },
+    {
+      "key": "RNT-11",
+      "phase": 3,
+      "owner": "Hien",
+      "reviewer": "Khai",
+      "title": "Apply the 15-day request rule, cache public search results and refresh them after listing changes",
+      "requirements": [
+        "FR46",
+        "FR85"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-05",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-06",
+        "RNT-07",
+        "RNT-09"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Aged rental requests are rejected only when no eligible full-period unit exists; cached discovery remains fresh and private.",
+      "backend": [
+        "Implement the >=15-day pending-rental request job using current full-interval availability across eligible alternatives, after reaping due holds under the common lock order. Preferred unit is soft; visibility is not proof of occupation.",
+        "Implement public response caching/revalidation with fresh visibility checks and invalidation after publish/hide/archive/suspend/edit; keep private contacts/favourites/contracts in account-scoped private responses.",
+        "Measure/eager-load/index listing queries and bound pagination; record local query counts/plans and validate hosted timing separately without inventing latency budgets.",
+        "Exclude session/CSRF/password-reset/API-token management and one-time token secrets from shared response caches; clear prior-account private browser data on session logout."
+      ],
+      "frontend": [
+        "Show auto-rejection reason/status in tenant/owner rental-request lists and refresh availability/counts after relevant mutations.",
+        "Implement responsive images, lazy noncritical resources, race-safe filter/search responses and account-private heart hydration with failure/retry states."
+      ],
+      "acceptance": [
+        "Age alone or another tenant\u2019s acceptance never rejects a pending rental request if an eligible alternate unit fits the whole desired interval.",
+        "Partial availability, maintenance and real blocking reservations prevent false matches; hidden listing status alone cannot establish occupation.",
+        "Ageing versus withdrawal/proposal/expiry races produce one valid audited outcome and retried jobs are idempotent.",
+        "Hidden/suspended content is not served through a stale shared cache; owner restore does not bypass owner publication.",
+        "No private heart/contact/contract fields enter a shared listing cache and switching accounts clears private state.",
+        "On the same seeded dataset, record listing query counts and query plans, remove repeated per-unit lookups, and verify pagination. Repeating the same public search uses its cache; a listing hide/edit invalidates or revalidates it so stale public details are not returned."
+      ],
+      "tests": [
+        "Unit/component tests for boundary ages, availability alternatives, cached/search race handling and UI rejection states.",
+        "PostgreSQL worker/API tests for full interval, alternate units and independent ageing/proposal/withdrawal races.",
+        "Cache invalidation/privacy integration tests and recorded query counts/plans on the same seed; manually inspect resource downloads in browser developer tools."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-05, NFR-07; T6b, T6c, T6d, T3g, T4d\n15-day interpretation and proposed 48h expiry are explicit product defaults. Do not silently turn either into unconditional rejection or time-dependent exclusion predicates.",
+      "body_file": "issues/RNT-11.md"
+    },
+    {
+      "key": "RNT-12",
+      "phase": 3,
+      "owner": "Tri",
+      "reviewer": "Khai",
+      "title": "Monitor errors and slow queries, send alerts and show useful error screens",
+      "requirements": [
+        "FR47",
+        "FR48"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-05",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-01",
+        "RNT-03",
+        "RNT-08"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Developers/admins can diagnose real failures and receive critical, slow-query and server-resource alerts without exposing private data.",
+      "backend": [
+        "Use Khai\u2019s RNT-01 Telescope setup to investigate errors, slow queries and failed jobs. Add structured correlation IDs across HTTP/jobs/audit and verify sensitive data remains filtered; do not duplicate package installation/configuration here.",
+        "Implement critical-error reporting and configurable deduplicated individual slow-query alerts; distinguish these from cumulative request DB-time warnings.",
+        "Configure CPU/memory/disk/network monitoring and threshold alerts for the actual app/worker host; document managed-provider visibility limits, worker health, fallback logging and actionable recovery guidance.",
+        "Verify Telescope and logs redact session/CSRF cookies, X-XSRF-TOKEN, Authorization, passwords, reset links and one-time API-token responses; diagnostic access uses an approved session/admin gate if enabled nonlocally."
+      ],
+      "frontend": [
+        "Implement consistent safe error pages/toasts/field feedback with correlation reference and appropriate retry/re-authentication actions.",
+        "Integrate authorized diagnostics navigation for admin/developer use; normal users see no diagnostics or internal exception detail."
+      ],
+      "acceptance": [
+        "Normal users cannot access Telescope/diagnostic routes, and diagnostics do not expose protected resource contents.",
+        "A controlled actual application failure produces friendly UI feedback, correlated structured log and delivered critical alert.",
+        "A controlled slow query produces a real rate-limited alert; query display alone is not treated as alert evidence.",
+        "CPU, memory, disk and network monitoring and at least one controlled threshold delivery are demonstrated on the chosen host.",
+        "Alert delivery failure does not recurse indefinitely or corrupt business state; fallback handling is observable and redacted.",
+        "Loading/empty/network/validation/session-expiry failures recover through tested UI behavior without exposing stack traces."
+      ],
+      "tests": [
+        "Unit/component tests for error mapping/redaction, threshold/dedup logic and UI recovery.",
+        "Backend integration tests for restricted diagnostics, exception paths and alert-adapter failure.",
+        "Record actual critical-error/slow-query/resource alert deliveries and manually check that a displayed request error links to its restricted diagnostic record."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; T5b, T5c, T5d\nTri owns correlation/error diagnostics, real critical/slow-query/server-resource alerts and safe error UI, with Khai reviewing. Initial Telescope package/config/migrations/watchers/access/filtering/pruning are RNT-01 (Khai). Telescope query display is diagnostic evidence, not proof that an alert was sent.",
+      "body_file": "issues/RNT-12.md"
+    },
+    {
+      "key": "RNT-13",
+      "phase": 4,
+      "owner": "Khai",
+      "reviewer": "Kien",
+      "title": "Verify contract permissions, conflicting updates and deployment failure recovery",
+      "requirements": [
+        "FR05",
+        "FR33",
+        "FR43",
+        "FR74",
+        "FR75",
+        "FR81",
+        "FR84",
+        "FR86",
+        "FR89",
+        "FR90"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-09",
+        "RNT-10",
+        "RNT-12"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Agreement flows survive hostile/stale/concurrent input, and reviewed merges migrate/deploy the same tested revision safely.",
+      "backend": [
+        "Close observed security/integrity defects across original and renewal APIs using real participant, hash, lock, revision and replay rules; review private storage/download grants and public Data API exposure.",
+        "Verify Khai\u2019s RNT-01 CI/CD to test schema rebuild plus upgrade of the prior state; merged deployment uses environment secrets, direct DB connectivity preflight, one database concurrency group with cancel-in-progress=false and migrate --force before matching app/worker deployment.",
+        "Document compatible additive/backfill/remove releases, failed-migration recovery and backup/restore rehearsal in a disposable environment; do not assume batch-wide rollback or auto-run destructive resets.",
+        "Verify private routes use Sanctum session or explicitly allowed PAT mode, current Policies and CSRF for browser mutations. Prove missing CSRF denial, session invalidation, token expiry/revocation and denial of PAT access to admin/session-only actions. Review no provider JWT bridge remains."
+      ],
+      "frontend": [
+        "Check account/session recovery, stale contract forms and participant-only contract links; fix confirmed errors with frontend component and API regression tests.",
+        "Ensure old contract/history views and forms recover safely when a deployed API/schema changes compatibly."
+      ],
+      "acceptance": [
+        "Targeted hostile, stale and concurrent contract tests pass without permitting hidden writes or mismatched acknowledgement.",
+        "A PR test or migration failure prevents hosted deployment; production credentials are unavailable to PR test code.",
+        "Two hosted deployment attempts cannot migrate concurrently or cancel a migration in progress.",
+        "Hosted deployment runs only reviewed migrations and matching code; no migrate:fresh/reset/demo reseed occurs.",
+        "A fresh setup and previous-schema upgrade both pass; backup/restore and migration failure recovery are documented with actual rehearsal evidence.",
+        "Security fixes include backend and frontend regression tests and updated API documentation and response types.",
+        "A missing/mismatched CSRF request cannot mutate domain data; revoked session/PAT replay fails after reset/suspension; real PAT read/write/admin denial evidence is recorded."
+      ],
+      "tests": [
+        "Feature unit tests for any changed authorization/state logic plus frontend recovery components.",
+        "Real PostgreSQL concurrency and upgrade tests, API negative tests and manual checks of owner/tenant contract screens.",
+        "CI/deployment failure rehearsal, connection preflight and disposable restore evidence.",
+        "Integrated CSRF/cookie/CORS tests with bypass disabled; real token scope/revocation and password-reset/suspension invalidation tests, plus manual deployed-origin verification."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-06, NFR-07; T1d, T2a, T3g, T4d, T4b\nDo not postpone RNT-01/05/09 tests to this phase. This issue fixes integrated-release defects and proves the release process, rather than collecting untested code.",
+      "body_file": "issues/RNT-13.md"
+    },
+    {
+      "key": "RNT-14",
+      "phase": 4,
+      "owner": "Kien",
+      "reviewer": "Hien",
+      "title": "Verify owner property/listing/photo actions, remove repeated database queries and reduce image downloads",
+      "requirements": [
+        "FR07",
+        "FR08",
+        "FR09",
+        "FR10",
+        "FR11",
+        "FR12",
+        "FR17",
+        "FR18",
+        "FR41",
+        "FR50",
+        "FR51",
+        "FR52",
+        "FR55",
+        "FR56",
+        "FR57",
+        "FR59",
+        "FR60",
+        "FR61",
+        "FR87"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-02",
+        "RNT-06",
+        "RNT-10"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Verify owner property, unit, photo and listing actions; fix reproducible errors; remove repeated database lookups and avoid downloading full-resolution photos for small cards.",
+      "backend": [
+        "Inspect query counts/plans for owner property and unit/listing lists on a fixed seeded dataset. Replace repeated per-row relationship queries with eager loading, paginate collection endpoints, and add an index only where a query plan demonstrates the need. Record before/after counts and the same test inputs.",
+        "Test separate property/unit/listing create/edit/archive/submit/publish actions, concurrent admin suspension and stale revision rejection. Editing advertised data must preserve previously agreed contract snapshots.",
+        "Test Storage upload failure/retry and the scheduled deletion rules from RNT-10. Record actual successful/failed provider calls without secrets; a referenced photo must survive owner edits and deletion-job retries."
+      ],
+      "frontend": [
+        "Check owner bulk unit forms, photo upload/reorder/remove, property policies and listing forms on mobile/desktop. Fix reproducible validation, retry, stale-revision and unsaved-input errors, with component regression tests.",
+        "Use appropriately sized responsive photos for cards/previews and load below-the-fold photos only when needed. Verify actual image dimensions and downloaded bytes in browser developer tools; do not add an AI thumbnail service."
+      ],
+      "acceptance": [
+        "API integration tests cover whole-space/multi-unit property edits, separate listing creation/publication, failed upload retries and stale revisions. Record a short manual UI checklist; no automated browser suite is required.",
+        "Editing a published listing preserves initial approval and audit history, cannot remove admin suspension and cannot change agreed contract snapshots.",
+        "Owner list endpoints paginate results; relationship loading does not add one repeated query per returned unit. Include before/after query counts and query plans for the same seeded inputs.",
+        "Photo cards/previews request display-appropriate image sizes; below-the-fold photos are deferred. Record requested dimensions and downloaded bytes before/after the change rather than claiming an unspecified speed improvement.",
+        "Storage/worker integration tests cover upload/removal retries and concurrent reference changes; referenced cover/history photos are never deleted.",
+        "Add unit/component/API regression tests for the defects fixed here. Required tests, lint/typecheck and coverage checks pass; include actual commands/results."
+      ],
+      "tests": [
+        "Unit/component tests for bulk-form validation, upload failure/retry, reordered/removed photo state, stale-revision recovery and unsaved input.",
+        "PostgreSQL/API/worker/Storage integration tests for property/unit/listing actions, authorization, snapshot preservation, failed provider calls and concurrent photo-reference changes.",
+        "Capture query counts/plans and image dimensions/bytes using the same seed and viewport before/after changes. Manually check the affected owner screens; automated browser/E2E tests are outside required scope."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-06, NFR-07; T3f, T6b, T6d, T3g, T4d\nKien verifies and fixes the owner features from RNT-02/RNT-10 here. Public search caching belongs to Hien in RNT-11 and public browsing UI to Khai in RNT-06. No new search platform, map feature or AI image service; no invented latency target or automated browser-test requirement.",
+      "body_file": "issues/RNT-14.md"
+    },
+    {
+      "key": "RNT-15",
+      "phase": 4,
+      "owner": "Hien",
+      "reviewer": "Khai",
+      "title": "Check tenant account/search/request/favourite behavior, API responses and test coverage",
+      "requirements": [
+        "FR19",
+        "FR20",
+        "FR21",
+        "FR25",
+        "FR26",
+        "FR27",
+        "FR28",
+        "FR29",
+        "FR31",
+        "FR32",
+        "FR40",
+        "FR46",
+        "FR77",
+        "FR85",
+        "FR88"
+      ],
+      "nfrs": [
+        "NFR-01",
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-07",
+        "RNT-09",
+        "RNT-11"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Discovery, favourites and rental requests remain coherent through full rental/renewal flows, and explicit API contracts plus both coverage reports are trustworthy.",
+      "backend": [
+        "Fix discovered search/request/favourite pagination, privacy, availability and serialization defects; verify actual Resource responses against exported OpenAPI, especially conditional fields/JSONB/decimal/date/nullability.",
+        "Coordinate separate meaningful UI/business and API coverage reports strictly above 70%; all members supply their own feature tests and fix gaps in their areas.",
+        "Ensure API response tests and maintained frontend types detect response breaking changes and account-private caches stay isolated across integration journeys."
+      ],
+      "frontend": [
+        "Manually check listing search, save/remove favourite, rental-request submission/status, contract viewing and renewal status across member-owned APIs; fix confirmed UI errors with component tests.",
+        "Fix keyboard/accessibility, hidden-placeholder, stale-response and re-authentication errors in desktop."
+      ],
+      "acceptance": [
+        "The real tenant journey completes across independently implemented modules, with correct pending rental request versus pending-confirmation agreement labels.",
+        "Suspended content is unavailable in search/detail/favourites without private field leakage; account switching clears all previous private state.",
+        "A deliberate incompatible serialized response change fails response-contract tests and relevant frontend checks, and actual JSON responses agree with the published schema.",
+        "Both required coverage reports exceed 70% without exclusions that hide core business logic; full PostgreSQL constraints are not replaced by mocks.",
+        "Unit/component and API/PostgreSQL integration tests run from documented commands in CI. Automated browser/E2E suites are not required.",
+        "Observed cross-module defects have regression tests and API documentation and maintained response types are updated."
+      ],
+      "tests": [
+        "Focused unit/component tests for discovered search/cache/type/UI defects.",
+        "API response, authorization and PostgreSQL integration tests for tenant actions; use a short manual UI checklist for navigation across screens.",
+        "Separate measured frontend/business and backend API coverage plus a deliberately failing response-contract test.",
+        "Component/API tests for combined location/date/amenity search and location URL persistence; manually verify reload/back navigation.",
+        "Component/API regression checks cover token-settings one-time display and revoke, session account switching and 401/419 form recovery without automatic duplicate writes."
+      ],
+      "boundaries": "NFR-01, NFR-02, NFR-03, NFR-04, NFR-07; T3e, T3g, T4d, T6c\nCoverage is a team result, not permission to transfer everyone\u2019s testing to Hien. Full-stack defects remain the responsibility of their owning feature developer.",
+      "body_file": "issues/RNT-15.md"
+    },
+    {
+      "key": "RNT-16",
+      "phase": 4,
+      "owner": "Tri",
+      "reviewer": "Hien",
+      "title": "Verify admin approval/report permissions and prepare reproducible setup/demo evidence",
+      "requirements": [
+        "FR13",
+        "FR14",
+        "FR15",
+        "FR38",
+        "FR39",
+        "FR47",
+        "FR48",
+        "FR72",
+        "FR78"
+      ],
+      "nfrs": [
+        "NFR-02",
+        "NFR-03",
+        "NFR-04",
+        "NFR-05",
+        "NFR-06",
+        "NFR-07"
+      ],
+      "depends_on": [
+        "RNT-04",
+        "RNT-08",
+        "RNT-12",
+        "RNT-13",
+        "RNT-14",
+        "RNT-15"
+      ],
+      "publication": "Draft",
+      "delivery_status": "Planned",
+      "github_url": null,
+      "outcome": "Admin workflows are secure and accessible, and the marker/team can reproduce the application and inspect genuine implementation evidence.",
+      "backend": [
+        "Fix discovered moderation/report validation, authorization, stale-decision and privacy defects; keep reviewed transitions/audit consistent with owner/public eligibility.",
+        "Finish root README covering actual tools/setup, env names, schema/migration/seed/worker/scheduler, ERD, API types/docs, tests, monitoring and lecturer evidence.",
+        "Collect evidence links from all four members and verify each member\u2019s own five sprint self-reports. Document deadline/penalty policy rather than creating fake contribution records."
+      ],
+      "frontend": [
+        "Repair admin queue/detail/forms across keyboard/mobile and server failure states, integrating actual endpoints rather than fixture-only demos.",
+        "Capture actual sanitized screens and assemble <=10-minute >=720p MP4 demo with each member\u2019s real feature/test contributions and accessible public/unlisted link."
+      ],
+      "acceptance": [
+        "Admin UI and direct API calls pass normal-user denial, stale revision, reason validation and reporter privacy regressions.",
+        "Keyboard focus/labels, loading/empty/error/retry states and pagination work on implemented review/report screens.",
+        "A clean-machine setup rehearsal follows the README successfully, with resolving ERD/docs/type/test links and no secret values.",
+        "The video meets duration/quality/access rules and shows implemented workflows plus real tests/alerts/performance evidence.",
+        "Each of four members provides five truthful sprint reports; D checks links/completeness but does not write or claim others\u2019 contributions.",
+        "Submission and known limitations match actual code/test/evidence state, including any unresolved printed-rubric substitutions.",
+        "Final demonstration includes a CSRF-protected browser form (valid and rejected submission), token settings create/revoke and cookie-free scoped-token allowed/denied/401 examples; all claims link to actual implementation evidence."
+      ],
+      "tests": [
+        "Focused unit/component tests for final admin/accessibility defects.",
+        "Backend moderation/privacy integration and real admin-to-public visibility API/component regression tests and manual UI checks.",
+        "Clean setup rehearsal, link/access verification and actual demo/individual report checklist."
+      ],
+      "boundaries": "NFR-02, NFR-03, NFR-04, NFR-05, NFR-06, NFR-07; T1a, T3g, T4d\nAdmin backend remains D-owned with Khai reviewing risky changes. Evidence work does not replace backend/frontend implementation or its tests.",
+      "body_file": "issues/RNT-16.md"
+    }
+  ],
+  "requirement_coverage": {
+    "FR01": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR01-AC01",
+        "FR01-AC02",
+        "FR01-AC03",
+        "FR01-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR02": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR02-AC01",
+        "FR02-AC02",
+        "FR02-AC03",
+        "FR02-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR03": {
+      "priority": "P2 Defer",
+      "module": "M01-identity-access",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR03-AC01",
+        "FR03-AC02",
+        "FR03-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR04": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR04-AC01",
+        "FR04-AC02",
+        "FR04-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR05": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR05-AC01",
+        "FR05-AC02",
+        "FR05-AC03",
+        "FR05-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR06": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR06-AC01",
+        "FR06-AC02",
+        "FR06-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR07": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR07-AC01",
+        "FR07-AC02",
+        "FR07-AC03",
+        "FR07-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR08": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR08-AC01",
+        "FR08-AC02",
+        "FR08-AC03",
+        "FR08-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR09": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR09-AC01",
+        "FR09-AC02",
+        "FR09-AC03",
+        "FR09-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR10": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR10-AC01",
+        "FR10-AC02",
+        "FR10-AC03",
+        "FR10-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR11": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR11-AC01",
+        "FR11-AC02",
+        "FR11-AC03",
+        "FR11-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR12": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR12-AC01",
+        "FR12-AC02",
+        "FR12-AC03",
+        "FR12-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR13": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-04"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR13-AC01",
+        "FR13-AC02",
+        "FR13-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR14": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-04"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR14-AC01",
+        "FR14-AC02",
+        "FR14-AC03",
+        "FR14-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR15": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-04"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR15-AC01",
+        "FR15-AC02",
+        "FR15-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR16": {
+      "priority": "P2 Defer",
+      "module": "M03-listings-moderation",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR16-AC01"
+      ],
+      "scope_rule": false
+    },
+    "FR17": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR17-AC01",
+        "FR17-AC02",
+        "FR17-AC03",
+        "FR17-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR18": {
+      "priority": "P0 Must",
+      "module": "M03-listings-moderation",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR18-AC01",
+        "FR18-AC02",
+        "FR18-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR19": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-06"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR19-AC01",
+        "FR19-AC02",
+        "FR19-AC03",
+        "FR19-AC04",
+        "FR19-AC05",
+        "FR19-AC06"
+      ],
+      "scope_rule": false
+    },
+    "FR20": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-06"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR20-AC01",
+        "FR20-AC02",
+        "FR20-AC03",
+        "FR20-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR21": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-06"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR21-AC01",
+        "FR21-AC02",
+        "FR21-AC03",
+        "FR21-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR22": {
+      "priority": "P2 Defer",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR22-AC01",
+        "FR22-AC02"
+      ],
+      "scope_rule": false
+    },
+    "FR23": {
+      "priority": "P2 Defer",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR23-AC01",
+        "FR23-AC02"
+      ],
+      "scope_rule": false
+    },
+    "FR24": {
+      "priority": "P2 Defer",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR24-AC01",
+        "FR24-AC02",
+        "FR24-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR25": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR25-AC01",
+        "FR25-AC02",
+        "FR25-AC03",
+        "FR25-AC04",
+        "FR25-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR26": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR26-AC01",
+        "FR26-AC02",
+        "FR26-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR27": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR27-AC01",
+        "FR27-AC02",
+        "FR27-AC03",
+        "FR27-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR28": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR28-AC01",
+        "FR28-AC02",
+        "FR28-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR29": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR29-AC01",
+        "FR29-AC02",
+        "FR29-AC03",
+        "FR29-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR30": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR30-AC01",
+        "FR30-AC02",
+        "FR30-AC03",
+        "FR30-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR31": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR31-AC01",
+        "FR31-AC02",
+        "FR31-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR32": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR32-AC01",
+        "FR32-AC02",
+        "FR32-AC03",
+        "FR32-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR33": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR33-AC01",
+        "FR33-AC02",
+        "FR33-AC03",
+        "FR33-AC04",
+        "FR33-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR34": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR34-AC01",
+        "FR34-AC02",
+        "FR34-AC03",
+        "FR34-AC04",
+        "FR34-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR35": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR35-AC01",
+        "FR35-AC02",
+        "FR35-AC03",
+        "FR35-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR36": {
+      "priority": "P2 Defer",
+      "module": "M08-reports-admin",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR36-AC01",
+        "FR36-AC02",
+        "FR36-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR37": {
+      "priority": "P2 Defer",
+      "module": "M08-reports-admin",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR37-AC01",
+        "FR37-AC02"
+      ],
+      "scope_rule": false
+    },
+    "FR38": {
+      "priority": "P0 Must",
+      "module": "M08-reports-admin",
+      "primary_issues": [
+        "RNT-08"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR38-AC01",
+        "FR38-AC02",
+        "FR38-AC03",
+        "FR38-AC04",
+        "FR38-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR39": {
+      "priority": "P0 Must",
+      "module": "M08-reports-admin",
+      "primary_issues": [
+        "RNT-08"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR39-AC01",
+        "FR39-AC02",
+        "FR39-AC03",
+        "FR39-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR40": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-06"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR40-AC01",
+        "FR40-AC02",
+        "FR40-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR41": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR41-AC01",
+        "FR41-AC02",
+        "FR41-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR42": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR42-AC01",
+        "FR42-AC02",
+        "FR42-AC03",
+        "FR42-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR43": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR43-AC01",
+        "FR43-AC02",
+        "FR43-AC03",
+        "FR43-AC04",
+        "FR43-AC05",
+        "FR43-AC06",
+        "FR43-AC07",
+        "FR43-AC08"
+      ],
+      "scope_rule": false
+    },
+    "FR44": {
+      "priority": "P1 Should",
+      "module": "M10-operations-delivery",
+      "primary_issues": [
+        "RNT-01"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR44-AC01",
+        "FR44-AC02",
+        "FR44-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR45": {
+      "priority": "P1 Should",
+      "module": "M09-notifications-audit",
+      "primary_issues": [
+        "RNT-10"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR45-AC01",
+        "FR45-AC02",
+        "FR45-AC03",
+        "FR45-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR46": {
+      "priority": "P1 Should",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-11"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR46-AC01",
+        "FR46-AC02",
+        "FR46-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR47": {
+      "priority": "P1 Should",
+      "module": "M10-operations-delivery",
+      "primary_issues": [
+        "RNT-12"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR47-AC01",
+        "FR47-AC02",
+        "FR47-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR48": {
+      "priority": "P1 Should",
+      "module": "M10-operations-delivery",
+      "primary_issues": [
+        "RNT-12"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR48-AC01",
+        "FR48-AC02",
+        "FR48-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR49": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR49-AC01",
+        "FR49-AC02",
+        "FR49-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR50": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR50-AC01",
+        "FR50-AC02",
+        "FR50-AC03",
+        "FR50-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR51": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR51-AC01",
+        "FR51-AC02",
+        "FR51-AC03",
+        "FR51-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR52": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR52-AC01",
+        "FR52-AC02",
+        "FR52-AC03",
+        "FR52-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR55": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR55-AC01",
+        "FR55-AC02",
+        "FR55-AC03",
+        "FR55-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR56": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR56-AC01",
+        "FR56-AC02",
+        "FR56-AC03",
+        "FR56-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR57": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR57-AC01",
+        "FR57-AC02",
+        "FR57-AC03",
+        "FR57-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR59": {
+      "priority": "P1 Should",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-10"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR59-AC01",
+        "FR59-AC02",
+        "FR59-AC03",
+        "FR59-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR60": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR60-AC01",
+        "FR60-AC02",
+        "FR60-AC03",
+        "FR60-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR61": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR61-AC01",
+        "FR61-AC02",
+        "FR61-AC03",
+        "FR61-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR66": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR66-AC01",
+        "FR66-AC02",
+        "FR66-AC03",
+        "FR66-AC04",
+        "FR66-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR67": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR67-AC01",
+        "FR67-AC02",
+        "FR67-AC03",
+        "FR67-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR68": {
+      "priority": "P0 Must",
+      "module": "M07-renewals",
+      "primary_issues": [
+        "RNT-09"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR68-AC01",
+        "FR68-AC02",
+        "FR68-AC03",
+        "FR68-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR69": {
+      "priority": "P0 Must",
+      "module": "M07-renewals",
+      "primary_issues": [
+        "RNT-09"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR69-AC01",
+        "FR69-AC02",
+        "FR69-AC03",
+        "FR69-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR70": {
+      "priority": "P0 Must",
+      "module": "M07-renewals",
+      "primary_issues": [
+        "RNT-09"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR70-AC01",
+        "FR70-AC02",
+        "FR70-AC03",
+        "FR70-AC04",
+        "FR70-AC05",
+        "FR70-AC06"
+      ],
+      "scope_rule": false
+    },
+    "FR71": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR71-AC01",
+        "FR71-AC02",
+        "FR71-AC03",
+        "FR71-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR72": {
+      "priority": "P0 Must",
+      "module": "M08-reports-admin",
+      "primary_issues": [
+        "RNT-08"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR72-AC01",
+        "FR72-AC02",
+        "FR72-AC03",
+        "FR72-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR73": {
+      "priority": "P1 Should",
+      "module": "M09-notifications-audit",
+      "primary_issues": [
+        "RNT-10"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR73-AC01",
+        "FR73-AC02",
+        "FR73-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR74": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-01"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR74-AC01",
+        "FR74-AC02",
+        "FR74-AC03",
+        "FR74-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR75": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-01"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR75-AC01",
+        "FR75-AC02",
+        "FR75-AC03",
+        "FR75-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR76": {
+      "priority": "P3 Exclude",
+      "module": "M10-operations-delivery",
+      "primary_issues": [
+        "RNT-01"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR76-AC01",
+        "FR76-AC02",
+        "FR76-AC03"
+      ],
+      "scope_rule": true
+    },
+    "FR77": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-06"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR77-AC01",
+        "FR77-AC02",
+        "FR77-AC03",
+        "FR77-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR78": {
+      "priority": "P0 Must",
+      "module": "M08-reports-admin",
+      "primary_issues": [
+        "RNT-08"
+      ],
+      "verification_issues": [
+        "RNT-16"
+      ],
+      "case_ids": [
+        "FR78-AC01",
+        "FR78-AC02",
+        "FR78-AC03",
+        "FR78-AC04",
+        "FR78-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR79": {
+      "priority": "P2 Defer",
+      "module": "M08-reports-admin",
+      "primary_issues": [],
+      "verification_issues": [],
+      "case_ids": [
+        "FR79-AC01",
+        "FR79-AC02",
+        "FR79-AC03"
+      ],
+      "scope_rule": false
+    },
+    "FR80": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR80-AC01",
+        "FR80-AC02",
+        "FR80-AC03",
+        "FR80-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR81": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR81-AC01",
+        "FR81-AC02",
+        "FR81-AC03",
+        "FR81-AC04",
+        "FR81-AC05",
+        "FR81-AC06"
+      ],
+      "scope_rule": false
+    },
+    "FR82": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR82-AC01",
+        "FR82-AC02",
+        "FR82-AC03",
+        "FR82-AC04",
+        "FR82-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR83": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-09"
+      ],
+      "verification_issues": [],
+      "case_ids": [
+        "FR83-AC01",
+        "FR83-AC02",
+        "FR83-AC03",
+        "FR83-AC04",
+        "FR83-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR84": {
+      "priority": "P0 Must",
+      "module": "M07-renewals",
+      "primary_issues": [
+        "RNT-09"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR84-AC01",
+        "FR84-AC02",
+        "FR84-AC03",
+        "FR84-AC04"
+      ],
+      "scope_rule": false
+    },
+    "FR85": {
+      "priority": "P0 Must",
+      "module": "M05-rental-requests",
+      "primary_issues": [
+        "RNT-11"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR85-AC01",
+        "FR85-AC02",
+        "FR85-AC03",
+        "FR85-AC04",
+        "FR85-AC05",
+        "FR85-AC06",
+        "FR85-AC07",
+        "FR85-AC08"
+      ],
+      "scope_rule": false
+    },
+    "FR86": {
+      "priority": "P0 Must",
+      "module": "M06-tenancies-contracts",
+      "primary_issues": [
+        "RNT-05"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR86-AC01",
+        "FR86-AC02",
+        "FR86-AC03",
+        "FR86-AC04",
+        "FR86-AC05"
+      ],
+      "scope_rule": false
+    },
+    "FR87": {
+      "priority": "P0 Must",
+      "module": "M02-property-units-media",
+      "primary_issues": [
+        "RNT-02"
+      ],
+      "verification_issues": [
+        "RNT-14"
+      ],
+      "case_ids": [
+        "FR87-AC01",
+        "FR87-AC02",
+        "FR87-AC03",
+        "FR87-AC04",
+        "FR87-AC05",
+        "FR87-AC06",
+        "FR87-AC07",
+        "FR87-AC08",
+        "FR87-AC09",
+        "FR87-AC10"
+      ],
+      "scope_rule": false
+    },
+    "FR88": {
+      "priority": "P0 Must",
+      "module": "M04-discovery-favourites",
+      "primary_issues": [
+        "RNT-07"
+      ],
+      "verification_issues": [
+        "RNT-15"
+      ],
+      "case_ids": [
+        "FR88-AC01",
+        "FR88-AC02",
+        "FR88-AC03",
+        "FR88-AC04",
+        "FR88-AC05",
+        "FR88-AC06",
+        "FR88-AC07",
+        "FR88-AC08",
+        "FR88-AC09",
+        "FR88-AC10"
+      ],
+      "scope_rule": false
+    },
+    "FR89": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR89-AC01",
+        "FR89-AC02",
+        "FR89-AC03",
+        "FR89-AC04",
+        "FR89-AC05",
+        "FR89-AC06",
+        "FR89-AC07",
+        "FR89-AC08"
+      ],
+      "scope_rule": false
+    },
+    "FR90": {
+      "priority": "P0 Must",
+      "module": "M01-identity-access",
+      "primary_issues": [
+        "RNT-03"
+      ],
+      "verification_issues": [
+        "RNT-13"
+      ],
+      "case_ids": [
+        "FR90-AC01",
+        "FR90-AC02",
+        "FR90-AC03",
+        "FR90-AC04",
+        "FR90-AC05",
+        "FR90-AC06"
+      ],
+      "scope_rule": false
+    }
+  },
+  "authentication": {
+    "identity": "Laravel Fortify",
+    "browser": "Sanctum SPA session + CSRF",
+    "non_browser": "Explicit user-created Sanctum PAT",
+    "supabase_auth_used": false,
+    "token_abilities": [
+      "account:read",
+      "favourites:read",
+      "favourites:write"
+    ],
+    "token_management": "browser session only; recent password confirmation + CSRF for mutations",
+    "primary_issue": "RNT-03",
+    "setup_issue": "RNT-01",
+    "shared_parent_domain_required": true
+  }
+}

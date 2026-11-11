@@ -1,0 +1,14 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    level: 5
+    treatPhpDocTypesAsCertain: false
+    
+    excludePaths:
+        - app/View/Components/AppLayout.php
+        - app/View/Components/GuestLayout.php
+
