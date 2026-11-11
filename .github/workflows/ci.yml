@@ -76,58 +76,10 @@ jobs:
       - run: php artisan test
 
   publish:
-    name: Publish images
     needs: [frontend, backend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: docker/setup-buildx-action@v3
-
-      - id: image
-        run: echo "owner=$(echo "${GITHUB_REPOSITORY_OWNER}" | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
-
-      - uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push frontend
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./frontend/Dockerfile
-          push: true
-          build-args: |
-            NEXT_PUBLIC_API_URL=https://api.rentos.io.vn
-          tags: |
-            ghcr.io/${{ steps.image.outputs.owner }}/rentos-frontend:${{ github.sha }}
-            ghcr.io/${{ steps.image.outputs.owner }}/rentos-frontend:production
-
-      - name: Build and push backend
-        uses: docker/build-push-action@v6
-        with:
-          context: ./backend
-          file: ./backend/Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ steps.image.outputs.owner }}/rentos-backend:${{ github.sha }}
-            ghcr.io/${{ steps.image.outputs.owner }}/rentos-backend:production
-
-      - name: Trigger Dokploy deployment
-        if: vars.DOKPLOY_URL != ''
-        env:
-          DOKPLOY_URL: ${{ vars.DOKPLOY_URL }}
-          DOKPLOY_API_KEY: ${{ secrets.DOKPLOY_API_KEY }}
-          COMPOSE_ID: ${{ secrets.DOKPLOY_COMPOSE_ID }}
-        run: |
-          curl --fail-with-body \
-            -X POST "$DOKPLOY_URL/api/compose.deploy" \
-            -H "x-api-key: $DOKPLOY_API_KEY" \
-            -H "Content-Type: application/json" \
-            --data "{\"composeId\":\"$COMPOSE_ID\"}"
+    uses: ./.github/workflows/cd.yml
+    secrets: inherit
