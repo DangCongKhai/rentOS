@@ -1,6 +1,10 @@
 #!/bin/sh
 set -eu
 
+# libpq looks for a client certificate in $HOME/.postgresql. This container
+# starts as root, so HOME is /root, and the www-data process cannot read it.
+export HOME=/var/www
+
 cd /var/www/html
 
 mkdir -p \

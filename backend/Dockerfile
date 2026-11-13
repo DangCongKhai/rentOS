@@ -24,6 +24,7 @@ RUN apt-get update \
     && docker-php-ext-install -j"$(nproc)" pdo_pgsql pcntl bcmath opcache \
     && rm -rf /var/lib/apt/lists/* \
     && rm -f /etc/nginx/sites-enabled/default
+COPY docker/nginx-log-format.conf /etc/nginx/conf.d/00-laravel-log.conf
 COPY docker/nginx.conf /etc/nginx/sites-available/laravel.conf
 COPY docker/php-fpm.conf /usr/local/etc/php-fpm.d/zz-laravel.conf
 COPY docker/entrypoint.sh /entrypoint.sh

@@ -8,6 +8,7 @@ use App\Notifications\DomainMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class DeliverNotification implements ShouldQueue
 {
@@ -32,12 +33,26 @@ class DeliverNotification implements ShouldQueue
             return;
         }
 
+        $context = [
+            'notification_id' => $this->notificationId,
+            'recipient_id' => $notification->recipient_id,
+            'event_key' => $notification->event_key,
+            'mailer' => (string) config('notifications.mailer'),
+        ];
+
         $recipient = DB::table('users')->where('id', $notification->recipient_id)->first();
         if ($recipient === null || ! is_string($recipient->email) || $recipient->email === '') {
+            Log::error('notification.delivery.failed', [
+                ...$context,
+                'kind' => 'invalid',
+                'reason' => 'recipient_email_missing',
+            ]);
             $this->fail('Recipient email is missing.');
 
             return;
         }
+
+        Log::info('notification.delivery.started', $context);
 
         $message = new DomainMessage(
             from: $this->fromAddress(),
@@ -48,7 +63,13 @@ class DeliverNotification implements ShouldQueue
 
         try {
             $mailer->send($notification->event_key, $message);
+            Log::info('notification.delivery.sent', $context);
         } catch (DomainMailException $exception) {
+            Log::error('notification.delivery.failed', [
+                ...$context,
+                'kind' => $exception->kind,
+                'reason' => $exception->getMessage(),
+            ]);
             if ($exception->kind === 'concurrent') {
                 $this->release();
 
