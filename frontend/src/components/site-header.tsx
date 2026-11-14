@@ -32,7 +32,7 @@ export function SiteHeader() {
   const router = useRouter();
   const pathname = usePathname();
   const { user, status, signOut } = useAuth();
-  const unread = useNotificationUnread(user?.id, Boolean(user?.is_admin));
+  const unread = useNotificationUnread(user?.id);
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const [scrolled, setScrolled] = useState(false);

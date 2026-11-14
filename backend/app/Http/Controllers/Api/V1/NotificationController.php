@@ -15,8 +15,8 @@ class NotificationController extends Controller
 {
     public function index(NotificationIndexRequest $request): JsonResponse
     {
-        $audience = (string) $request->validated('audience');
-        if ($audience === 'ADMIN') {
+        $audiences = $request->audiences();
+        if (in_array('ADMIN', $audiences, true)) {
             app(EnsureAdminSession::class)->handle($request, fn () => response()->noContent());
         }
 
@@ -24,26 +24,31 @@ class NotificationController extends Controller
         $user = $request->user();
         $perPage = 20;
         $page = max(1, (int) $request->integer('page', 1));
-        $rows = DB::table('notifications')
+        $notifications = DB::table('notifications')
             ->where('recipient_id', $user->id)
-            ->where('audience', $audience)
+            ->whereIn('audience', $audiences);
+        $rows = (clone $notifications)
             ->orderByDesc('created_at')
             ->orderByDesc('id')
             ->forPage($page, $perPage)
             ->get();
-        $total = DB::table('notifications')
-            ->where('recipient_id', $user->id)
-            ->where('audience', $audience)
-            ->count();
-        $unread = DB::table('notifications')
-            ->where('recipient_id', $user->id)
-            ->where('audience', $audience)
+        $total = (clone $notifications)->count();
+        $unread = (clone $notifications)->whereNull('read_at')->count();
+        $unreadRows = (clone $notifications)
             ->whereNull('read_at')
-            ->count();
+            ->select('audience')
+            ->selectRaw('count(*) as aggregate')
+            ->groupBy('audience')
+            ->pluck('aggregate', 'audience');
+        $unreadByAudience = [];
+        foreach ($audiences as $audience) {
+            $unreadByAudience[$audience] = (int) $unreadRows->get($audience, 0);
+        }
 
         return NotificationResource::collection($rows)
             ->additional([
                 'unread_count' => $unread,
+                'unread_by_audience' => $unreadByAudience,
                 'meta' => [
                     'current_page' => $page,
                     'last_page' => max(1, (int) ceil($total / $perPage)),

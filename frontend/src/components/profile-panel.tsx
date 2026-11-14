@@ -4,11 +4,9 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ApiError,
-  getCurrentUser,
   resendVerification,
   updatePassword,
   updateProfile,
-  type CurrentUser,
 } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
@@ -28,11 +26,10 @@ function initials(name: string): string {
 export function ProfilePanel() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { refreshUser } = useAuth();
-  const [user, setUser] = useState<CurrentUser | null>(null);
+  const { user, refreshUser, status } = useAuth();
+  const [formUserId, setFormUserId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [loadError, setLoadError] = useState("");
   const [profileMessage, setProfileMessage] = useState("");
   const [profileError, setProfileError] = useState(false);
   const [profileBusy, setProfileBusy] = useState(false);
@@ -50,27 +47,19 @@ export function ProfilePanel() {
   const isVerifiedFromUrl = searchParams?.get("verified") === "1";
   const showVerifiedBanner = isVerifiedFromUrl && !bannerDismissed;
 
-  useEffect(() => {
-    if (isVerifiedFromUrl) {
-      void refreshUser();
-    }
+  if (user && formUserId !== user.id) {
+    setFormUserId(user.id);
+    setName(user.name);
+    setPhone(user.phone ?? "");
+  }
 
-    getCurrentUser()
-      .then((current) => {
-        setUser(current);
-        setName(current.name);
-        setPhone(current.phone ?? "");
-      })
-      .catch((error) => {
-        if (error instanceof ApiError && error.status === 401) {
-          router.replace("/login");
-        } else {
-          setLoadError(
-            "Không thể tải hồ sơ. Vui lòng tải lại trang để thử lại.",
-          );
-        }
-      });
-  }, [router, isVerifiedFromUrl, refreshUser]);
+  useEffect(() => {
+    if (status === "guest") router.replace("/login");
+  }, [status, router]);
+
+  useEffect(() => {
+    if (isVerifiedFromUrl) void refreshUser();
+  }, [isVerifiedFromUrl, refreshUser]);
 
   async function saveProfile(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -82,7 +71,6 @@ export function ProfilePanel() {
         name: name.trim(),
         phone: phone.trim() || null,
       });
-      setUser(updated);
       setName(updated.name);
       setPhone(updated.phone ?? "");
       await refreshUser();
@@ -150,15 +138,7 @@ export function ProfilePanel() {
     }
   }
 
-  if (loadError) {
-    return (
-      <div className="mx-auto w-full max-w-3xl px-6 py-16">
-        <FormMessage message={loadError} error />
-      </div>
-    );
-  }
-
-  if (!user)
+  if (status !== "authenticated" || !user)
     return (
       <p className="px-6 py-16 text-center text-sm text-secondary">
         Đang tải hồ sơ…
@@ -210,6 +190,10 @@ export function ProfilePanel() {
                     <span className="inline-flex rounded-full bg-amber-300/15 px-3 py-1 text-xs font-semibold text-amber-100">
                       Email chưa xác nhận
                     </span>
+                    <p className="max-w-xs text-sm leading-5 text-[#BCD0DB]">
+                      Chúng tôi đã gửi email xác minh. Nếu bạn không thấy email,
+                      hãy kiểm tra hộp thư spam hoặc ấn gửi lại bên dưới.
+                    </p>
                     <button
                       type="button"
                       className="block text-sm font-semibold text-[#8FBCD0] underline decoration-[#8FBCD0]/40 underline-offset-4 disabled:opacity-50"
