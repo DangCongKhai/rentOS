@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense, type ReactNode } from "react";
 import { AuthProvider } from "@/lib/auth-context";
+import { QueryProvider } from "@/lib/query-provider";
 import { SiteFrame } from "@/components/site-frame";
 import { FavouritesProvider } from "@/features/discovery/favourites-provider";
 import "./globals.css";
@@ -14,20 +15,22 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="vi" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col bg-surface-app text-primary antialiased">
-        <AuthProvider>
-          <Suspense
-            fallback={
-              <div
-                className="flex flex-1 items-center justify-center p-6 text-secondary"
-                role="status"
-              >
-                Đang tải trang…
-              </div>
-            }
-          >
-            <FavouritesProvider><SiteFrame>{children}</SiteFrame></FavouritesProvider>
-          </Suspense>
-        </AuthProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <Suspense
+              fallback={
+                <div
+                  className="flex flex-1 items-center justify-center p-6 text-secondary"
+                  role="status"
+                >
+                  Đang tải trang…
+                </div>
+              }
+            >
+              <FavouritesProvider><SiteFrame>{children}</SiteFrame></FavouritesProvider>
+            </Suspense>
+          </AuthProvider>
+        </QueryProvider>
       </body>
     </html>
   );

@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect, useSyncExternalStore } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   ApiError,
   listNotifications,
   markNotificationRead,
   type InboxNotification,
   type NotificationAudience,
+  type NotificationPage,
 } from "./auth-api";
+import { getQueryClient } from "./query-provider";
 
 export type HeldInbox = {
   userId: string;
@@ -20,11 +22,6 @@ export type HeldInbox = {
   error: string | null;
 };
 
-const slots = new Map<string, HeldInbox>();
-const listeners = new Set<() => void>();
-const inflight = new Set<string>();
-let epoch = 0;
-
 const emptyInbox: HeldInbox = {
   userId: "",
   audience: "OWNER",
@@ -36,148 +33,152 @@ const emptyInbox: HeldInbox = {
   error: null,
 };
 
-function slotKey(userId: string, audience: NotificationAudience): string {
-  return `${userId}:${audience}`;
+type AudienceInput = NotificationAudience | readonly NotificationAudience[];
+
+function normalizeAudiences(audience: AudienceInput): NotificationAudience[] {
+  const values = Array.isArray(audience) ? [...audience] : [audience];
+  return values.sort();
 }
 
-function emit(): void {
-  listeners.forEach((listener) => listener());
+function cursorKey(userId: string, audiences: readonly NotificationAudience[]) {
+  return ["notifications-page", userId, audiences] as const;
 }
 
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => listeners.delete(listener);
+function listKey(
+  userId: string,
+  audiences: readonly NotificationAudience[],
+  page: number,
+) {
+  return ["notifications", userId, audiences, page] as const;
 }
 
-function readSlot(
-  userId: string | undefined,
-  audience: NotificationAudience,
-): HeldInbox {
-  if (!userId) return emptyInbox;
-  return slots.get(slotKey(userId, audience)) ?? emptyInbox;
+function errorMessage(error: unknown): string {
+  return error instanceof ApiError
+    ? error.message
+    : "Không tải được thông báo. Vui lòng thử lại.";
 }
 
 export function clearHeldNotifications(): void {
-  epoch += 1;
-  inflight.clear();
-  slots.clear();
-  emit();
+  if (typeof window === "undefined") return;
+  const client = getQueryClient();
+  client.removeQueries({ queryKey: ["notifications"] });
+  client.removeQueries({ queryKey: ["notifications-page"] });
 }
 
-export function useNotificationUnread(
-  userId: string | undefined,
-  includeAdmin: boolean,
-): number {
-  const owner = useNotificationInbox(userId, "OWNER");
-  const tenant = useNotificationInbox(userId, "TENANT");
-  const admin = useNotificationInbox(
-    includeAdmin ? userId : undefined,
-    "ADMIN",
-  );
-
-  return owner.unread + tenant.unread + (includeAdmin ? admin.unread : 0);
+export function useNotificationUnread(userId: string | undefined): number {
+  return useNotificationInbox(userId, ["OWNER", "TENANT"]).unread;
 }
 
 export function useNotificationInbox(
   userId: string | undefined,
-  audience: NotificationAudience,
+  audience: AudienceInput,
 ): HeldInbox {
-  const inbox = useSyncExternalStore(
-    subscribe,
-    () => readSlot(userId, audience),
-    () => emptyInbox,
-  );
+  const audiences = normalizeAudiences(audience);
+  const cursor = useQuery({
+    queryKey: cursorKey(userId ?? "", audiences),
+    queryFn: () => 1,
+    enabled: Boolean(userId),
+    initialData: 1,
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+  const page = cursor.data ?? 1;
+  const list = useQuery({
+    queryKey: userId
+      ? listKey(userId, audiences, page)
+      : ["notifications", "signed-out"],
+    queryFn: () => listNotifications(audiences, page),
+    enabled: Boolean(userId),
+  });
 
-  useEffect(() => {
-    if (!userId) return;
-    if (slots.has(slotKey(userId, audience))) return;
-    void loadNotificationPage(userId, audience, 1);
-  }, [userId, audience]);
+  if (!userId) return emptyInbox;
 
-  return inbox;
+  if (list.isError && !list.data) {
+    return {
+      userId,
+      audience: audiences[0] ?? "OWNER",
+      items: [],
+      unread: 0,
+      page,
+      lastPage: 1,
+      status: "error",
+      error: errorMessage(list.error),
+    };
+  }
+
+  if (!list.data) {
+    return {
+      userId,
+      audience: audiences[0] ?? "OWNER",
+      items: [],
+      unread: 0,
+      page,
+      lastPage: 1,
+      status: "loading",
+      error: null,
+    };
+  }
+
+  return {
+    userId,
+    audience: audiences[0] ?? "OWNER",
+    items: list.data.data,
+    unread: list.data.unread_count,
+    page: list.data.meta.current_page,
+    lastPage: list.data.meta.last_page,
+    status: "ready",
+    error: null,
+  };
 }
 
 export async function loadNotificationPage(
   userId: string,
-  audience: NotificationAudience,
+  audience: AudienceInput,
   page: number,
 ): Promise<void> {
-  const key = slotKey(userId, audience);
-  if (inflight.has(key)) return;
-
-  const seen = epoch;
-  const previous = slots.get(key);
-  inflight.add(key);
-  slots.set(key, {
-    userId,
-    audience,
-    items: previous?.items ?? [],
-    unread: previous?.unread ?? 0,
-    page,
-    lastPage: previous?.lastPage ?? 1,
-    status: "loading",
-    error: null,
-  });
-  emit();
-
+  const audiences = normalizeAudiences(audience);
+  const client = getQueryClient();
+  client.setQueryData(cursorKey(userId, audiences), page);
   try {
-    const result = await listNotifications(audience, page);
-    if (seen !== epoch) return;
-    slots.set(key, {
-      userId,
-      audience,
-      items: result.data,
-      unread: result.unread_count,
-      page: result.meta.current_page,
-      lastPage: result.meta.last_page,
-      status: "ready",
-      error: null,
+    await client.fetchQuery({
+      queryKey: listKey(userId, audiences, page),
+      queryFn: () => listNotifications(audiences, page),
     });
-    emit();
-  } catch (error) {
-    if (seen !== epoch) return;
-    const message = error instanceof ApiError
-      ? error.message
-      : "Không tải được thông báo. Vui lòng thử lại.";
-    slots.set(key, {
-      userId,
-      audience,
-      items: [],
-      unread: previous?.unread ?? 0,
-      page,
-      lastPage: previous?.lastPage ?? 1,
-      status: "error",
-      error: message,
-    });
-    emit();
-  } finally {
-    inflight.delete(key);
+  } catch {
+    // The inbox query keeps the error for the page that just failed.
   }
 }
 
 export async function markHeldNotificationRead(
   userId: string,
-  audience: NotificationAudience,
+  audience: AudienceInput,
   id: string,
 ): Promise<void> {
-  const seen = epoch;
   const updated = await markNotificationRead(id);
-  if (seen !== epoch) return;
-
-  const key = slotKey(userId, audience);
-  const current = slots.get(key);
-  if (!current || current.userId !== userId) return;
-
-  const previous = current.items.find((item) => item.id === id);
-  const becameRead = previous?.read_at == null && updated.read_at != null;
-  slots.set(key, {
-    ...current,
-    items: current.items.map((item) => (
-      item.id === id ? updated : item
-    )),
-    unread: becameRead
-      ? Math.max(0, current.unread - 1)
-      : current.unread,
+  const client = getQueryClient();
+  const audiences = normalizeAudiences(audience);
+  const pages = client.getQueriesData<NotificationPage>({
+    queryKey: ["notifications", userId],
   });
-  emit();
+
+  for (const [key, page] of pages) {
+    const keyAudiences = key[2];
+    const overlaps = Array.isArray(keyAudiences)
+      && audiences.some((value) => keyAudiences.includes(value));
+    if (!page || !overlaps) continue;
+
+    const previous = page.data.find((item) => item.id === id);
+    if (!previous) continue;
+    const becameRead = previous.read_at == null && updated.read_at != null;
+    client.setQueryData<NotificationPage>(key, {
+      ...page,
+      data: page.data.map((item) => (item.id === id ? updated : item)),
+      unread_count: becameRead
+        ? Math.max(0, page.unread_count - 1)
+        : page.unread_count,
+    });
+  }
+
+  await client.invalidateQueries({ queryKey: ["notifications", userId] });
 }

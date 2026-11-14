@@ -330,6 +330,7 @@ type ApiDocument = {
   errors?: FieldErrors;
   data?: unknown;
   unread_count?: number;
+  unread_by_audience?: Partial<Record<NotificationAudience, number>>;
   meta?: NotificationPageMeta;
   two_factor?: boolean;
 };
@@ -418,6 +419,7 @@ export async function registerAccount(input: {
 export async function login(input: {
   email: string;
   password: string;
+  remember: boolean;
 }): Promise<void> {
   await request<void>("/login", {
     method: "POST",
@@ -900,17 +902,23 @@ export type NotificationPageMeta = {
 export type NotificationPage = {
   data: InboxNotification[];
   unread_count: number;
+  unread_by_audience: Partial<Record<NotificationAudience, number>>;
   meta: NotificationPageMeta;
 };
 
 export async function listNotifications(
-  audience: NotificationAudience,
+  audience: NotificationAudience | readonly NotificationAudience[],
   page = 1,
 ): Promise<NotificationPage> {
-  const params = new URLSearchParams({
-    audience,
-    page: String(page),
-  });
+  const params = new URLSearchParams({ page: String(page) });
+  const audiences = Array.isArray(audience) ? audience : [audience];
+  if (audiences.length === 1) {
+    params.set("audience", audiences[0]);
+  } else {
+    for (const value of audiences) {
+      params.append("audience[]", value);
+    }
+  }
   const payload = await requestDocument(
     `/api/v1/notifications?${params.toString()}`,
   );
@@ -919,6 +927,7 @@ export async function listNotifications(
   return {
     data: data as InboxNotification[],
     unread_count: payload?.unread_count ?? 0,
+    unread_by_audience: payload?.unread_by_audience ?? {},
     meta: payload?.meta ?? {
       current_page: page,
       last_page: 1,

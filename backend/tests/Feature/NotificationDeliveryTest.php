@@ -314,6 +314,74 @@ class NotificationDeliveryTest extends TestCase
         }
     }
 
+    public function test_notifications_default_to_owner_and_tenant_in_one_list(): void
+    {
+        $user = User::factory()->create();
+        foreach (range(1, 20) as $index) {
+            $this->insertNotification($user, 'OWNER', 'owner-'.$index, now()->subMinutes($index));
+        }
+        $this->insertNotification($user, 'TENANT', 'tenant-old', now()->subMinutes(30));
+        $this->insertNotification($user, 'ADMIN', 'admin-hidden', now());
+
+        $first = $this->asWebUser($user)->getJson('/api/v1/notifications');
+        $first->assertOk()
+            ->assertJsonPath('meta.total', 21)
+            ->assertJsonPath('meta.current_page', 1)
+            ->assertJsonPath('meta.last_page', 2)
+            ->assertJsonCount(20, 'data')
+            ->assertJsonPath('unread_count', 21)
+            ->assertJsonPath('unread_by_audience.OWNER', 20)
+            ->assertJsonPath('unread_by_audience.TENANT', 1)
+            ->assertJsonMissingPath('unread_by_audience.ADMIN');
+        $this->assertSame(
+            ['OWNER'],
+            collect($first->json('data'))->pluck('audience')->unique()->values()->all(),
+        );
+
+        $this->asWebUser($user)
+            ->getJson('/api/v1/notifications?page=2')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.audience', 'TENANT')
+            ->assertJsonPath('meta.total', 21);
+    }
+
+    public function test_admin_audience_still_requires_a_browser_session(): void
+    {
+        $admin = User::factory()->create(['is_admin' => true]);
+        $this->insertNotification($admin, 'ADMIN', 'admin-row', now());
+        $token = $admin->createToken('api', ['account:read'], now()->addHour())->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson('/api/v1/notifications?audience=ADMIN')
+            ->assertForbidden();
+        $this->withToken($token)
+            ->getJson('/api/v1/notifications?'.http_build_query(['audience' => ['OWNER', 'ADMIN']]))
+            ->assertForbidden();
+
+        $this->asWebUser($admin)
+            ->getJson('/api/v1/notifications?audience=ADMIN')
+            ->assertOk()
+            ->assertJsonPath('unread_count', 1)
+            ->assertJsonPath('unread_by_audience.ADMIN', 1)
+            ->assertJsonPath('data.0.audience', 'ADMIN');
+    }
+
+    private function insertNotification(User $user, string $audience, string $eventKey, \DateTimeInterface $createdAt): void
+    {
+        DB::table('notifications')->insert([
+            'id' => (string) Str::uuid(),
+            'recipient_id' => $user->id,
+            'audience' => $audience,
+            'event_key' => $eventKey,
+            'title' => $audience,
+            'body' => $eventKey,
+            'resource_type' => 'listing',
+            'resource_id' => (string) Str::uuid(),
+            'created_at' => $createdAt,
+        ]);
+    }
+
     private function asWebUser(User $user): static
     {
         $this->app['auth']->forgetGuards();

@@ -4,82 +4,71 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
-  useState,
   type ReactNode,
 } from "react";
-import { getCurrentUser, logout, type CurrentUser } from "./auth-api";
-import { clearHeldNotifications } from "./notification-inbox";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { ApiError, getCurrentUser, logout, type CurrentUser } from "./auth-api";
+import { getQueryClient } from "./query-provider";
 
 export type AuthStatus = "loading" | "authenticated" | "guest";
+
+const currentUserKey = ["current-user"] as const;
+
+function markCurrentUserGuest(): void {
+  const client = getQueryClient();
+  void client.cancelQueries({ queryKey: currentUserKey });
+  client.setQueryData<CurrentUser | null>(currentUserKey, null);
+  client.removeQueries({ queryKey: ["notifications"] });
+  client.removeQueries({ queryKey: ["notifications-page"] });
+}
 
 interface AuthContextValue {
   user: CurrentUser | null;
   status: AuthStatus;
-  refreshUser: () => Promise<void>;
+  refreshUser: () => Promise<CurrentUser | null>;
   signOut: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<CurrentUser | null>(null);
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: currentUserKey,
+    queryFn: async () => {
+      try {
+        return await getCurrentUser();
+      } catch (error) {
+        if (error instanceof ApiError && error.status === 401) return null;
+        throw error;
+      }
+    },
+    retry: (failureCount, error) => {
+      if (error instanceof ApiError && error.status === 401) return false;
+      return failureCount < 1;
+    },
+  });
+
+  const user = query.data ?? null;
+  const status: AuthStatus = query.isPending
+    ? "loading"
+    : query.isError || query.data == null
+      ? "guest"
+      : "authenticated";
 
   const refreshUser = useCallback(async () => {
-    try {
-      const currentUser = await getCurrentUser();
-      setUser(currentUser);
-      setStatus("authenticated");
-    } catch {
-      setUser(null);
-      setStatus("guest");
-    }
-  }, []);
-
-  useEffect(() => {
-    let active = true;
-
-    async function init() {
-      try {
-        const currentUser = await getCurrentUser();
-        if (active) {
-          setUser(currentUser);
-          setStatus("authenticated");
-        }
-      } catch {
-        if (active) {
-          setUser(null);
-          setStatus("guest");
-        }
-      }
-    }
-
-    void init();
-
-    const handleFocus = () => {
-      void refreshUser();
-    };
-
-    window.addEventListener("focus", handleFocus);
-    window.addEventListener("pageshow", handleFocus);
-
-    return () => {
-      active = false;
-      window.removeEventListener("focus", handleFocus);
-      window.removeEventListener("pageshow", handleFocus);
-    };
-  }, [refreshUser]);
+    await queryClient.invalidateQueries({ queryKey: currentUserKey });
+    return queryClient.getQueryData<CurrentUser | null>(currentUserKey) ?? null;
+  }, [queryClient]);
 
   const signOut = useCallback(async () => {
+    await queryClient.cancelQueries({ queryKey: currentUserKey });
     try {
       await logout();
     } finally {
-      clearHeldNotifications();
-      setUser(null);
-      setStatus("guest");
+      markCurrentUserGuest();
     }
-  }, []);
+  }, [queryClient]);
 
   return (
     <AuthContext.Provider value={{ user, status, refreshUser, signOut }}>
