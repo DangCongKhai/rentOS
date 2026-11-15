@@ -13,6 +13,11 @@ class ResolveListingReportRequest extends FormRequest
         return $user !== null && $user->isAdmin();
     }
 
+    protected function failedAuthorization(): void
+    {
+        abort(404);
+    }
+
     /**
      * @return array<string, mixed>
      */

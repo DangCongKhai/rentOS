@@ -114,7 +114,7 @@ class AdminListingReportsController extends Controller
             abort(404, 'Không tìm thấy báo cáo.');
         }
 
-        $action->execute($report, $admin);
+        $report = $action->execute($report, $admin);
 
         $report->load(['listing.property.owner', 'reporter', 'reviewer']);
 
@@ -143,7 +143,7 @@ class AdminListingReportsController extends Controller
 
         $validated = $request->validated();
 
-        $action->execute(
+        $report = $action->execute(
             report: $report,
             admin: $admin,
             resolutionSummary: $validated['resolution_summary'],
@@ -179,7 +179,7 @@ class AdminListingReportsController extends Controller
 
         $validated = $request->validated();
 
-        $action->execute(
+        $report = $action->execute(
             report: $report,
             admin: $admin,
             resolutionSummary: $validated['resolution_summary'],

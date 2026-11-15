@@ -48,7 +48,7 @@ class AdminListingSuspensionController extends Controller
 
         $validated = $request->validated();
 
-        $action->execute($listing, $admin, $validated['reason']);
+        $listing = $action->execute($listing, $admin, $validated['reason']);
 
         return response()->json([
             'message' => 'Tin đăng đã được đình chỉ thành công.',
@@ -80,7 +80,7 @@ class AdminListingSuspensionController extends Controller
 
         $validated = $request->validated();
 
-        $action->execute($listing, $admin, $validated['reason']);
+        $listing = $action->execute($listing, $admin, $validated['reason']);
 
         return response()->json([
             'message' => 'Tin đăng đã được khôi phục thành công.',
