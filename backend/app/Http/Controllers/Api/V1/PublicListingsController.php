@@ -23,9 +23,7 @@ class PublicListingsController extends Controller
         $criteria = $this->criteria($request);
 
         return DB::transaction(function () use ($criteria, $presentation): JsonResponse {
-            $ids = EligibleUnitQuery::matchingListingIds($criteria);
-            $total = count($ids);
-            $pageIds = array_slice($ids, ($criteria->page - 1) * $criteria->perPage, $criteria->perPage);
+            ['ids' => $pageIds, 'total' => $total] = EligibleUnitQuery::matchingListingPage($criteria);
             $listings = $presentation->cardsFor($pageIds, $criteria);
 
             $meta = [

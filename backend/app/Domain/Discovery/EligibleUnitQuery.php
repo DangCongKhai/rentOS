@@ -35,26 +35,59 @@ final class EligibleUnitQuery
     }
 
     /**
-     * @return list<string>
+     * @return array{ids: list<string>, total: int}
      */
-    public static function matchingListingIds(ListingSearchCriteria $criteria): array
+    public static function matchingListingPage(ListingSearchCriteria $criteria): array
     {
         self::useWordSimilarityThreshold();
+
+        $total = (int) DB::query()
+            ->fromSub(self::matchingListingIdBaseQuery($criteria)->toBase(), 'matched_listings')
+            ->count();
+
+        $ids = self::matchingListingIdPageQuery($criteria)
+            ->offset(($criteria->page - 1) * $criteria->perPage)
+            ->limit($criteria->perPage)
+            ->pluck('listing_id')
+            ->map(fn (mixed $id): string => (string) $id)
+            ->all();
+
+        return ['ids' => $ids, 'total' => $total];
+    }
+
+    /**
+     * Grouped listing ids without ordering (for counting matches).
+     *
+     * @return Builder<Unit>
+     */
+    private static function matchingListingIdBaseQuery(ListingSearchCriteria $criteria): Builder
+    {
         $query = Unit::query()->select('discovery_listings.id as listing_id');
         self::constrain($query, $criteria, true);
+        $query->groupBy('discovery_listings.id');
+
+        return $query;
+    }
+
+    /**
+     * Grouped listing ids with stable discovery order.
+     *
+     * @return Builder<Unit>
+     */
+    private static function matchingListingIdPageQuery(ListingSearchCriteria $criteria): Builder
+    {
+        $query = self::matchingListingIdBaseQuery($criteria);
 
         if ($criteria->location !== null) {
             $needle = $criteria->location->value();
             $query->selectRaw('MAX('.self::relevanceExpression().') as relevance', [$needle, $needle, $needle]);
-            $query->groupBy('discovery_listings.id');
             $query->orderByDesc('relevance')->orderBy('discovery_listings.id');
         } else {
             $query->selectRaw('MAX(discovery_listings.created_at) as published_at');
-            $query->groupBy('discovery_listings.id');
             $query->orderByDesc('published_at')->orderBy('discovery_listings.id');
         }
 
-        return $query->pluck('listing_id')->map(fn (mixed $id): string => (string) $id)->all();
+        return $query;
     }
 
     /**

@@ -108,9 +108,9 @@ export default function Home() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchListings(new URLSearchParams(), controller.signal)
+    fetchListings(new URLSearchParams({ per_page: "3" }), controller.signal)
       .then((body) => {
-        if (!controller.signal.aborted) setListings(body.data.slice(0, 3));
+        if (!controller.signal.aborted) setListings(body.data);
       })
       .catch(() => undefined);
     return () => controller.abort();
