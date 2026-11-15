@@ -6,6 +6,7 @@ use App\Actions\Tenancies\ReadTenancyTimeline;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
@@ -83,6 +84,40 @@ class TenancyTimelineReadTest extends TestCase
             User::factory()->create(),
             $case['tenancy']->id,
         );
+    }
+
+    public function test_timeline_includes_pending_renewal_request_and_its_audit_event(): void
+    {
+        $case = $this->createPendingTenancy(false);
+
+        Auth::forgetGuards();
+        $this->actingAs($case['tenant'], 'web')->postJson(
+            "/api/v1/tenant/tenancies/{$case['tenancy']->id}/contracts/{$case['contract']->id}/confirm",
+            ['client_operation_id' => (string) Str::uuid()],
+        )->assertOk();
+
+        $tenancy = DB::table('tenancies')->where('id', $case['tenancy']->id)->firstOrFail();
+        $requestedEndDate = CarbonImmutable::parse($tenancy->confirmed_end_date)
+            ->addMonthsNoOverflow(2)
+            ->toDateString();
+
+        Auth::forgetGuards();
+        $request = $this->actingAs($case['tenant'], 'web')->postJson(
+            "/api/v1/tenant/tenancies/{$tenancy->id}/renewal-requests",
+            [
+                'client_operation_id' => (string) Str::uuid(),
+                'requested_end_date' => $requestedEndDate,
+                'proposed_monthly_rent' => 4_200_000,
+                'message' => 'Tôi muốn tiếp tục thuê căn này.',
+            ],
+        )->assertCreated();
+
+        $timeline = app(ReadTenancyTimeline::class)->handle($case['tenant'], $tenancy->id);
+        $this->assertCount(1, $timeline['renewal_requests']);
+        $this->assertSame($request->json('data.id'), $timeline['renewal_requests'][0]->id);
+        $this->assertSame($requestedEndDate, $timeline['renewal_requests'][0]->requested_end_date);
+        $this->assertSame('PENDING', $timeline['renewal_requests'][0]->status);
+        $this->assertContains('tenancy.renewal.requested', $timeline['events']->pluck('action')->all());
     }
 
     /**

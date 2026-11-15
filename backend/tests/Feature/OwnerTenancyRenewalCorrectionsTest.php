@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Actions\Tenancies\ExpireTenancyReservation;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -161,6 +162,54 @@ class OwnerTenancyRenewalCorrectionsTest extends TestCase
             'confirmed_end_date' => $case['confirmed_end_date'],
             'latest_confirmed_contract_id' => $case['basis']->id,
             'pending_contract_id' => $secondCorrection->json('data.contract.id'),
+        ]);
+    }
+
+    public function test_owner_can_correct_the_latest_renewal_version_after_its_confirmation_expires(): void
+    {
+        $case = $this->declinedRenewal();
+        Auth::forgetGuards();
+        $firstCorrection = $this->actingAs($case['listing']->owner, 'web')->postJson(
+            $this->correctionPath($case),
+            $this->correctionPayload($case, $case['declined_contract']->id),
+        )->assertCreated();
+        $expiredContractId = $firstCorrection->json('data.contract.id');
+        $expiredDeadline = now()->subSecond();
+
+        DB::table('tenancies')
+            ->where('id', $case['tenancy']->id)
+            ->update(['confirmation_expires_at' => $expiredDeadline]);
+
+        $this->assertTrue(app(ExpireTenancyReservation::class)->handle(
+            $case['tenancy']->id,
+            $expiredContractId,
+            $expiredDeadline->toDateTimeString(),
+        ));
+
+        $nextPayload = $this->correctionPayload($case, $expiredContractId, 4_650_000);
+        Auth::forgetGuards();
+        $nextCorrection = $this->actingAs($case['listing']->owner, 'web')->postJson(
+            $this->correctionPath($case),
+            $nextPayload,
+        )->assertCreated()
+            ->assertJsonPath('data.contract.version_number', 4)
+            ->assertJsonPath('data.contract.supersedes_contract_id', $expiredContractId)
+            ->assertJsonPath('data.contract.basis_contract_id', $case['basis']->id);
+
+        $this->assertDatabaseHas('tenancy_contracts', [
+            'id' => $expiredContractId,
+            'tenant_confirmed_at' => null,
+            'tenant_rejected_at' => null,
+        ]);
+        $this->assertDatabaseHas('tenancy_renewal_requests', [
+            'id' => $case['renewal_request']->id,
+            'status' => 'PENDING',
+        ]);
+        $this->assertDatabaseHas('tenancies', [
+            'id' => $case['tenancy']->id,
+            'confirmed_end_date' => $case['confirmed_end_date'],
+            'blocked_end_date' => $nextPayload['end_date'],
+            'pending_contract_id' => $nextCorrection->json('data.contract.id'),
         ]);
     }
 
