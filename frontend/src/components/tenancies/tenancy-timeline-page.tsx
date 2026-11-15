@@ -15,6 +15,7 @@ import {
   type TenancyContractRecord,
   type TenancyTimeline,
 } from "@/lib/auth-api";
+import { TenancyRenewalActions } from "@/components/tenancies/tenancy-renewal-actions";
 
 type Party = "owner" | "tenant";
 
@@ -83,6 +84,14 @@ function eventLabel(action: string): string {
     "tenancy.contract.confirmed": "Người thuê đã xác nhận hợp đồng",
     "tenancy.contract.declined": "Người thuê đã từ chối hợp đồng",
     "tenancy.contract.corrected": "Chủ nhà đã gửi phiên bản hợp đồng mới",
+    "tenancy.renewal.requested": "Người thuê đã gửi yêu cầu gia hạn",
+    "tenancy.renewal.proposed": "Chủ nhà đã gửi đề xuất gia hạn",
+    "tenancy.renewal.corrected": "Chủ nhà đã gửi phiên bản gia hạn điều chỉnh",
+    "tenancy.renewal.proposal.declined": "Người thuê đã từ chối đề xuất gia hạn",
+    "tenancy.renewal.proposal.expired": "Đề xuất gia hạn đã hết hạn",
+    "tenancy.renewal.accepted": "Hai bên đã xác nhận gia hạn",
+    "tenancy.renewal.withdrawn": "Người thuê đã rút yêu cầu gia hạn",
+    "tenancy.renewal.rejected": "Chủ nhà đã từ chối yêu cầu gia hạn",
     "tenancy.moved_in": "Đã ghi nhận ngày nhận nhà",
     "tenancy.cancelled": "Kỳ thuê đã bị hủy",
     "tenancy.ended": "Kỳ thuê đã kết thúc",
@@ -525,7 +534,6 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
           </p>
         </section>
       )}
-
       {canCorrect && latestContract && (
         <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <div>
@@ -565,6 +573,17 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
 
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
+          {party === "owner" && (
+            <TenancyRenewalActions
+              party="owner"
+              timeline={timeline}
+              onSuccess={(message) => {
+                setSuccessMessage(message);
+                setRetry((value) => value + 1);
+              }}
+            />
+          )}
+
           {party === "tenant" && pendingContract && (
             <ContractCard
               contract={pendingContract}
@@ -674,10 +693,23 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
         </div>
 
         <aside className="space-y-4">
+          {party === "tenant" && (
+            <TenancyRenewalActions
+              party="tenant"
+              timeline={timeline}
+              onSuccess={(message) => {
+                setSuccessMessage(message);
+                setRetry((value) => value + 1);
+              }}
+            />
+          )}
+
           {party === "tenant" &&
             pendingContract &&
             tenancy.pending_contract_id === pendingContract.id &&
-            tenancy.status === "PENDING_CONFIRMATION" && (
+            (tenancy.status === "PENDING_CONFIRMATION" ||
+              (pendingContract.type === "RENEWAL" &&
+                ["CONFIRMED", "ACTIVE"].includes(tenancy.status))) && (
               <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
                 <h2 className="text-lg font-bold text-slate-900">Quyết định của bạn</h2>
                 <dl className="mt-4 space-y-3 border-b border-slate-100 pb-4 text-sm">

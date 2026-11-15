@@ -160,16 +160,24 @@ class CorrectTenancyRenewalProposal
                     ->lockForUpdate()
                     ->first();
 
+                $previousWasExpired = $previousContract !== null
+                    && DB::table('audit_logs')
+                        ->where('entity_type', 'tenancy_renewal_request')
+                        ->where('entity_id', $renewalRequestId)
+                        ->where('action', 'tenancy.renewal.proposal.expired')
+                        ->where('correlation_id', $previousContract->id)
+                        ->exists();
+
                 abort_unless(
                     $previousContract !== null
                         && $previousContract->type === 'RENEWAL'
                         && $previousContract->renewal_request_id === $renewalRequestId
                         && $previousContract->basis_contract_id === $tenancy->latest_confirmed_contract_id
                         && $previousContract->owner_confirmed_at !== null
-                        && $previousContract->tenant_rejected_at !== null
+                        && ($previousContract->tenant_rejected_at !== null || $previousWasExpired)
                         && $previousContract->tenant_confirmed_at === null,
                     409,
-                    'Chỉ có thể điều chỉnh phiên bản gia hạn gần nhất mà người thuê đã từ chối.',
+                    'Chỉ có thể điều chỉnh phiên bản gia hạn gần nhất mà người thuê đã từ chối hoặc đã hết hạn.',
                 );
 
                 $latestVersion = (int) DB::table('tenancy_contracts')

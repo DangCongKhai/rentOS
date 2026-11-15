@@ -154,6 +154,19 @@ export type TenancyContractRecord = {
   tenant_rejection_reason: string | null;
 };
 
+export type TenancyRenewalRequest = {
+  id: string;
+  requested_end_date: string;
+  proposed_monthly_rent: string | number;
+  message: string | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type TenancyTimeline = {
   tenancy: {
     id: string;
@@ -199,14 +212,37 @@ export type TenancyTimeline = {
     tenant_name: string;
   };
   contracts: TenancyContractRecord[];
+  renewal_requests: TenancyRenewalRequest[];
   pending_contract: TenancyContractRecord | null;
   current_agreement: TenancyContractRecord | null;
   upcoming_agreements: TenancyContractRecord[];
   events: Array<{
+    entity_type: string;
     action: string;
     reason: string | null;
+    correlation_id: string | null;
     created_at: string;
   }>;
+};
+
+export type TenancyRenewalMutationResult = {
+  id?: string;
+  tenancy_id: string;
+  status?: string;
+  confirmation_expires_at?: string | null;
+  blocked_end_date?: string | null;
+  replayed: boolean;
+  contract?: {
+    id: string;
+    version_number: number;
+    type: "RENEWAL";
+    start_date: string;
+    end_date: string;
+    monthly_rent?: string | number;
+    deposit_amount?: string | number;
+    supersedes_contract_id?: string | null;
+    basis_contract_id?: string | null;
+  };
 };
 
 export type TenancyDecisionResult = {
@@ -576,6 +612,78 @@ export async function getTenantTenancyTimeline(
 ): Promise<TenancyTimeline> {
   return request<TenancyTimeline>(
     `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}`,
+  );
+}
+
+export async function requestTenantTenancyRenewal(
+  tenancyId: string,
+  input: {
+    client_operation_id: string;
+    requested_end_date: string;
+    proposed_monthly_rent: number;
+    message?: string;
+  },
+): Promise<TenancyRenewalRequest> {
+  return request<TenancyRenewalRequest>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function withdrawTenantTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: { client_operation_id: string },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/withdraw`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function proposeOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: {
+    client_operation_id: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+  },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/proposal`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function correctOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: {
+    client_operation_id: string;
+    supersedes_contract_id: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+  },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/corrections`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function rejectOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: { client_operation_id: string; reason: string },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/reject`,
+    { method: "POST", body: JSON.stringify(input) },
   );
 }
 
