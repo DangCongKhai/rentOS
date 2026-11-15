@@ -1,0 +1,98 @@
+# Pull-only production stack.
+# GitHub Actions builds and publishes the images. This file has no build key,
+# so Dokploy only downloads the images and starts containers.
+# Runtime secrets come from the Dokploy environment and are passed in below.
+# They are not stored in the images.
+
+x-laravel-env: &laravel-env
+  HOME: /var/www
+  APP_NAME: ${APP_NAME:-rentOS}
+  APP_ENV: ${APP_ENV:-production}
+  APP_DEBUG: ${APP_DEBUG:-false}
+  APP_URL: ${APP_URL:-https://api.rentos.io.vn}
+  APP_KEY: ${APP_KEY:?APP_KEY is required}
+  FRONTEND_URL: ${FRONTEND_URL:-https://rentos.io.vn}
+  LOG_CHANNEL: ${LOG_CHANNEL:-stack}
+  LOG_STACK: ${LOG_STACK:-stderr}
+  LOG_LEVEL: ${LOG_LEVEL:-error}
+  TELESCOPE_ENABLED: ${TELESCOPE_ENABLED:-false}
+  DB_CONNECTION: ${DB_CONNECTION:-pgsql}
+  DB_HOST: ${DB_HOST:?DB_HOST is required}
+  DB_PORT: ${DB_PORT:-5432}
+  DB_DATABASE: ${DB_DATABASE:?DB_DATABASE is required}
+  DB_USERNAME: ${DB_USERNAME:?DB_USERNAME is required}
+  DB_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+  DB_SSLMODE: ${DB_SSLMODE:-require}
+  DB_SEARCH_PATH: ${DB_SEARCH_PATH:-public}
+  DB_SCHEMA: ${DB_SCHEMA:-public}
+  CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://rentos.io.vn}
+  SANCTUM_STATEFUL_DOMAINS: ${SANCTUM_STATEFUL_DOMAINS:-rentos.io.vn}
+  SESSION_DRIVER: ${SESSION_DRIVER:-file}
+  SESSION_DOMAIN: ${SESSION_DOMAIN:-.rentos.io.vn}
+  SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}
+  SESSION_SAME_SITE: ${SESSION_SAME_SITE:-lax}
+  QUEUE_CONNECTION: ${QUEUE_CONNECTION:-database}
+  CACHE_STORE: ${CACHE_STORE:-file}
+  SUPABASE_URL: ${SUPABASE_URL:?SUPABASE_URL is required}
+  SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?SUPABASE_SERVICE_ROLE_KEY is required}
+  SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-property-media}
+  NOTIFICATIONS_MAILER: ${NOTIFICATIONS_MAILER:-resend}
+  RESEND_API_KEY: ${RESEND_API_KEY:?RESEND_API_KEY is required}
+  MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS:-support@rentos.io.vn}
+  MAIL_FROM_NAME: ${MAIL_FROM_NAME:-rentOS}
+  MAIL_MAILER: ${MAIL_MAILER:-resend}
+
+services:
+  migrate:
+    image: ghcr.io/${IMAGE_OWNER:-ndrhmdk}/rentos-backend:${IMAGE_TAG:-production}
+    pull_policy: always
+    restart: "no"
+    command:
+      - php
+      - artisan
+      - migrate
+      - --force
+    environment: *laravel-env
+
+  frontend:
+    image: ghcr.io/${IMAGE_OWNER:-ndrhmdk}/rentos-frontend:${IMAGE_TAG:-production}
+    pull_policy: always
+    restart: unless-stopped
+    expose:
+      - "3000"
+    environment:
+      NODE_ENV: production
+      PORT: "3000"
+
+  api:
+    image: ghcr.io/${IMAGE_OWNER:-ndrhmdk}/rentos-backend:${IMAGE_TAG:-production}
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    expose:
+      - "8080"
+    environment: *laravel-env
+    volumes:
+      - laravel_storage:/var/www/html/storage
+
+  worker:
+    image: ghcr.io/${IMAGE_OWNER:-ndrhmdk}/rentos-backend:${IMAGE_TAG:-production}
+    pull_policy: always
+    restart: unless-stopped
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    command:
+      - php
+      - artisan
+      - queue:work
+      - --sleep=3
+      - --tries=3
+    environment: *laravel-env
+    volumes:
+      - laravel_storage:/var/www/html/storage
+
+volumes:
+  laravel_storage:
