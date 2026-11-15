@@ -31,4 +31,12 @@ php artisan db:seed --class='Database\Seeders\Rnt05ProposalRequestsSeeder' --no-
 
 The seeder uses published listings from the baseline data and is safe to rerun; existing demo requests are skipped. If no baseline listing is available for `owner1@rentos.test`, run `BaselineSeeder` first. The five test tenants are `tenant.rnt05.1@rentos.test` through `tenant.rnt05.5@rentos.test`, all with the password `password`.
 
+To create a confirmed tenancy with one pending RNT-09 renewal request for the baseline owner and tenant, run:
+
+```bash
+php artisan db:seed --class="Database\\Seeders\\Rnt09RenewalFlowSeeder" --no-interaction
+```
+
+The seeder is limited to local/testing PostgreSQL databases and is safe to rerun; it recognizes its fixture by a stable tenancy operation ID. It requires the baseline owner’s published listing and a ready unit. Sign in as `owner1@rentos.test` or `tenant1@example.com` with password `password` to test the workflow. The command prints the tenancy and renewal request IDs. The seeded confirmed lease starts in 14 days and runs for six months, leaving time to exercise the renewal proposal and response flow.
+
 Image sources, the `seed/` prefix, and rerun behavior are documented in the [media fixture setup](../../docs/setup/media-fixtures.md).
