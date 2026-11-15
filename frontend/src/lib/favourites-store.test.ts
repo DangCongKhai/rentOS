@@ -86,4 +86,13 @@ describe("favourites intent", () => {
     expect(setFavourite).not.toHaveBeenCalled();
     stop?.();
   });
+
+  it("marks load failure without a toast notice", async () => {
+    vi.mocked(getFavouriteIds).mockRejectedValue(new Error("Offline"));
+    const store = new FavouritesStore("account");
+    const deactivate = store.activate();
+    await waitFor(() => expect(store.snapshot().status).toBe("error"));
+    expect(store.snapshot().notice).toBeNull();
+    deactivate?.();
+  });
 });

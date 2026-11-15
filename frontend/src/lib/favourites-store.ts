@@ -77,7 +77,7 @@ export class FavouritesStore {
       this.committed = new Set(data.ids);
       this.publish({ status: "ready", revision: this.state.revision + 1 });
     } catch {
-      if (!controller.signal.aborted) this.publish({ status: "error", notice: "error" });
+      if (!controller.signal.aborted) this.publish({ status: "error" });
     }
   }
 

@@ -63,11 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = useCallback(async () => {
     await queryClient.cancelQueries({ queryKey: currentUserKey });
-    try {
-      await logout();
-    } finally {
-      markCurrentUserGuest();
-    }
+    // Show guest UI immediately. The session cookie is HttpOnly, so only
+    // POST /logout can clear it; that runs in the background.
+    markCurrentUserGuest();
+    void logout().catch(() => {
+      // UI is already guest. A failed logout leaves the server session until
+      // the next successful logout or cookie expiry.
+    });
   }, [queryClient]);
 
   return (

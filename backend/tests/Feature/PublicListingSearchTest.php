@@ -161,6 +161,37 @@ class PublicListingSearchTest extends TestCase
             ->assertJsonValidationErrors(['move_in_date']);
     }
 
+    public function test_listings_index_paginates_with_sql_limit_and_reports_full_total(): void
+    {
+        $published = [];
+        for ($i = 0; $i < 5; $i++) {
+            $published[] = PublicListingFixture::published([
+                'title' => "Tin đăng phân trang {$i}",
+                'address_line' => "{$i} Nguyễn Văn Linh",
+            ]);
+        }
+
+        $pageOne = $this->getJson('/api/v1/listings?per_page=3&page=1')->assertOk();
+        $pageOne->assertJsonPath('meta.per_page', 3);
+        $pageOne->assertJsonPath('meta.current_page', 1);
+        $pageOne->assertJsonPath('meta.total', 5);
+        $pageOne->assertJsonPath('meta.last_page', 2);
+        $this->assertCount(3, $pageOne->json('data'));
+
+        $pageTwo = $this->getJson('/api/v1/listings?per_page=3&page=2')->assertOk();
+        $pageTwo->assertJsonPath('meta.current_page', 2);
+        $pageTwo->assertJsonPath('meta.total', 5);
+        $this->assertCount(2, $pageTwo->json('data'));
+
+        $pageOneIds = collect($pageOne->json('data'))->pluck('id')->all();
+        $pageTwoIds = collect($pageTwo->json('data'))->pluck('id')->all();
+        $this->assertSame([], array_values(array_intersect($pageOneIds, $pageTwoIds)));
+        $this->assertEqualsCanonicalizing(
+            collect($published)->pluck('listingId')->all(),
+            [...$pageOneIds, ...$pageTwoIds],
+        );
+    }
+
     public function test_amenity_catalog_is_public(): void
     {
         $this->getJson('/api/v1/amenities')
