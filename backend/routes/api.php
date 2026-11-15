@@ -70,4 +70,3 @@ Route::get('/debug/db-performance', function () {
         'queries_ms' => $queries,
     ]);
 });
-
