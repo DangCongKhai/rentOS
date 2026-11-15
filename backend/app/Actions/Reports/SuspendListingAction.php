@@ -8,6 +8,7 @@ use App\Models\Listing;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class SuspendListingAction
 {
@@ -65,6 +66,7 @@ class SuspendListingAction
                     'suspension_reason' => $trimmedReason,
                 ],
                 'reason' => $trimmedReason,
+                'correlation_id' => (string) Str::uuid(),
             ]);
 
             $ownerId = $lockedListing->property?->owner_id;

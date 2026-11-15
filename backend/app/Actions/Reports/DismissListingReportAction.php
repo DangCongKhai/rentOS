@@ -8,6 +8,7 @@ use App\Models\ListingReport;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class DismissListingReportAction
 {
@@ -73,6 +74,7 @@ class DismissListingReportAction
                     'resolution_summary' => trim($resolutionSummary),
                 ],
                 'reason' => 'Report dismissed by admin',
+                'correlation_id' => (string) Str::uuid(),
             ]);
 
             // Notify reporter of safe outcome

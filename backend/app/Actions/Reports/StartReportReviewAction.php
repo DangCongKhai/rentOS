@@ -7,6 +7,7 @@ use App\Models\ListingReport;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class StartReportReviewAction
 {
@@ -62,6 +63,7 @@ class StartReportReviewAction
                     'reviewed_at' => $now->toIso8601String(),
                 ],
                 'reason' => 'Admin started investigation',
+                'correlation_id' => (string) Str::uuid(),
             ]);
 
             return $lockedReport;

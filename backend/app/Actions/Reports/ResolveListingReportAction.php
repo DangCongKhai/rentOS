@@ -9,6 +9,7 @@ use App\Models\ListingReport;
 use App\Models\User;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ResolveListingReportAction
 {
@@ -94,6 +95,7 @@ class ResolveListingReportAction
                             'suspension_reason' => $reason,
                         ],
                         'reason' => 'Suspended via report resolution',
+                        'correlation_id' => (string) Str::uuid(),
                     ]);
 
                     // Notify owner if available
@@ -136,6 +138,7 @@ class ResolveListingReportAction
                     'resolution_summary' => trim($resolutionSummary),
                 ],
                 'reason' => 'Report resolved by admin',
+                'correlation_id' => (string) Str::uuid(),
             ]);
 
             // Notify reporter of safe outcome
