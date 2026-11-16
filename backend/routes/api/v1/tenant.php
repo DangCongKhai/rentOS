@@ -3,12 +3,21 @@
 use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use App\Http\Controllers\Api\V1\TenantRentalRequestsController;
 use App\Http\Controllers\Api\V1\TenantTenanciesController;
+use App\Http\Controllers\Api\V1\TenantTenancyRenewalRequestsController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/tenant/tenancies', [TenantTenanciesController::class, 'index'])->name('tenant.tenancies');
     Route::get('/tenant/tenancies/{tenancy}', [TenancyTimelineController::class, 'show'])
         ->name('tenant.tenancies.show');
+    Route::post(
+        '/tenant/tenancies/{tenancy}/renewal-requests',
+        [TenantTenancyRenewalRequestsController::class, 'store'],
+    )->whereUuid('tenancy')->name('tenant.tenancies.renewal-requests.store');
+    Route::post(
+        '/tenant/tenancies/{tenancy}/renewal-requests/{renewalRequest}/withdraw',
+        [TenantTenancyRenewalRequestsController::class, 'withdraw'],
+    )->whereUuid('tenancy')->whereUuid('renewalRequest')->name('tenant.tenancies.renewal-requests.withdraw');
     Route::post(
         '/tenant/tenancies/{tenancy}/contracts/{contract}/confirm',
         [TenantTenanciesController::class, 'confirmContract'],

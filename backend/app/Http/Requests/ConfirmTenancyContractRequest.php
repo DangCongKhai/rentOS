@@ -26,4 +26,15 @@ class ConfirmTenancyContractRequest extends FormRequest
             'client_operation_id' => ['required', 'uuid'],
         ];
     }
+
+    /**
+     * @return array<string, string>
+     */
+    public function messages(): array
+    {
+        return [
+            'client_operation_id.required' => 'Thiếu mã thao tác xác nhận.',
+            'client_operation_id.uuid' => 'Mã thao tác xác nhận không hợp lệ.',
+        ];
+    }
 }

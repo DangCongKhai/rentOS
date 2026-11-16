@@ -15,6 +15,7 @@ import {
   type TenancyContractRecord,
   type TenancyTimeline,
 } from "@/lib/auth-api";
+import { TenancyRenewalActions } from "@/components/tenancies/tenancy-renewal-actions";
 
 type Party = "owner" | "tenant";
 
@@ -83,6 +84,14 @@ function eventLabel(action: string): string {
     "tenancy.contract.confirmed": "Người thuê đã xác nhận hợp đồng",
     "tenancy.contract.declined": "Người thuê đã từ chối hợp đồng",
     "tenancy.contract.corrected": "Chủ nhà đã gửi phiên bản hợp đồng mới",
+    "tenancy.renewal.requested": "Người thuê đã gửi yêu cầu gia hạn",
+    "tenancy.renewal.proposed": "Chủ nhà đã gửi đề xuất gia hạn",
+    "tenancy.renewal.corrected": "Chủ nhà đã gửi phiên bản gia hạn điều chỉnh",
+    "tenancy.renewal.proposal.declined": "Người thuê đã từ chối đề xuất gia hạn",
+    "tenancy.renewal.proposal.expired": "Đề xuất gia hạn đã hết hạn",
+    "tenancy.renewal.accepted": "Hai bên đã xác nhận gia hạn",
+    "tenancy.renewal.withdrawn": "Người thuê đã rút yêu cầu gia hạn",
+    "tenancy.renewal.rejected": "Chủ nhà đã từ chối yêu cầu gia hạn",
     "tenancy.moved_in": "Đã ghi nhận ngày nhận nhà",
     "tenancy.cancelled": "Kỳ thuê đã bị hủy",
     "tenancy.ended": "Kỳ thuê đã kết thúc",
@@ -247,6 +256,7 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
   const [lifecycleLoading, setLifecycleLoading] = useState(false);
   const [closeLoading, setCloseLoading] = useState(false);
   const [declineReason, setDeclineReason] = useState("");
+  const [showDeclineReason, setShowDeclineReason] = useState(false);
   const [closeReason, setCloseReason] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
 
@@ -315,7 +325,11 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
   }
 
   async function declinePendingContract() {
-    if (!timeline?.pending_contract || party !== "tenant") return;
+    if (
+      !timeline?.pending_contract ||
+      party !== "tenant" ||
+      declineReason.trim().length < 5
+    ) return;
 
     setError("");
     setSuccessMessage("");
@@ -328,6 +342,7 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
       });
 
       setDeclineReason("");
+      setShowDeclineReason(false);
       setSuccessMessage("Bạn đã từ chối phiên bản hợp đồng này.");
       setRetry((value) => value + 1);
     } catch (caught) {
@@ -512,14 +527,13 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
       {pendingContract && (
         <section className="rounded-2xl border border-blue-200 bg-blue-50 p-5">
           <h2 className="font-semibold text-slate-900">
-            Phiên bản {pendingContract.version_number} đang chờ xác nhận
+            Phiên bản {pendingContract.version_number} · {pendingContract.type === "RENEWAL" ? "Gia hạn" : "Bản gốc"} đang chờ xác nhận
           </h2>
           <p className="mt-1 text-sm text-slate-700">
             Hạn phản hồi: {formatDateTime(tenancy.confirmation_expires_at)}
           </p>
         </section>
       )}
-
       {canCorrect && latestContract && (
         <section className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-5">
           <div>
@@ -557,63 +571,30 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
         </p>
       )}
 
-      {party === "tenant" &&
-        pendingContract &&
-        tenancy.pending_contract_id === pendingContract.id &&
-        tenancy.status === "PENDING_CONFIRMATION" && (
-          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-            <h2 className="text-lg font-bold text-slate-900">
-              Xác nhận phiên bản {pendingContract.version_number}
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Vui lòng kiểm tra thời hạn, giá thuê, tiền cọc và các quy định
-              dưới đây trước khi phản hồi phiên bản này.
-            </p>
-
-            <label
-              htmlFor="decline-reason"
-              className="mt-5 block text-sm font-semibold text-slate-800"
-            >
-              Lý do từ chối
-            </label>
-            <textarea
-              id="decline-reason"
-              value={declineReason}
-              onChange={(event) => setDeclineReason(event.target.value)}
-              minLength={5}
-              maxLength={2000}
-              rows={3}
-              placeholder="Nhập lý do (ít nhất 5 ký tự)"
-              className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3368a0] focus:ring-2 focus:ring-blue-100"
-            />
-
-            <div className="mt-4 flex flex-wrap justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => void declinePendingContract()}
-                disabled={decisionLoading || declineReason.trim().length < 5}
-                className="min-h-11 rounded-xl border border-slate-300 px-5 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {decisionLoading ? "Đang gửi…" : "Từ chối"}
-              </button>
-              <button
-                type="button"
-                onClick={() => void confirmPendingContract()}
-                disabled={decisionLoading}
-                className="min-h-11 rounded-xl bg-[#3368a0] px-5 text-sm font-semibold text-white hover:bg-[#285584] disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {decisionLoading ? "Đang gửi…" : "Xác nhận hợp đồng"}
-              </button>
-            </div>
-          </section>
-        )}
-
       <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
+          {party === "owner" && (
+            <TenancyRenewalActions
+              party="owner"
+              timeline={timeline}
+              onSuccess={(message) => {
+                setSuccessMessage(message);
+                setRetry((value) => value + 1);
+              }}
+            />
+          )}
+
+          {party === "tenant" && pendingContract && (
+            <ContractCard
+              contract={pendingContract}
+              title={`Điều khoản đề xuất · Phiên bản ${pendingContract.version_number}`}
+            />
+          )}
+
           {currentContract ? (
             <ContractCard
               contract={currentContract}
-              title="Điều khoản đã xác nhận"
+              title={party === "tenant" && pendingContract ? "Điều khoản hiện tại" : "Điều khoản đã xác nhận"}
             />
           ) : (
             <section className="rounded-2xl border border-slate-200 bg-white p-6">
@@ -626,7 +607,7 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
             </section>
           )}
 
-          {pendingContract && (
+          {pendingContract && party === "owner" && (
             <ContractCard
               contract={pendingContract}
               title="Phiên bản đang chờ xác nhận"
@@ -711,7 +692,104 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
           </section>
         </div>
 
-        <aside className="space-y-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+        <aside className="space-y-4">
+          {party === "tenant" && (
+            <TenancyRenewalActions
+              party="tenant"
+              timeline={timeline}
+              onSuccess={(message) => {
+                setSuccessMessage(message);
+                setRetry((value) => value + 1);
+              }}
+            />
+          )}
+
+          {party === "tenant" &&
+            pendingContract &&
+            tenancy.pending_contract_id === pendingContract.id &&
+            (tenancy.status === "PENDING_CONFIRMATION" ||
+              (pendingContract.type === "RENEWAL" &&
+                ["CONFIRMED", "ACTIVE"].includes(tenancy.status))) && (
+              <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
+                <h2 className="text-lg font-bold text-slate-900">Quyết định của bạn</h2>
+                <dl className="mt-4 space-y-3 border-b border-slate-100 pb-4 text-sm">
+                  <div>
+                    <dt className="text-slate-500">Phiên bản</dt>
+                    <dd className="font-semibold text-slate-900">{pendingContract.version_number} · {pendingContract.type === "RENEWAL" ? "Gia hạn" : "Bản gốc"}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Giá thuê</dt>
+                    <dd className="font-semibold text-slate-900">{formatMoney(pendingContract.monthly_rent)}/tháng</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Tiền đặt cọc</dt>
+                    <dd className="font-semibold text-slate-900">{formatMoney(pendingContract.deposit_amount)}</dd>
+                  </div>
+                  <div>
+                    <dt className="text-slate-500">Thời hạn</dt>
+                    <dd className="font-semibold text-slate-900">{formatDate(pendingContract.start_date)} – {formatDate(pendingContract.end_date)}</dd>
+                  </div>
+                </dl>
+
+                <button
+                  type="button"
+                  onClick={() => void confirmPendingContract()}
+                  disabled={decisionLoading}
+                  className="mt-4 min-h-11 w-full rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584] disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {decisionLoading ? "Đang gửi…" : `Xác nhận phiên bản ${pendingContract.version_number}`}
+                </button>
+
+                {!showDeclineReason ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowDeclineReason(true)}
+                    disabled={decisionLoading}
+                    className="mt-2 min-h-11 w-full rounded-xl border border-slate-300 px-4 text-sm font-semibold text-slate-800 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Từ chối
+                  </button>
+                ) : (
+                  <div className="mt-4">
+                    <label htmlFor="decline-reason" className="block text-sm font-semibold text-slate-800">
+                      Lý do từ chối
+                    </label>
+                    <textarea
+                      id="decline-reason"
+                      value={declineReason}
+                      onChange={(event) => setDeclineReason(event.target.value)}
+                      minLength={5}
+                      maxLength={2000}
+                      rows={3}
+                      placeholder="Nhập lý do (ít nhất 5 ký tự)"
+                      className="mt-2 w-full rounded-xl border border-slate-300 px-4 py-3 text-sm text-slate-900 outline-none focus:border-[#3368a0] focus:ring-2 focus:ring-blue-100"
+                    />
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowDeclineReason(false); setDeclineReason(""); }}
+                        className="min-h-10 flex-1 rounded-xl border border-slate-300 px-3 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                      >
+                        Quay lại
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => void declinePendingContract()}
+                        disabled={decisionLoading || declineReason.trim().length < 5}
+                        className="min-h-10 flex-1 rounded-xl border border-rose-200 px-3 text-sm font-semibold text-rose-800 hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {decisionLoading ? "Đang gửi…" : "Gửi từ chối"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+                <p className="mt-4 text-xs leading-5 text-slate-500">
+                  Xác nhận sẽ ghi nhận phản hồi của bạn cho đúng phiên bản đang hiển thị.
+                </p>
+              </section>
+            )}
+
+          <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
           <h2 className="text-lg font-bold text-slate-900">
             {party === "owner" ? "Thông tin người thuê" : "Thông tin chủ nhà"}
           </h2>
@@ -809,12 +887,12 @@ export function TenancyTimelinePage({ party }: { party: Party }) {
             </p>
           )}
 
-          {pendingContract && party === "tenant" && (
+          {pendingContract && party === "tenant" && !showDeclineReason && (
             <p className="border-t border-slate-100 pt-3 text-xs leading-5 text-slate-500">
-              Hãy kiểm tra các điều khoản hiển thị ở trên của phiên bản đang
-              chờ xác nhận.
+              Hãy kiểm tra phiên bản đang chờ cùng điều khoản hiện tại trước khi phản hồi.
             </p>
           )}
+          </section>
         </aside>
       </div>
     </section>

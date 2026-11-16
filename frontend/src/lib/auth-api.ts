@@ -4,6 +4,77 @@ const apiUrl = (
 
 type FieldErrors = Record<string, string[]>;
 
+const translatedApiMessages: Record<string, string> = {
+  "Move-in cannot be recorded before the confirmed start date.":
+    "Chỉ có thể xác nhận nhận nhà từ ngày bắt đầu kỳ thuê đã xác nhận.",
+  "Only a confirmed tenancy awaiting move-in can be activated.":
+    "Chỉ có thể xác nhận nhận nhà cho kỳ thuê đã được xác nhận và chưa ghi nhận ngày nhận nhà.",
+  "The latest contract version is not mutually confirmed.":
+    "Phiên bản hợp đồng mới nhất chưa được cả hai bên xác nhận.",
+  "This contract is no longer the current, unexpired proposal.":
+    "Đề xuất này không còn là phiên bản hiện hành hoặc đã hết hạn.",
+  "This contract already has a tenant decision.":
+    "Bạn đã phản hồi phiên bản hợp đồng này rồi.",
+  "The selected unit is no longer available for those dates.":
+    "Căn này không còn trống trong khoảng thời gian đã chọn.",
+  "The given data was invalid.":
+    "Thông tin gửi lên chưa hợp lệ. Vui lòng kiểm tra lại các mục đã nhập.",
+};
+
+const translatedFieldLabels: Record<string, string> = {
+  email: "email",
+  password: "mật khẩu",
+  password_confirmation: "xác nhận mật khẩu",
+  name: "họ tên",
+  reason: "lý do",
+  start_date: "ngày bắt đầu",
+  end_date: "ngày kết thúc",
+  requested_end_date: "ngày kết thúc đề xuất",
+  monthly_rent: "giá thuê tháng",
+  proposed_monthly_rent: "giá thuê tháng đề xuất",
+  contact_name: "tên liên hệ",
+  contact_phone: "số điện thoại liên hệ",
+};
+
+function localizeApiMessage(message: string, status: number): string {
+  const trimmed = message.trim();
+  const knownTranslation = translatedApiMessages[trimmed];
+
+  if (knownTranslation) return knownTranslation;
+  if (/[À-ỹĐđ]/u.test(trimmed)) return trimmed;
+
+  const requiredField = trimmed.match(/^The (.+) field is required\.$/i);
+  if (requiredField) {
+    const field = requiredField[1].replaceAll(".", " ");
+    return `Vui lòng nhập ${translatedFieldLabels[field] ?? field.replaceAll("_", " ")}.`;
+  }
+
+  const invalidField = trimmed.match(/^The (.+) field is invalid\.$/i);
+  if (invalidField) {
+    const field = invalidField[1].replaceAll(".", " ");
+    return `${translatedFieldLabels[field] ?? field.replaceAll("_", " ")} không hợp lệ.`;
+  }
+
+  if (status === 401) return "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.";
+  if (status === 403) return "Bạn không có quyền thực hiện thao tác này.";
+  if (status === 404) return "Không tìm thấy dữ liệu yêu cầu.";
+  if (status === 409) return "Dữ liệu đã thay đổi hoặc không còn phù hợp. Vui lòng tải lại trang.";
+  if (status === 419) return "Phiên bảo mật đã hết hạn. Vui lòng tải lại trang.";
+  if (status === 422) return "Thông tin chưa hợp lệ. Vui lòng kiểm tra lại các mục đã nhập.";
+  if (status === 429) return "Bạn thao tác quá nhanh. Vui lòng chờ rồi thử lại.";
+
+  return "Có lỗi xảy ra. Vui lòng thử lại sau.";
+}
+
+function localizeFieldErrors(errors: FieldErrors): FieldErrors {
+  return Object.fromEntries(
+    Object.entries(errors).map(([field, messages]) => [
+      field,
+      messages.map((message) => localizeApiMessage(message, 422)),
+    ]),
+  );
+}
+
 export class ApiError extends Error {
   status: number;
   errors: FieldErrors;
@@ -83,6 +154,19 @@ export type TenancyContractRecord = {
   tenant_rejection_reason: string | null;
 };
 
+export type TenancyRenewalRequest = {
+  id: string;
+  requested_end_date: string;
+  proposed_monthly_rent: string | number;
+  message: string | null;
+  status: "PENDING" | "ACCEPTED" | "REJECTED" | "CANCELLED" | string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_reason: string | null;
+  created_at: string;
+  updated_at: string;
+};
+
 export type TenancyTimeline = {
   tenancy: {
     id: string;
@@ -128,14 +212,37 @@ export type TenancyTimeline = {
     tenant_name: string;
   };
   contracts: TenancyContractRecord[];
+  renewal_requests: TenancyRenewalRequest[];
   pending_contract: TenancyContractRecord | null;
   current_agreement: TenancyContractRecord | null;
   upcoming_agreements: TenancyContractRecord[];
   events: Array<{
+    entity_type: string;
     action: string;
     reason: string | null;
+    correlation_id: string | null;
     created_at: string;
   }>;
+};
+
+export type TenancyRenewalMutationResult = {
+  id?: string;
+  tenancy_id: string;
+  status?: string;
+  confirmation_expires_at?: string | null;
+  blocked_end_date?: string | null;
+  replayed: boolean;
+  contract?: {
+    id: string;
+    version_number: number;
+    type: "RENEWAL";
+    start_date: string;
+    end_date: string;
+    monthly_rent?: string | number;
+    deposit_amount?: string | number;
+    supersedes_contract_id?: string | null;
+    basis_contract_id?: string | null;
+  };
 };
 
 export type TenancyDecisionResult = {
@@ -386,8 +493,8 @@ async function requestDocument(
 
     throw new ApiError(
       response.status,
-      payload.message ?? defaultMessage,
-      payload.errors ?? {},
+      localizeApiMessage(payload.message ?? defaultMessage, response.status),
+      localizeFieldErrors(payload.errors ?? {}),
     );
   }
 
@@ -516,6 +623,78 @@ export async function getTenantTenancyTimeline(
 ): Promise<TenancyTimeline> {
   return request<TenancyTimeline>(
     `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}`,
+  );
+}
+
+export async function requestTenantTenancyRenewal(
+  tenancyId: string,
+  input: {
+    client_operation_id: string;
+    requested_end_date: string;
+    proposed_monthly_rent: number;
+    message?: string;
+  },
+): Promise<TenancyRenewalRequest> {
+  return request<TenancyRenewalRequest>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function withdrawTenantTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: { client_operation_id: string },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/tenant/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/withdraw`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function proposeOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: {
+    client_operation_id: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+  },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/proposal`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function correctOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: {
+    client_operation_id: string;
+    supersedes_contract_id: string;
+    end_date: string;
+    monthly_rent: number;
+    deposit_amount: number;
+    policies_snapshot: Record<string, unknown>;
+  },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/corrections`,
+    { method: "POST", body: JSON.stringify(input) },
+  );
+}
+
+export async function rejectOwnerTenancyRenewal(
+  tenancyId: string,
+  renewalRequestId: string,
+  input: { client_operation_id: string; reason: string },
+): Promise<TenancyRenewalMutationResult> {
+  return request<TenancyRenewalMutationResult>(
+    `/api/v1/owner/tenancies/${encodeURIComponent(tenancyId)}/renewal-requests/${encodeURIComponent(renewalRequestId)}/reject`,
+    { method: "POST", body: JSON.stringify(input) },
   );
 }
 

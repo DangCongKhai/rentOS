@@ -16,6 +16,13 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (DB::table('tenancy_contracts')
+            ->whereNull('document_path')
+            ->orWhereNull('document_sha256')
+            ->exists()) {
+            return;
+        }
+
         DB::statement(<<<'SQL'
             ALTER TABLE tenancy_contracts
                 ALTER COLUMN document_path SET NOT NULL,

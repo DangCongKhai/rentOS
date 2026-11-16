@@ -42,6 +42,22 @@ class ProposeTenancy
 
         abort_if($context === null, 404);
 
+        abort_unless(
+            DB::table('properties')->where('id', $context->property_id)->value('owner_id') === $owner->id,
+            403,
+        );
+        abort_unless(
+            Unit::query()->whereKey($data['unit_id'])->where('property_id', $context->property_id)->exists(),
+            422,
+            'Choose a unit in this property.',
+        );
+
+        app(ExpireTenancyReservation::class)->reapDueConflicts(
+            $data['unit_id'],
+            $data['start_date'],
+            $data['end_date'],
+        );
+
         $tenancyId = (string) Str::uuid();
         $contractId = (string) Str::uuid();
 

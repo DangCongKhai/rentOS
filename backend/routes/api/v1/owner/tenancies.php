@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\OwnerTenancyLifecycleController;
 use App\Http\Controllers\Api\V1\OwnerTenancyProposalsController;
+use App\Http\Controllers\Api\V1\OwnerTenancyRenewalRequestsController;
 use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use Illuminate\Support\Facades\Route;
 
@@ -9,6 +10,18 @@ Route::middleware('auth:sanctum')
     ->prefix('v1')
     ->name('api.v1.owner.')
     ->group(function (): void {
+        Route::post(
+            '/owner/tenancies/{tenancy}/renewal-requests/{renewalRequest}/proposal',
+            [OwnerTenancyRenewalRequestsController::class, 'propose'],
+        )->whereUuid('tenancy')->whereUuid('renewalRequest')->name('tenancies.renewal-requests.proposal');
+        Route::post(
+            '/owner/tenancies/{tenancy}/renewal-requests/{renewalRequest}/corrections',
+            [OwnerTenancyRenewalRequestsController::class, 'correct'],
+        )->whereUuid('tenancy')->whereUuid('renewalRequest')->name('tenancies.renewal-requests.corrections');
+        Route::post(
+            '/owner/tenancies/{tenancy}/renewal-requests/{renewalRequest}/reject',
+            [OwnerTenancyRenewalRequestsController::class, 'reject'],
+        )->whereUuid('tenancy')->whereUuid('renewalRequest')->name('tenancies.renewal-requests.reject');
         Route::post(
             '/owner/rental-requests/{rentalRequest}/proposal',
             [OwnerTenancyProposalsController::class, 'store'],

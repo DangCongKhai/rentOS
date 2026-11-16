@@ -86,13 +86,12 @@ class DeclineTenancyContract
             }
 
             abort_unless(
-                $tenancy->status === 'PENDING_CONFIRMATION'
-                    && $tenancy->pending_contract_id === $contractId
+                $tenancy->pending_contract_id === $contractId
                     && $tenancy->confirmation_expires_at !== null
                     && CarbonImmutable::parse($tenancy->confirmation_expires_at)
                         ->isAfter(CarbonImmutable::now()),
                 409,
-                'This contract is no longer the current, unexpired proposal.',
+                'Đề xuất này không còn là phiên bản hiện tại hoặc đã hết hạn.',
             );
 
             $contract = DB::table('tenancy_contracts')
@@ -101,13 +100,50 @@ class DeclineTenancyContract
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            abort_unless($contract->type === 'ORIGINAL', 409);
             abort_unless(
                 $contract->tenant_confirmed_at === null
                     && $contract->tenant_rejected_at === null,
                 409,
-                'This contract already has a tenant decision.',
+                'Bạn đã phản hồi phiên bản này rồi.',
             );
+
+            $renewalRequest = null;
+            if ($contract->type === 'ORIGINAL') {
+                abort_unless(
+                    $tenancy->status === 'PENDING_CONFIRMATION',
+                    409,
+                    'Đề xuất thuê ban đầu không còn chờ xác nhận.',
+                );
+            } elseif ($contract->type === 'RENEWAL') {
+                abort_unless(
+                    in_array($tenancy->status, ['CONFIRMED', 'ACTIVE'], true)
+                        && $tenancy->confirmed_start_date !== null
+                        && $tenancy->confirmed_end_date !== null
+                        && $tenancy->blocked_start_date === $tenancy->confirmed_start_date
+                        && $contract->owner_confirmed_at !== null
+                        && $contract->renewal_request_id !== null
+                        && $contract->basis_contract_id === $tenancy->latest_confirmed_contract_id
+                        && $contract->start_date === CarbonImmutable::parse($tenancy->confirmed_end_date)
+                            ->addDay()
+                            ->toDateString(),
+                    409,
+                    'Đề xuất gia hạn không còn phù hợp với thỏa thuận hiện tại.',
+                );
+
+                $renewalRequest = DB::table('tenancy_renewal_requests')
+                    ->where('id', $contract->renewal_request_id)
+                    ->where('tenancy_id', $tenancyId)
+                    ->lockForUpdate()
+                    ->first();
+
+                abort_unless(
+                    $renewalRequest !== null && $renewalRequest->status === 'PENDING',
+                    409,
+                    'Đề nghị gia hạn không còn chờ xử lý.',
+                );
+            } else {
+                abort(409, 'Loại phiên bản hợp đồng không hợp lệ.');
+            }
             $now = now();
 
             DB::select(
@@ -123,30 +159,52 @@ class DeclineTenancyContract
                     'tenant_rejection_reason' => $reason,
                 ]);
 
-            DB::table('tenancies')
-                ->where('id', $tenancyId)
-                ->update([
-                    'status' => 'AWAITING_REVISION',
-                    'blocked_start_date' => null,
-                    'blocked_end_date' => null,
-                    'pending_contract_id' => null,
-                    'confirmation_expires_at' => null,
-                    'updated_at' => $now,
-                ]);
+            if ($contract->type === 'ORIGINAL') {
+                DB::table('tenancies')
+                    ->where('id', $tenancyId)
+                    ->update([
+                        'status' => 'AWAITING_REVISION',
+                        'blocked_start_date' => null,
+                        'blocked_end_date' => null,
+                        'pending_contract_id' => null,
+                        'confirmation_expires_at' => null,
+                        'updated_at' => $now,
+                    ]);
+            } else {
+                DB::table('tenancies')
+                    ->where('id', $tenancyId)
+                    ->update([
+                        'blocked_start_date' => $tenancy->confirmed_start_date,
+                        'blocked_end_date' => $tenancy->confirmed_end_date,
+                        'pending_contract_id' => null,
+                        'confirmation_expires_at' => null,
+                        'updated_at' => $now,
+                    ]);
+            }
+
+            $auditAction = $contract->type === 'RENEWAL'
+                ? 'tenancy.renewal.proposal.declined'
+                : 'tenancy.contract.declined';
 
             DB::table('audit_logs')->insert([
                 'id' => (string) Str::uuid(),
                 'actor_id' => $tenant->id,
-                'entity_type' => 'tenancy',
-                'entity_id' => $tenancyId,
-                'action' => 'tenancy.contract.declined',
+                'entity_type' => $contract->type === 'RENEWAL' ? 'tenancy_renewal_request' : 'tenancy',
+                'entity_id' => $contract->type === 'RENEWAL' ? $renewalRequest->id : $tenancyId,
+                'action' => $auditAction,
                 'before_values' => json_encode([
                     'status' => $tenancy->status,
                     'pending_contract_id' => $contractId,
+                    'blocked_end_date' => $tenancy->blocked_end_date,
+                    'renewal_request_status' => $renewalRequest?->status,
                 ], JSON_THROW_ON_ERROR),
                 'after_values' => json_encode([
-                    'status' => 'AWAITING_REVISION',
+                    'status' => $contract->type === 'ORIGINAL' ? 'AWAITING_REVISION' : $tenancy->status,
                     'contract_id' => $contractId,
+                    'blocked_end_date' => $contract->type === 'RENEWAL'
+                        ? $tenancy->confirmed_end_date
+                        : null,
+                    'renewal_request_status' => $contract->type === 'RENEWAL' ? 'PENDING' : null,
                     'reason' => $reason,
                 ], JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE),
                 'reason' => $reason,
@@ -157,9 +215,13 @@ class DeclineTenancyContract
             app(RecordNotification::class)->record(
                 recipientId: $tenancy->owner_id,
                 audience: 'OWNER',
-                eventKey: 'tenancy.contract.declined:'.$contractId,
-                title: 'Người thuê đã từ chối đề xuất',
-                body: 'Người thuê đã từ chối đề xuất kỳ thuê của bạn.',
+                eventKey: ($contract->type === 'RENEWAL' ? 'tenancy.renewal.proposal.declined:' : 'tenancy.contract.declined:').$contractId,
+                title: $contract->type === 'RENEWAL'
+                    ? 'Người thuê đã từ chối đề xuất gia hạn'
+                    : 'Người thuê đã từ chối đề xuất',
+                body: $contract->type === 'RENEWAL'
+                    ? 'Người thuê đã từ chối phiên bản gia hạn. Bạn có thể tiếp tục trao đổi và gửi phiên bản mới.'
+                    : 'Người thuê đã từ chối đề xuất kỳ thuê của bạn.',
                 resourceType: 'tenancy',
                 resourceId: $tenancyId,
                 actorId: $tenant->id,

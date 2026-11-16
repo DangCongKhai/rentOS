@@ -158,103 +158,106 @@ export default function TenantContractsPage() {
         </section>
       ) : (
         <div className="space-y-4">
-          {tenancies.map((tenancy) => {
-            const pending = tenancy.status === "PENDING_CONFIRMATION";
-            const startDate =
-              tenancy.pending_contract_start_date ??
-              tenancy.confirmed_start_date ??
-              tenancy.blocked_start_date;
-            const endDate =
-              tenancy.pending_contract_end_date ??
-              tenancy.confirmed_end_date ??
-              tenancy.blocked_end_date;
-            const rent =
-              tenancy.pending_contract_monthly_rent ??
-              tenancy.latest_confirmed_contract_monthly_rent;
-            const deposit =
-              tenancy.pending_contract_deposit_amount ??
-              tenancy.latest_confirmed_contract_deposit_amount;
+          <div className="overflow-x-auto rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <table className="w-full min-w-[900px] border-collapse text-left text-sm">
+              <thead className="bg-slate-50 text-xs font-semibold text-slate-500">
+                <tr>
+                  <th className="px-5 py-4">Căn</th>
+                  <th className="px-5 py-4">Bất động sản</th>
+                  <th className="px-5 py-4">Dọn vào</th>
+                  <th className="px-5 py-4">Dọn ra</th>
+                  <th className="px-5 py-4">Hợp đồng</th>
+                  <th className="px-5 py-4">Trạng thái</th>
+                  <th className="px-5 py-4"><span className="sr-only">Thao tác</span></th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {tenancies.map((tenancy) => {
+                  const hasPendingContract = tenancy.pending_contract_version !== null;
+                  const startDate =
+                    tenancy.pending_contract_start_date ??
+                    tenancy.confirmed_start_date ??
+                    tenancy.blocked_start_date;
+                  const endDate =
+                    tenancy.pending_contract_end_date ??
+                    tenancy.confirmed_end_date ??
+                    tenancy.blocked_end_date;
+                  const rent =
+                    tenancy.pending_contract_monthly_rent ??
+                    tenancy.latest_confirmed_contract_monthly_rent;
+                  const deposit =
+                    tenancy.pending_contract_deposit_amount ??
+                    tenancy.latest_confirmed_contract_deposit_amount;
 
-            return (
-              <article
-                key={tenancy.id}
-                className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      {tenancy.property_name}
-                    </p>
-                    <h2 className="mt-1 text-lg font-bold text-slate-900">
-                      {tenancy.unit_label}
-                    </h2>
-                    <p className="mt-1 text-sm text-slate-600">
-                      Chủ nhà: {tenancy.counterparty_name}
-                      {tenancy.property_city
-                        ? ` · ${tenancy.property_city}`
-                        : ""}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full border px-3 py-1 text-xs font-semibold ${tenancyStatusClass(tenancy.status)}`}
-                  >
-                    {tenancyStatusLabel(tenancy.status)}
-                  </span>
-                </div>
-
-                {pending && tenancy.pending_contract_version !== null && (
-                  <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm font-semibold text-amber-900">
-                    Bạn cần xem và phản hồi đề xuất hợp đồng phiên bản{" "}
-                    {tenancy.pending_contract_version}.
-                    {tenancy.confirmation_expires_at && (
-                      <span className="mt-1 block text-xs font-normal">
-                        Hạn phản hồi:{" "}
-                        {formatDate(tenancy.confirmation_expires_at)}
-                      </span>
-                    )}
-                  </p>
-                )}
-
-                <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
-                  <div>
-                    <dt className="text-slate-500">Bắt đầu</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {formatDate(startDate)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">Kết thúc</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {formatDate(endDate)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">Giá thuê tháng</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {formatMoney(rent)}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt className="text-slate-500">Tiền đặt cọc</dt>
-                    <dd className="mt-1 font-medium text-slate-900">
-                      {formatMoney(deposit)}
-                    </dd>
-                  </div>
-                </dl>
-
-                <div className="mt-5 flex justify-end border-t border-slate-100 pt-4">
-                  <Link
-                    href={`/tenant/tenancies/${encodeURIComponent(tenancy.id)}`}
-                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#3368a0] px-5 text-sm font-semibold text-white hover:bg-[#285584]"
-                  >
-                    {pending
-                      ? "Xem và phản hồi đề xuất"
-                      : "Xem hợp đồng và lịch sử"}
-                  </Link>
-                </div>
-              </article>
-            );
-          })}
+                  return (
+                    <tr key={tenancy.id} className="align-top text-slate-800">
+                      <td className="px-5 py-5 font-semibold">
+                        {tenancy.unit_label}
+                      </td>
+                      <td className="px-5 py-5">
+                        <p className="font-medium">{tenancy.property_name}</p>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {tenancy.counterparty_name}
+                          {tenancy.property_city
+                            ? ` · ${tenancy.property_city}`
+                            : ""}
+                        </p>
+                      </td>
+                      <td className="px-5 py-5">{formatDate(startDate)}</td>
+                      <td className="px-5 py-5">{formatDate(endDate)}</td>
+                      <td className="px-5 py-5">
+                        {hasPendingContract ? (
+                          <>
+                            <p className="font-semibold">
+                              Phiên bản {tenancy.pending_contract_version}
+                            </p>
+                            <p className="mt-1">{formatMoney(rent)}/tháng</p>
+                            <p className="text-xs text-slate-500">
+                              Cọc {formatMoney(deposit)}
+                            </p>
+                          </>
+                        ) : tenancy.latest_confirmed_contract_version !== null ? (
+                          <>
+                            <p className="font-semibold">
+                              Phiên bản {tenancy.latest_confirmed_contract_version}
+                            </p>
+                            <p className="mt-1">{formatMoney(rent)}/tháng</p>
+                            <p className="text-xs text-slate-500">
+                              Cọc {formatMoney(deposit)}
+                            </p>
+                          </>
+                        ) : (
+                          <span className="text-slate-500">
+                            Chưa có hợp đồng
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-5 py-5">
+                        <span
+                          className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${tenancyStatusClass(tenancy.status)}`}
+                        >
+                          {tenancyStatusLabel(tenancy.status)}
+                        </span>
+                        {hasPendingContract && tenancy.confirmation_expires_at && (
+                          <p className="mt-2 text-xs text-slate-500">
+                            Phản hồi trước {formatDate(tenancy.confirmation_expires_at)}
+                          </p>
+                        )}
+                      </td>
+                      <td className="px-5 py-5 text-right">
+                        <Link
+                          href={`/tenant/tenancies/${encodeURIComponent(tenancy.id)}`}
+                          className="inline-flex min-h-10 items-center justify-center whitespace-nowrap rounded-xl border border-slate-300 px-4 text-sm font-semibold text-[#285584] hover:bg-slate-50"
+                        >
+                          {hasPendingContract ? "Xem đề xuất" : "Xem hợp đồng"}
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </section>

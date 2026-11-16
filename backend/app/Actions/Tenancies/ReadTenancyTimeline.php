@@ -99,6 +99,22 @@ class ReadTenancyTimeline
                 'tenant_rejection_reason',
             ]);
 
+        $renewalRequests = DB::table('tenancy_renewal_requests')
+            ->where('tenancy_id', $tenancyId)
+            ->orderByDesc('created_at')
+            ->get([
+                'id',
+                'requested_end_date',
+                'proposed_monthly_rent',
+                'message',
+                'status',
+                'reviewed_by',
+                'reviewed_at',
+                'review_reason',
+                'created_at',
+                'updated_at',
+            ]);
+
         $pendingContract = $tenancy->pending_contract_id === null
             ? null
             : $contracts->firstWhere('id', $tenancy->pending_contract_id);
@@ -120,11 +136,23 @@ class ReadTenancyTimeline
             )
             ->values();
 
+        $renewalRequestIds = $renewalRequests->pluck('id');
         $events = DB::table('audit_logs')
-            ->where('entity_type', 'tenancy')
-            ->where('entity_id', $tenancyId)
+            ->where(function ($query) use ($tenancyId, $renewalRequestIds): void {
+                $query->where(function ($query) use ($tenancyId): void {
+                    $query->where('entity_type', 'tenancy')
+                        ->where('entity_id', $tenancyId);
+                });
+
+                if ($renewalRequestIds->isNotEmpty()) {
+                    $query->orWhere(function ($query) use ($renewalRequestIds): void {
+                        $query->where('entity_type', 'tenancy_renewal_request')
+                            ->whereIn('entity_id', $renewalRequestIds);
+                    });
+                }
+            })
             ->orderBy('created_at')
-            ->get(['action', 'reason', 'created_at']);
+            ->get(['entity_type', 'action', 'reason', 'correlation_id', 'created_at']);
 
         return [
             'tenancy' => $tenancy,
@@ -145,6 +173,7 @@ class ReadTenancyTimeline
                 'tenant_name' => $context->tenant_name,
             ],
             'contracts' => $contracts,
+            'renewal_requests' => $renewalRequests,
             'pending_contract' => $pendingContract,
             'current_agreement' => $currentAgreement,
             'upcoming_agreements' => $upcomingAgreements,
