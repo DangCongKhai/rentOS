@@ -79,7 +79,7 @@ return [
     'redirects' => [
         'email-verification' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/profile?verified=1',
         'login' => env('FRONTEND_URL', 'http://localhost:3000'),
-        'register' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/confirm-email',
+        'register' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/profile',
         'logout' => env('FRONTEND_URL', 'http://localhost:3000'),
         'password-reset' => rtrim(env('FRONTEND_URL', 'http://localhost:3000'), '/').'/login?reset=1',
     ],

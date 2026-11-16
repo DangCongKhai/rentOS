@@ -97,6 +97,9 @@ return [
             'search_path' => env('DB_SEARCH_PATH', 'public'),
             'sslmode' => env('DB_SSLMODE', 'require'),
             'schema' => env('DB_SCHEMA', 'public'),
+            'options' => extension_loaded('pdo_pgsql') ? array_filter([
+                PDO::ATTR_EMULATE_PREPARES => true,
+            ]) : [],
         ],
 
         'sqlsrv' => [
@@ -125,7 +128,7 @@ return [
     | your application. Using this information, we can determine which of
     | the migrations on disk haven't actually been run on the database.
     |
-    */
+*/
 
     'migrations' => [
         'table' => 'migrations',

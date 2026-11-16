@@ -3,15 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import {
-  ApiError,
-  login,
-  registerAccount,
-  getCurrentUser,
-} from "@/lib/auth-api";
+import { ApiError, login, registerAccount } from "@/lib/auth-api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
-import { GoogleAuthButton } from "./google-auth-button";
 
 type AuthMode = "login" | "register";
 
@@ -111,21 +105,10 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
       await login({
         email: String(values.get("email") ?? "").trim(),
         password: String(values.get("password") ?? ""),
+        remember: Boolean(values.get("remember")),
       });
-      await refreshUser();
-
-      // Check email verification status and redirect accordingly
-      try {
-        const currentUser = await getCurrentUser();
-        if (currentUser.email_verified_at) {
-          router.push("/"); // Go to homepage if email is verified
-        } else {
-          router.push("/profile"); // Go to profile if email needs verification
-        }
-      } catch {
-        // Fallback to profile if check fails
-        router.push("/profile");
-      }
+      const currentUser = await refreshUser();
+      router.push(currentUser?.email_verified_at ? "/" : "/profile");
     } catch (error) {
       if (error instanceof ApiError) {
         // Map backend errors to friendly Vietnamese messages
@@ -183,18 +166,6 @@ export function AccountForm({ mode }: { mode: AuthMode }) {
 
   return (
     <>
-      <div className="mb-5">
-        <GoogleAuthButton mode={mode} />
-        <div className="relative my-6 flex items-center justify-center">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-200" />
-          </div>
-          <div className="relative bg-white px-3 text-xs text-slate-400 font-medium select-none">
-            hoặc dùng email
-          </div>
-        </div>
-      </div>
-
       <form className="space-y-4" onSubmit={handleSubmit} noValidate>
         {isRegister && (
           <label className="block space-y-1.5 text-xs font-semibold text-slate-700">

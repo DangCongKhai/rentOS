@@ -8,39 +8,24 @@ import {
   loadNotificationPage,
   markHeldNotificationRead,
   useNotificationInbox,
-  type HeldInbox,
 } from "@/lib/notification-inbox";
 import { FilterTab, InboxBody } from "./notification-inbox";
 
 type Filter = "all" | "unread";
 
+const combinedAudiences = ["OWNER", "TENANT"] as const;
+
 export function AllNotifications() {
   const router = useRouter();
   const { user, status } = useAuth();
-  const owner = useNotificationInbox(user?.id, "OWNER");
-  const tenant = useNotificationInbox(user?.id, "TENANT");
-  const admin = useNotificationInbox(
-    user?.is_admin ? user.id : undefined,
-    "ADMIN",
-  );
+  const inbox = useNotificationInbox(user?.id, combinedAudiences);
   const [filter, setFilter] = useState<Filter>("all");
   const [pendingId, setPendingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
-  const inboxes = user?.is_admin ? [owner, tenant, admin] : [owner, tenant];
-  const items = inboxes
-    .flatMap((inbox) => inbox.items)
-    .sort((left, right) => (
-      right.created_at.localeCompare(left.created_at)
-      || right.id.localeCompare(left.id)
-    ));
+  const items = inbox.items;
   const visible = filter === "unread"
     ? items.filter((item) => item.read_at == null)
     : items;
-  const unread = inboxes.reduce((sum, inbox) => sum + inbox.unread, 0);
-  const page = Math.max(...inboxes.map((inbox) => inbox.page));
-  const lastPage = Math.max(...inboxes.map((inbox) => inbox.lastPage));
-  const loading = inboxes.some((inbox) => inbox.status === "loading");
-  const failed = inboxes.find((inbox) => inbox.status === "error");
 
   useEffect(() => {
     if (status === "guest") router.replace("/login");
@@ -63,27 +48,8 @@ export function AllNotifications() {
 
   function openPage(nextPage: number) {
     if (!user) return;
-    void loadNotificationPage(user.id, "OWNER", nextPage);
-    void loadNotificationPage(user.id, "TENANT", nextPage);
-    if (user.is_admin) {
-      void loadNotificationPage(user.id, "ADMIN", nextPage);
-    }
+    void loadNotificationPage(user.id, combinedAudiences, nextPage);
   }
-
-  const inbox: HeldInbox = {
-    userId: user?.id ?? "",
-    audience: "OWNER",
-    items,
-    unread,
-    page,
-    lastPage,
-    status: failed && items.length === 0
-      ? "error"
-      : loading && items.length === 0
-        ? "loading"
-        : "ready",
-    error: failed?.error ?? null,
-  };
 
   if (status !== "authenticated") {
     return (
@@ -119,7 +85,7 @@ export function AllNotifications() {
           selected={filter === "unread"}
           onSelect={() => setFilter("unread")}
           label="Chưa đọc"
-          count={unread}
+          count={inbox.unread}
         />
       </div>
       <InboxBody
@@ -128,7 +94,7 @@ export function AllNotifications() {
         filter={filter}
         pendingId={pendingId}
         actionError={actionError}
-        onRetry={() => openPage(page)}
+        onRetry={() => openPage(inbox.page)}
         onMarkRead={(id) => {
           const item = items.find((entry) => entry.id === id);
           if (item) void markRead(item);

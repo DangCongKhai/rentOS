@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { NotificationIcon } from "@/config/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -29,10 +29,9 @@ function NavLink({
 }
 
 export function SiteHeader() {
-  const router = useRouter();
   const pathname = usePathname();
   const { user, status, signOut } = useAuth();
-  const unread = useNotificationUnread(user?.id, Boolean(user?.is_admin));
+  const unread = useNotificationUnread(user?.id);
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const [scrolled, setScrolled] = useState(false);
@@ -62,7 +61,6 @@ export function SiteHeader() {
     setError("");
     try {
       await signOut();
-      router.replace("/login");
     } catch {
       setError("Đăng xuất chưa hoàn tất. Vui lòng thử lại.");
     } finally {

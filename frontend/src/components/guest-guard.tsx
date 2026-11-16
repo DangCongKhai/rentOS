@@ -5,14 +5,14 @@ import { useEffect, type ReactNode } from "react";
 import { useAuth } from "@/lib/auth-context";
 
 export function GuestGuard({ children }: { children: ReactNode }) {
-  const { status } = useAuth();
+  const { user, status } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.replace("/profile");
+      router.replace(user?.email_verified_at ? "/" : "/profile");
     }
-  }, [status, router]);
+  }, [status, user, router]);
 
   if (status === "loading" || status === "authenticated") {
     return (
