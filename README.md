@@ -16,7 +16,7 @@ See the backend and frontend setup instructions before running the application.
 
 ## Team Workflow
 
-All changes must be developed on a feature or fix branch and submitted through a pull request into `main`. Direct pushes to `main` are prohibited.
+All changes must be developed on a feature or fix branch and submitted through a pull request into `develop`. Direct pushes to `main` are prohibited.
 
 ## Documentation
 

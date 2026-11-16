@@ -24,6 +24,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isQueue = pathname.startsWith("/admin/review-queue");
   const isNotifications = pathname.startsWith("/admin/notifications");
+  const isReports = pathname.startsWith("/admin/reports");
   const inbox = useNotificationInbox(
     user?.is_admin && !adminPreviewMode ? user.id : undefined,
     "ADMIN",
@@ -201,11 +202,11 @@ export function AdminShell({ children }: { children: ReactNode }) {
               <span className="admin-count">{inbox.unread}</span>
             )}
           </Link>
-          <button
-            type="button"
-            className="admin-navItem"
-            disabled
-            title="Báo cáo vi phạm thuộc RNT-08"
+          <Link
+            href="/admin/reports"
+            className={`admin-navItem ${isReports ? "admin-navActive" : ""}`}
+            aria-current={isReports ? "page" : undefined}
+            onClick={closeMenu}
           >
             <span className="admin-navIcon">
               <AdminIcon name="flag" />
@@ -214,7 +215,7 @@ export function AdminShell({ children }: { children: ReactNode }) {
             <span className="admin-count">
               {adminPreviewMode ? 2 : (dashboard?.open_reports_count ?? 0)}
             </span>
-          </button>
+          </Link>
           <button
             type="button"
             className="admin-navItem"
