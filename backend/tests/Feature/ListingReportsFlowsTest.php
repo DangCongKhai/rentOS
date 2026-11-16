@@ -157,6 +157,59 @@ class ListingReportsFlowsTest extends TestCase
             ->assertJsonPath('message', 'Bạn đã có một báo cáo đang được xử lý cho tin đăng này.');
     }
 
+    public function test_repeating_same_client_operation_returns_original_report(): void
+    {
+        $published = PublicListingFixture::published();
+        $reporter = User::factory()->create();
+        $operationId = fake()->uuid();
+        $payload = [
+            'reason_code' => 'FRAUD',
+            'description' => 'Báo cáo có thể được gửi lại an toàn.',
+            'client_operation_id' => $operationId,
+        ];
+
+        $first = $this->actingAs($reporter)
+            ->postJson("/api/v1/listings/{$published->listingId}/reports", $payload)
+            ->assertStatus(201);
+
+        $second = $this->actingAs($reporter)
+            ->postJson("/api/v1/listings/{$published->listingId}/reports", $payload)
+            ->assertStatus(201);
+
+        $this->assertSame($first->json('data.id'), $second->json('data.id'));
+        $this->assertDatabaseCount('listing_reports', 1);
+    }
+
+    public function test_report_must_be_reviewing_before_resolve_or_dismiss(): void
+    {
+        $reporter = User::factory()->create();
+        $admin = $this->createAdminUser();
+
+        $resolveListing = PublicListingFixture::published();
+        $resolveReportId = $this->actingAs($reporter)
+            ->postJson("/api/v1/listings/{$resolveListing->listingId}/reports", [
+                'reason_code' => 'FRAUD',
+                'description' => 'Không được giải quyết trực tiếp từ OPEN.',
+            ])->json('data.id');
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/admin/listing-reports/{$resolveReportId}/resolve", [
+                'resolution_summary' => 'Kết quả điều tra',
+            ])->assertStatus(409);
+
+        $dismissListing = PublicListingFixture::published();
+        $dismissReportId = $this->actingAs($reporter)
+            ->postJson("/api/v1/listings/{$dismissListing->listingId}/reports", [
+                'reason_code' => 'OTHER',
+                'description' => 'Không được bác bỏ trực tiếp từ OPEN.',
+            ])->json('data.id');
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/admin/listing-reports/{$dismissReportId}/dismiss", [
+                'resolution_summary' => 'Không đủ căn cứ',
+            ])->assertStatus(409);
+    }
+
     /**
      * FR38-AC05: Cannot report listing that has been hidden or suspended.
      */
@@ -199,6 +252,10 @@ class ListingReportsFlowsTest extends TestCase
             'description' => 'Lừa đảo tiền đặt cọc',
         ]);
         $reportId = $submitRes->json('data.id');
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/admin/listing-reports/{$reportId}/start-review")
+            ->assertOk();
 
         $resolveRes = $this->actingAs($admin)->postJson("/api/v1/admin/listing-reports/{$reportId}/resolve", [
             'resolution_summary' => 'Xác minh có dấu hiệu lừa đảo. Đình chỉ tin đăng và hoàn tiền cho người thuê.',
@@ -277,6 +334,10 @@ class ListingReportsFlowsTest extends TestCase
         ]);
         $reportId = $submitRes->json('data.id');
 
+        $this->actingAs($admin1)
+            ->postJson("/api/v1/admin/listing-reports/{$reportId}/start-review")
+            ->assertOk();
+
         // Admin 1 resolves
         $res1 = $this->actingAs($admin1)->postJson("/api/v1/admin/listing-reports/{$reportId}/resolve", [
             'resolution_summary' => 'Giải quyết bởi Admin 1',
@@ -331,6 +392,10 @@ class ListingReportsFlowsTest extends TestCase
             'description' => 'Thông tin phòng không đúng thực tế',
         ]);
         $reportId = $submitRes->json('data.id');
+
+        $this->actingAs($admin)
+            ->postJson("/api/v1/admin/listing-reports/{$reportId}/start-review")
+            ->assertOk();
 
         // Admin resolves with internal notes
         $this->actingAs($admin)->postJson("/api/v1/admin/listing-reports/{$reportId}/resolve", [

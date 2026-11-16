@@ -53,6 +53,15 @@ class ResolveListingReportAction
                 );
             }
 
+            if ($lockedReport->status !== ListingReport::STATUS_REVIEWING) {
+                throw new HttpResponseException(
+                    response()->json([
+                        'message' => 'Báo cáo phải ở trạng thái đang điều tra trước khi được giải quyết.',
+                        'current_status' => $lockedReport->status,
+                    ], 409)
+                );
+            }
+
             $now = now();
             $reportBefore = [
                 'status' => $lockedReport->status,

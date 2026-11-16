@@ -278,29 +278,29 @@ export function ListingDetailView({
               {preview ? null : isSignedIn ? (
                 <button
                   type="button"
-                  className="inline-flex items-center gap-1.5 text-sm leading-5 text-[#5b6676]"
+                  className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#d9a441] bg-[#fff8e7] px-4 py-2.5 text-sm font-semibold leading-5 text-[#7a4a00] shadow-sm transition hover:border-[#b98518] hover:bg-[#fff1c9] focus:outline-none focus:ring-2 focus:ring-[#d9a441] focus:ring-offset-2"
                   onClick={() => setReportOpen(true)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/listings/report-flag.svg"
                     alt=""
-                    width={14}
-                    height={14}
+                    width={18}
+                    height={18}
                   />
                   Báo cáo
                 </button>
               ) : (
                 <Link
                   href="/login"
-                  className="inline-flex items-center gap-1.5 text-sm leading-5 text-[#5b6676]"
+                  className="inline-flex w-fit items-center gap-2 rounded-xl border border-[#d9a441] bg-[#fff8e7] px-4 py-2.5 text-sm font-semibold leading-5 text-[#7a4a00] shadow-sm transition hover:border-[#b98518] hover:bg-[#fff1c9] focus:outline-none focus:ring-2 focus:ring-[#d9a441] focus:ring-offset-2"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/images/listings/report-flag.svg"
                     alt=""
-                    width={14}
-                    height={14}
+                    width={18}
+                    height={18}
                   />
                   Đăng nhập để báo cáo tin đăng này
                 </Link>
