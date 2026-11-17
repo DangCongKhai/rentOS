@@ -1,4 +1,4 @@
-import { request } from "./auth-api";
+import { request } from "@/lib/http/client";
 import type { ListingCard } from "@/features/discovery/listings-api";
 
 const path = "/api/v1/favourite-properties";

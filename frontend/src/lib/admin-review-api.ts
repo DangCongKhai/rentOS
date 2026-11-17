@@ -1,4 +1,4 @@
-import { ApiError, csrfToken, initializeCsrf } from "./auth-api";
+import { ApiError, csrfToken, initializeCsrf } from "@/lib/http/client";
 import type { ReviewPackage } from "./admin-review-package";
 
 export const adminPreviewMode =

@@ -1,4 +1,4 @@
-import { request } from "@/lib/auth-api";
+import { request } from "@/lib/http/client";
 
 type SubmitRentalRequestInput = {
   listing_id: string;

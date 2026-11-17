@@ -7,7 +7,9 @@ import {
   type ReactNode,
 } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { ApiError, getCurrentUser, logout, type CurrentUser } from "./auth-api";
+import { ApiError } from "@/lib/http/client";
+import { getCurrentUser, logout } from "@/lib/auth/api";
+import { type CurrentUser } from "@/lib/auth/types";
 import { getQueryClient } from "./query-provider";
 
 export type AuthStatus = "loading" | "authenticated" | "guest";

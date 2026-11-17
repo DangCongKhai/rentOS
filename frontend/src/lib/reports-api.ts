@@ -1,4 +1,4 @@
-import { request } from "./auth-api";
+import { request } from "@/lib/http/client";
 
 export type ReasonCode = "FRAUD" | "MISLEADING" | "HARMFUL" | "OTHER";
 export type ReportStatus = "OPEN" | "REVIEWING" | "RESOLVED" | "DISMISSED";

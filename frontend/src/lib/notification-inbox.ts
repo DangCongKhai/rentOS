@@ -1,14 +1,9 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  ApiError,
-  listNotifications,
-  markNotificationRead,
-  type InboxNotification,
-  type NotificationAudience,
-  type NotificationPage,
-} from "./auth-api";
+import { ApiError } from "@/lib/http/client";
+import { listNotifications, markNotificationRead } from "@/lib/notifications/api";
+import { type InboxNotification, type NotificationAudience, type NotificationPage } from "@/lib/notifications/types";
 import { getQueryClient } from "./query-provider";
 
 export type HeldInbox = {
