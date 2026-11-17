@@ -9,16 +9,9 @@ import {
   type FormEvent,
 } from "react";
 import { toast } from "sonner";
-import {
-  ApiError,
-  getOwnerProperty,
-  getOwnerPropertyMedia,
-  removeOwnerMedia,
-  saveOwnerUnitSharedMedia,
-  uploadOwnerMedia,
-  type OwnerPropertyDetail,
-  type OwnerPropertyMedia,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type OwnerPropertyDetail, type OwnerPropertyMedia } from "@/lib/owner/types";
+import { getOwnerProperty, getOwnerPropertyMedia, removeOwnerMedia, saveOwnerUnitSharedMedia, uploadOwnerMedia } from "@/lib/owner/api";
 
 const buttonClass =
   "inline-flex min-h-10 items-center justify-center rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584] disabled:cursor-not-allowed disabled:opacity-60";

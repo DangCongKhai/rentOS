@@ -14,7 +14,7 @@ import {
   decideAdminPackage,
   type AdminPackageDto,
 } from "@/lib/admin-review-api";
-import { ApiError, initializeCsrf } from "@/lib/auth-api";
+import { ApiError, initializeCsrf } from "@/lib/http/client";
 import { useAdminApi } from "./admin-api-provider";
 
 export function AdminReviewDialog({

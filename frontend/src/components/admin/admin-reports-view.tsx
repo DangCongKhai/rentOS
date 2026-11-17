@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import {
   dismissAdminReport,
   getAdminListingReports,

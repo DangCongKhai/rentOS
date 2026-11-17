@@ -9,8 +9,11 @@ vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
 }));
 
-vi.mock("@/lib/auth-api", () => ({
+vi.mock("@/lib/http/client", () => ({
   ApiError: class ApiError extends Error {},
+}));
+
+vi.mock("@/lib/owner/api", () => ({
   createOwnerProperty: vi.fn(),
   createOwnerUnitBatch: vi.fn(),
   getAmenityCatalog: vi.fn().mockResolvedValue([

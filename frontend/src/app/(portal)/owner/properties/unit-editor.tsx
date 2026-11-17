@@ -3,15 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
-import {
-  ApiError,
-  getAmenityCatalog,
-  getOwnerProperty,
-  updateOwnerUnit,
-  type AmenityCatalogEntry,
-  type AmenityDocument,
-  type OwnerUnit,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type AmenityCatalogEntry, type AmenityDocument, type OwnerUnit } from "@/lib/owner/types";
+import { getAmenityCatalog, getOwnerProperty, updateOwnerUnit } from "@/lib/owner/api";
 import { UnitPhotoManager } from "./unit-photos";
 
 const fieldClass =

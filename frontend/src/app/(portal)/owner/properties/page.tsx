@@ -3,14 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ApiError,
-  getOwnerListing,
-  getOwnerProperties,
-  getOwnerProperty,
-  type OwnerListing,
-  type OwnerPropertyDetail,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type OwnerListing, type OwnerPropertyDetail } from "@/lib/owner/types";
+import { getOwnerListing, getOwnerProperties, getOwnerProperty } from "@/lib/owner/api";
 
 const buttonClass =
   "inline-flex min-h-10 items-center justify-center rounded-xl bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584]";

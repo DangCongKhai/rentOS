@@ -3,18 +3,9 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ApiError,
-  cancelOwnerTenancy,
-  confirmTenantTenancyContract,
-  declineTenantTenancyContract,
-  endOwnerTenancy,
-  markOwnerTenancyMoveIn,
-  getOwnerTenancyTimeline,
-  getTenantTenancyTimeline,
-  type TenancyContractRecord,
-  type TenancyTimeline,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type TenancyContractRecord, type TenancyTimeline } from "@/lib/tenancies/types";
+import { cancelOwnerTenancy, confirmTenantTenancyContract, declineTenantTenancyContract, endOwnerTenancy, markOwnerTenancyMoveIn, getOwnerTenancyTimeline, getTenantTenancyTimeline } from "@/lib/tenancies/api";
 import { TenancyRenewalActions } from "@/components/tenancies/tenancy-renewal-actions";
 
 type Party = "owner" | "tenant";

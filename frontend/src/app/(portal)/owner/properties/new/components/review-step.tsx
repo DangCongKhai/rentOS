@@ -1,6 +1,6 @@
 "use client";
 
-import type { AmenityCatalogEntry } from "@/lib/auth-api";
+import type { AmenityCatalogEntry } from "@/lib/owner/types";
 import type { RoomDraft } from "./shared/types";
 
 export type ReviewStepFormData = {

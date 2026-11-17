@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import type { AmenityCatalogEntry } from "@/lib/auth-api";
+import type { AmenityCatalogEntry } from "@/lib/owner/types";
 import { CheckboxGroup } from "./shared/checkbox-group";
 import { textareaClass } from "./shared/form-styles";
 

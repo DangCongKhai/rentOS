@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { getFavouritePage, type FavouritePage } from "@/lib/favourites-api";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { DiscoverySidebar } from "./discovery-sidebar";
 import { FavouriteButton, useFavourites } from "./favourites-provider";
 import { ListingCardView } from "./listing-card";

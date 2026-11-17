@@ -9,17 +9,9 @@ import {
   type KeyboardEvent,
   type SubmitEvent,
 } from "react";
-import {
-  ApiError,
-  createOwnerProperty,
-  createOwnerUnitBatch,
-  getAmenityCatalog,
-  getOwnerProperty,
-  updateOwnerUnit,
-  type AmenityCatalogEntry,
-  type AmenityDocument,
-  type OwnerPropertyDetail,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type AmenityCatalogEntry, type AmenityDocument, type OwnerPropertyDetail } from "@/lib/owner/types";
+import { createOwnerProperty, createOwnerUnitBatch, getAmenityCatalog, getOwnerProperty, updateOwnerUnit } from "@/lib/owner/api";
 import { WizardProgress } from "./components/wizard-progress";
 import { BasicInfoStep } from "./components/basic-info-step";
 import { RentalArrangementStep } from "./components/rental-arrangement-step";

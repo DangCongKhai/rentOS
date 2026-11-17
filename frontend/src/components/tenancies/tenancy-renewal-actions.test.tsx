@@ -1,16 +1,12 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  proposeOwnerTenancyRenewal,
-  requestTenantTenancyRenewal,
-  type TenancyRenewalRequest,
-  type TenancyTimeline,
-} from "@/lib/auth-api";
+import { proposeOwnerTenancyRenewal, requestTenantTenancyRenewal } from "@/lib/tenancies/api";
+import { type TenancyRenewalRequest, type TenancyTimeline } from "@/lib/tenancies/types";
 import { TenancyRenewalActions } from "./tenancy-renewal-actions";
 
-vi.mock("@/lib/auth-api", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/auth-api")>()),
+vi.mock("@/lib/tenancies/api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/tenancies/api")>()),
   proposeOwnerTenancyRenewal: vi.fn(),
   requestTenantTenancyRenewal: vi.fn(),
   rejectOwnerTenancyRenewal: vi.fn(),

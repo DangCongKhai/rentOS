@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { submitListingReport, type ReasonCode } from "@/lib/reports-api";
 
 const reasons: Array<{ value: ReasonCode; title: string; detail: string }> = [

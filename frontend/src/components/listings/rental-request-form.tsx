@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { DateField } from "@/components/ui/date-field";
 import type { ListingDetail } from "@/features/discovery/listings-api";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { useAuth } from "@/lib/auth-context";
 import { submitRentalRequest } from "@/lib/rental-requests-api";
 import {

@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
-import { ApiError, login, registerAccount } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { login, registerAccount } from "@/lib/auth/api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
 

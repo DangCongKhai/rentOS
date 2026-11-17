@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
-import { ApiError, forgotPassword } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { forgotPassword } from "@/lib/auth/api";
 import { FieldError, FormMessage } from "./auth-shell";
 
 export function ForgotPasswordForm() {

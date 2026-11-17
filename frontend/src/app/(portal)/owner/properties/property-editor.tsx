@@ -11,25 +11,9 @@ import {
   type FormEvent,
 } from "react";
 import { toast } from "sonner";
-import {
-  ApiError,
-  archiveOwnerProperty,
-  archiveOwnerUnit,
-  getAmenityCatalog,
-  getOwnerProperty,
-  getOwnerPropertyMedia,
-  removeOwnerMedia,
-  saveOwnerUnitSharedMedia,
-  updateOwnerGallery,
-  updateOwnerProperty,
-  updateOwnerUnitGallery,
-  uploadOwnerMedia,
-  type AmenityCatalogEntry,
-  type AmenityDocument,
-  type OwnerPropertyDetail,
-  type OwnerPropertyMedia,
-  type OwnerUnit,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type AmenityCatalogEntry, type AmenityDocument, type OwnerPropertyDetail, type OwnerPropertyMedia, type OwnerUnit } from "@/lib/owner/types";
+import { archiveOwnerProperty, archiveOwnerUnit, getAmenityCatalog, getOwnerProperty, getOwnerPropertyMedia, removeOwnerMedia, saveOwnerUnitSharedMedia, updateOwnerGallery, updateOwnerProperty, updateOwnerUnitGallery, uploadOwnerMedia } from "@/lib/owner/api";
 import { VietnamLocationPicker } from "@/components/vietnam-location-picker";
 
 const fieldClass =

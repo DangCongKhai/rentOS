@@ -12,7 +12,7 @@ import {
   waitingLabel,
   type AdminQueueResponse,
 } from "@/lib/admin-review-api";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { useAdminApi } from "@/components/admin/admin-api-provider";
 
 const submittedDate = new Intl.DateTimeFormat("vi-VN", {

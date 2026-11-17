@@ -4,13 +4,9 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { DateField } from "@/components/ui/date-field";
-import {
-  ApiError,
-  correctOwnerTenancyProposal,
-  getOwnerTenancyTimeline,
-  type TenancyContractRecord,
-  type TenancyTimeline,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type TenancyContractRecord, type TenancyTimeline } from "@/lib/tenancies/types";
+import { correctOwnerTenancyProposal, getOwnerTenancyTimeline } from "@/lib/tenancies/api";
 
 type PolicySnapshot = {
   property: Record<string, unknown>;

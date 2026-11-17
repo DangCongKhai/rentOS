@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { NotificationIcon } from "@/config/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { useNotificationUnread } from "@/lib/notification-inbox";
@@ -35,6 +35,7 @@ export function SiteHeader() {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState("");
   const [scrolled, setScrolled] = useState(false);
+  const accountMenuRef = useRef<HTMLDetailsElement>(null);
   const onHome = pathname === "/";
 
   useEffect(() => {
@@ -44,6 +45,19 @@ export function SiteHeader() {
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
   }, [onHome]);
+
+  // Close on outside pointerdown instead of blur — Safari often leaves
+  // relatedTarget null on button/link click, which made blur-close eat the click.
+  useEffect(() => {
+    function onPointerDown(event: PointerEvent) {
+      const root = accountMenuRef.current;
+      if (!root?.open) return;
+      if (event.target instanceof Node && root.contains(event.target)) return;
+      root.open = false;
+    }
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
+  }, []);
 
   const transparent = onHome && !scrolled;
 
@@ -186,16 +200,12 @@ export function SiteHeader() {
             </Link>
 
             <details
+              ref={accountMenuRef}
               className="relative shrink-0 select-none"
               onKeyDown={(event) => {
                 if (event.key === "Escape") {
                   event.currentTarget.open = false;
                   event.currentTarget.querySelector("summary")?.focus();
-                }
-              }}
-              onBlur={(event) => {
-                if (!event.currentTarget.contains(event.relatedTarget)) {
-                  event.currentTarget.open = false;
                 }
               }}
             >

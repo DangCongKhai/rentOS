@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { ApiError, type InboxNotification } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type InboxNotification } from "@/lib/notifications/types";
 import { useAuth } from "@/lib/auth-context";
 import {
   loadNotificationPage,

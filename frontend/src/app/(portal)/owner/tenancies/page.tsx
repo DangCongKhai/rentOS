@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ApiError,
-  getOwnerTenancies,
-  type ParticipantTenancySummary,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type ParticipantTenancySummary } from "@/lib/tenancies/types";
+import { getOwnerTenancies } from "@/lib/tenancies/api";
 
 type TabId =
   "all" | "waiting" | "revision" | "confirmed" | "active" | "history";

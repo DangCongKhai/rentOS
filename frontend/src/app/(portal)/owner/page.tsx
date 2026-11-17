@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ApiError,
-  getOwnerProperties,
-  type OwnerProperty,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type OwnerProperty } from "@/lib/owner/types";
+import { getOwnerProperties } from "@/lib/owner/api";
 import { useAuth } from "@/lib/auth-context";
 import { PortalEmptyState } from "@/components/portal-empty-state";
 

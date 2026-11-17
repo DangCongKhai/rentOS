@@ -1,17 +1,9 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import {
-  ApiError,
-  correctOwnerTenancyRenewal,
-  proposeOwnerTenancyRenewal,
-  rejectOwnerTenancyRenewal,
-  requestTenantTenancyRenewal,
-  withdrawTenantTenancyRenewal,
-  type TenancyContractRecord,
-  type TenancyRenewalRequest,
-  type TenancyTimeline,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type TenancyContractRecord, type TenancyRenewalRequest, type TenancyTimeline } from "@/lib/tenancies/types";
+import { correctOwnerTenancyRenewal, proposeOwnerTenancyRenewal, rejectOwnerTenancyRenewal, requestTenantTenancyRenewal, withdrawTenantTenancyRenewal } from "@/lib/tenancies/api";
 
 type Party = "owner" | "tenant";
 type FormMode = "request" | "proposal" | "reject" | null;

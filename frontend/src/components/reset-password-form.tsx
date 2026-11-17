@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
-import { ApiError, resetPassword } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { resetPassword } from "@/lib/auth/api";
 import { FieldError, FormMessage } from "./auth-shell";
 
 function ResetPasswordFormContent() {

@@ -8,26 +8,9 @@ import type {
   ListingDetail,
   PublicAmenity,
 } from "@/features/discovery/listings-api";
-import {
-  ApiError,
-  archiveOwnerListing,
-  createOwnerListing,
-  getAmenityCatalog,
-  getOwnerListing,
-  getOwnerListingById,
-  getOwnerProperty,
-  getOwnerPropertyMedia,
-  hideOwnerListing,
-  publishOwnerListing,
-  submitOwnerListing,
-  updateOwnerListing,
-  updateOwnerUnit,
-  type AmenityCatalogEntry,
-  type OwnerListing,
-  type OwnerPropertyDetail,
-  type OwnerPropertyMedia,
-  type OwnerUnit,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type AmenityCatalogEntry, type OwnerListing, type OwnerPropertyDetail, type OwnerPropertyMedia, type OwnerUnit } from "@/lib/owner/types";
+import { archiveOwnerListing, createOwnerListing, getAmenityCatalog, getOwnerListing, getOwnerListingById, getOwnerProperty, getOwnerPropertyMedia, hideOwnerListing, publishOwnerListing, submitOwnerListing, updateOwnerListing, updateOwnerUnit } from "@/lib/owner/api";
 
 type FieldErrors = Record<string, string[]>;
 type Action = "save" | "submit" | "publish" | "hide" | "archive" | null;

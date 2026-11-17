@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { describeDuration, dong } from "@/components/listings/listing-format";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { useAuth } from "@/lib/auth-context";
 import { dateRange, statuses, timestamp } from "@/lib/rental-request-format";
 import {

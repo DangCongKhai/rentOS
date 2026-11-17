@@ -4,14 +4,10 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { DateField } from "@/components/ui/date-field";
-import {
-  ApiError,
-  getOwnerRentalRequest,
-  proposeOwnerTenancy,
-  type OwnerRentalRequestDetail,
-  type OwnerProposalUnit,
-  type PropertyPolicies,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type OwnerRentalRequestDetail, type OwnerProposalUnit, type PropertyPolicies } from "@/lib/owner/types";
+import { getOwnerRentalRequest } from "@/lib/owner/api";
+import { proposeOwnerTenancy } from "@/lib/tenancies/api";
 
 const steps = ["Chọn căn", "Điều khoản", "Xem lại và gửi"];
 

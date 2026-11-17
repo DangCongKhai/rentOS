@@ -3,11 +3,9 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import {
-  ApiError,
-  getTenantTenancies,
-  type TenantTenancy,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { type TenantTenancy } from "@/lib/tenancies/types";
+import { getTenantTenancies } from "@/lib/tenancies/api";
 
 function tenancyStatusLabel(status: string): string {
   switch (status) {

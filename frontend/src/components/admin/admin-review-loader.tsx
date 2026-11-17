@@ -7,7 +7,7 @@ import {
   getAdminPackage,
   type AdminPackageDto,
 } from "@/lib/admin-review-api";
-import { ApiError } from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
 import { useAdminApi } from "./admin-api-provider";
 import { AdminReviewDetail } from "./admin-review-detail";
 

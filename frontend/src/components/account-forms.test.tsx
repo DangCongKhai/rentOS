@@ -1,7 +1,7 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { login } from "@/lib/auth-api";
+import { login } from "@/lib/auth/api";
 import { AccountForm } from "./account-forms";
 
 const refreshUser = vi.fn();
@@ -14,10 +14,13 @@ vi.mock("@/lib/auth-context", () => ({
   useAuth: () => ({ refreshUser }),
 }));
 
-vi.mock("@/lib/auth-api", () => ({
+vi.mock("@/lib/http/client", () => ({
   ApiError: class ApiError extends Error {
     status = 400;
   },
+}));
+
+vi.mock("@/lib/auth/api", () => ({
   login: vi.fn(),
   registerAccount: vi.fn(),
 }));

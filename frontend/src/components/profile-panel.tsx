@@ -1,13 +1,10 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { useEffect, useState, type FormEvent } from "react";
-import {
-  ApiError,
-  resendVerification,
-  updatePassword,
-  updateProfile,
-} from "@/lib/auth-api";
+import { ApiError } from "@/lib/http/client";
+import { resendVerification, updatePassword, updateProfile } from "@/lib/auth/api";
 import { useAuth } from "@/lib/auth-context";
 import { FieldError, FormMessage } from "./auth-shell";
 
@@ -296,6 +293,14 @@ export function ProfilePanel() {
                 Cập nhật mật khẩu
               </button>
             </div>
+
+            <Link
+              href="/api-tokens"
+              className="mt-4 flex min-h-12 items-center justify-between rounded-2xl border border-slate-200 px-5 text-sm font-semibold text-[#3368a0] transition-colors hover:bg-slate-50"
+            >
+              <span>Mã truy cập API</span>
+              <span aria-hidden="true">→</span>
+            </Link>
 
             {profileMessage && (
               <div className="mt-5">
