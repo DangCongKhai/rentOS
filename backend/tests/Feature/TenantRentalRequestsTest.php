@@ -6,6 +6,7 @@ use App\Models\RentalRequest;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -272,15 +273,20 @@ class TenantRentalRequestsTest extends TestCase
             ->assertJsonPath('data.counts.pending', 0);
     }
 
-    public function test_personal_access_token_cannot_read_or_withdraw_requests(): void
+    public function test_personal_access_token_can_read_scoped_requests_but_cannot_withdraw(): void
     {
         $listing = PublicListingFixture::published();
         $tenant = User::factory()->create();
         $request = RentalRequest::factory()->create(['tenant_id' => $tenant->id, 'listing_id' => $listing->listingId]);
-        $token = $tenant->createToken('Read account', ['account:read'], now()->addHour());
+        $accountToken = $tenant->createToken('Read account', ['account:read'], now()->addHour());
+        $this->withToken($accountToken->plainTextToken)->getJson(self::PATH)->assertForbidden();
 
-        $this->withToken($token->plainTextToken)->getJson(self::PATH)->assertForbidden();
-        $this->getJson(self::PATH.'/'.$request->id)->assertForbidden();
+        Auth::forgetGuards();
+        $token = $tenant->createToken('Read rental requests', ['rental-requests:read'], now()->addHour());
+
+        $this->withToken($token->plainTextToken)->getJson(self::PATH)->assertOk()
+            ->assertJsonPath('data.items.0.id', $request->id);
+        $this->getJson(self::PATH.'/'.$request->id)->assertOk()->assertJsonPath('data.id', $request->id);
         $this->postJson(self::PATH.'/'.$request->id.'/withdraw', [
             'expected_updated_at' => $request->refresh()->updated_at->format('Y-m-d\TH:i:s.uP'),
             'client_operation_id' => (string) Str::uuid(),

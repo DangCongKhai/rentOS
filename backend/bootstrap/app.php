@@ -22,6 +22,13 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->respond(function (Response $response): Response {
+            if (request()->is('api/*') && $response->getStatusCode() === Response::HTTP_FORBIDDEN) {
+                $response->setContent(json_encode([
+                    'message' => 'This action is unauthorized.',
+                ], JSON_THROW_ON_ERROR));
+                $response->headers->set('Content-Type', 'application/json');
+            }
+
             if (request()->is('api/v1/admin/*')) {
                 $response->headers->set('Cache-Control', 'private, no-store');
             }

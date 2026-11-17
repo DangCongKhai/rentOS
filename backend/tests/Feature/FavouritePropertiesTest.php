@@ -3,9 +3,12 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Tests\Support\EnforcingCsrfMiddleware;
 use Tests\Support\PublicListingFixture;
 use Tests\TestCase;
 
@@ -114,6 +117,34 @@ class FavouritePropertiesTest extends TestCase
         ])->assertNoContent()->assertHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
 
         $this->assertStringContainsString('x-favourites-account', strtolower($response->headers->get('Access-Control-Allow-Headers', '')));
+    }
+
+    public function test_stateful_favourite_write_requires_csrf_and_does_not_mutate_without_it(): void
+    {
+        $this->withCredentials();
+        config([
+            'sanctum.stateful' => ['localhost:3000'],
+            'sanctum.middleware.validate_csrf_token' => EnforcingCsrfMiddleware::class,
+        ]);
+        $router = app(Router::class);
+        $router->middlewareGroup('web', array_map(
+            fn ($middleware): string => $middleware === PreventRequestForgery::class ? EnforcingCsrfMiddleware::class : $middleware,
+            $router->getMiddlewareGroups()['web'],
+        ));
+
+        $listing = PublicListingFixture::published();
+        $user = User::factory()->create();
+        $this->actingAs($user, 'web')->withHeaders([
+            'Origin' => 'http://localhost:3000',
+            'Referer' => 'http://localhost:3000/saved',
+        ])->putJson(self::PATH.'/'.$listing->propertyId)->assertStatus(419);
+
+        $this->assertDatabaseCount('favourite_properties', 0);
+        $token = $user->createToken('Postman', ['favourites:write'], now()->addDay())->plainTextToken;
+        $this->flushHeaders();
+        Auth::forgetGuards();
+        $this->withToken($token)->putJson(self::PATH.'/'.$listing->propertyId)->assertCreated();
+        $this->assertDatabaseCount('favourite_properties', 1);
     }
 
     public function test_list_paginates_saved_properties_and_keeps_the_overall_count(): void

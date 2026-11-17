@@ -81,4 +81,29 @@ class TenantTenancyConfirmationsTest extends TestCase
         $this->assertDatabaseCount('notifications', 1);
         $this->assertDatabaseCount('idempotency_records', 1);
     }
+
+    public function test_contract_confirmation_rejects_personal_tokens_and_nonparticipants(): void
+    {
+        $listing = PublicListingFixture::published();
+        $startDate = now()->addDays(30)->toDateString();
+        $endDate = CarbonImmutable::parse($startDate)->addMonthsNoOverflow(3)->subDay()->toDateString();
+        PublicListingFixture::blockUnit($listing->unitIds[0], $startDate, $endDate);
+
+        $tenancy = DB::table('tenancies')->where('unit_id', $listing->unitIds[0])->where('status', 'PENDING_CONFIRMATION')->firstOrFail();
+        $tenant = User::query()->findOrFail($tenancy->tenant_id);
+        $contract = DB::table('tenancy_contracts')->where('id', $tenancy->pending_contract_id)->firstOrFail();
+        $path = "/api/v1/tenant/tenancies/{$tenancy->id}/contracts/{$contract->id}/confirm";
+        $payload = ['client_operation_id' => (string) Str::uuid()];
+
+        $token = $tenant->createToken('Postman', ['account:read'], now()->addDay())->plainTextToken;
+        $this->withToken($token)->postJson($path, $payload)->assertForbidden();
+
+        $unrelatedUser = User::factory()->create();
+        $this->actingAs($unrelatedUser, 'web')->postJson($path, $payload)->assertForbidden();
+        $this->assertDatabaseHas('tenancies', ['id' => $tenancy->id, 'status' => 'PENDING_CONFIRMATION']);
+        $this->assertNull(DB::table('tenancy_contracts')->where('id', $contract->id)->value('tenant_confirmed_at'));
+        $this->assertDatabaseCount('audit_logs', 0);
+        $this->assertDatabaseCount('notifications', 0);
+        $this->assertDatabaseCount('idempotency_records', 0);
+    }
 }

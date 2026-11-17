@@ -12,10 +12,15 @@ class RentalRequestPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->account_status === 'ACTIVE'
-            && $user->hasVerifiedEmail()
-            && ! ($user->currentAccessToken() instanceof PersonalAccessToken)
-            && Auth::guard('web')->id() === $user->id;
+        if ($user->account_status !== 'ACTIVE' || ! $user->hasVerifiedEmail()) {
+            return false;
+        }
+
+        if ($user->currentAccessToken() instanceof PersonalAccessToken) {
+            return $user->tokenCan('rental-requests:read');
+        }
+
+        return Auth::guard('web')->id() === $user->id;
     }
 
     public function view(User $user, RentalRequest $rentalRequest): Response
@@ -29,6 +34,10 @@ class RentalRequestPolicy
 
     public function withdraw(User $user, RentalRequest $rentalRequest): Response
     {
+        if ($user->currentAccessToken() instanceof PersonalAccessToken) {
+            return Response::deny();
+        }
+
         return $this->view($user, $rentalRequest);
     }
 
