@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class FavouritePropertyPolicy
@@ -14,7 +15,10 @@ class FavouritePropertyPolicy
 
     public function write(User $user): bool
     {
-        return $this->allows($user, 'favourites:write');
+        return $user->account_status === 'ACTIVE'
+            && $user->hasVerifiedEmail()
+            && ! ($user->currentAccessToken() instanceof PersonalAccessToken)
+            && Auth::guard('web')->id() === $user->id;
     }
 
     private function allows(User $user, string $ability): bool

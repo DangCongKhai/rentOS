@@ -25,9 +25,9 @@ class OwnerRentalRequestsController extends Controller
     #[Response(403, description: 'Tài khoản hoặc phiên không có quyền xem hộp thư.', type: 'array{message: string}')]
     public function index(Request $request): JsonResponse
     {
-        Gate::authorize('viewOwnerInbox', RentalRequest::class);
+        Gate::authorize('viewOwnerRequests', RentalRequest::class);
         $input = $request->validate([
-            'status' => ['sometimes', Rule::in(['PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'])],
+            'status' => ['sometimes', Rule::in(['ALL', 'PENDING', 'ACCEPTED', 'REJECTED', 'WITHDRAWN'])],
             'page' => ['sometimes', 'integer', 'min:1', 'max:1000000'],
         ]);
         /** @var User $owner */
@@ -41,7 +41,8 @@ class OwnerRentalRequestsController extends Controller
             'REJECTED' => (int) $byStatus->get('REJECTED', 0),
             'WITHDRAWN' => (int) $byStatus->get('WITHDRAWN', 0),
         ];
-        $results = $this->readQuery($owner)->where('rental_requests.status', $status)
+        $results = $this->readQuery($owner)
+            ->when($status !== 'ALL', fn (Builder $query) => $query->where('rental_requests.status', $status))
             ->orderBy('rental_requests.created_at')->orderBy('rental_requests.id')
             ->paginate(15, page: (int) ($input['page'] ?? 1));
 
@@ -57,7 +58,7 @@ class OwnerRentalRequestsController extends Controller
     #[Response(404, description: 'Không tìm thấy yêu cầu thuộc bất động sản của chủ nhà.', type: 'array{message: string}')]
     public function show(Request $request, string $rentalRequest): JsonResponse
     {
-        Gate::authorize('viewOwnerInbox', RentalRequest::class);
+        Gate::authorize('viewOwnerRequests', RentalRequest::class);
         /** @var User $owner */
         $owner = $request->user();
         $item = $this->readQuery($owner)

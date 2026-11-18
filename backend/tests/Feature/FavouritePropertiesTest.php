@@ -101,9 +101,10 @@ class FavouritePropertiesTest extends TestCase
         $this->deleteJson($path)->assertForbidden();
 
         Auth::forgetGuards();
-        $this->withToken($write)->putJson($path)->assertCreated();
+        $this->withToken($write)->putJson($path)->assertForbidden();
         $this->getJson(self::PATH.'/ids')->assertForbidden();
-        $this->deleteJson($path)->assertNoContent();
+        $this->deleteJson($path)->assertForbidden();
+        $this->assertDatabaseCount('favourite_properties', 0);
     }
 
     public function test_browser_can_send_the_account_guard_header(): void
@@ -140,11 +141,11 @@ class FavouritePropertiesTest extends TestCase
         ])->putJson(self::PATH.'/'.$listing->propertyId)->assertStatus(419);
 
         $this->assertDatabaseCount('favourite_properties', 0);
-        $token = $user->createToken('Postman', ['favourites:write'], now()->addDay())->plainTextToken;
+        $token = $user->createToken('Legacy token', ['favourites:write'], now()->addDay())->plainTextToken;
         $this->flushHeaders();
         Auth::forgetGuards();
-        $this->withToken($token)->putJson(self::PATH.'/'.$listing->propertyId)->assertCreated();
-        $this->assertDatabaseCount('favourite_properties', 1);
+        $this->withToken($token)->putJson(self::PATH.'/'.$listing->propertyId)->assertForbidden();
+        $this->assertDatabaseCount('favourite_properties', 0);
     }
 
     public function test_list_paginates_saved_properties_and_keeps_the_overall_count(): void

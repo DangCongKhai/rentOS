@@ -123,14 +123,25 @@ class OwnerRentalRequestsTest extends TestCase
             ->assertJsonPath('data.status', 'REJECTED')->assertJsonPath('data.outcome_reason', trim($payload['reason']));
     }
 
-    public function test_personal_token_cannot_read_or_reject_inbox_requests(): void
+    public function test_personal_token_reads_only_its_owners_requests_and_cannot_manage_them(): void
     {
         $listing = PublicListingFixture::published();
+        $foreignListing = PublicListingFixture::published();
         $item = RentalRequest::factory()->create(['listing_id' => $listing->listingId]);
-        $token = $listing->owner->createToken('Read account', ['account:read'], now()->addHour());
+        $foreign = RentalRequest::factory()->create(['listing_id' => $foreignListing->listingId]);
+        $accountToken = $listing->owner->createToken('Read account', ['account:read'], now()->addHour());
 
-        $this->withToken($token->plainTextToken)->getJson(self::OWNER)->assertForbidden();
-        $this->getJson(self::OWNER.'/'.$item->id)->assertForbidden();
+        $this->withToken($accountToken->plainTextToken)->getJson(self::OWNER)->assertForbidden();
+
+        Auth::forgetGuards();
+        $token = $listing->owner->createToken('Read owner requests', ['rental-requests:read'], now()->addHour());
+        $this->withToken($token->plainTextToken)->getJson(self::OWNER.'?status=ALL')->assertOk()
+            ->assertJsonPath('data.counts.PENDING', 1)
+            ->assertJsonCount(1, 'data.items')
+            ->assertJsonPath('data.items.0.id', $item->id);
+        $this->getJson(self::OWNER.'/'.$item->id)->assertOk()->assertJsonPath('data.id', $item->id);
+        $this->getJson(self::OWNER.'/'.$foreign->id)->assertNotFound();
+        $this->getJson(self::OWNER.'/'.$item->id.'/proposal-context')->assertForbidden();
         $this->postJson(self::OWNER.'/'.$item->id.'/reject', $this->payload($item))->assertForbidden();
     }
 

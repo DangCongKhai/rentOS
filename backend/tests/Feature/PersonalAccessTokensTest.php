@@ -28,7 +28,7 @@ class PersonalAccessTokensTest extends TestCase
         $user = User::factory()->create();
         $payload = [
             'name' => ' Postman ',
-            'abilities' => ['account:read', 'favourites:write', 'rental-requests:read'],
+            'abilities' => ['account:read', 'favourites:read', 'rental-requests:read'],
             'expires_at' => now()->addDays(7)->toDateString(),
         ];
 
@@ -36,7 +36,7 @@ class PersonalAccessTokensTest extends TestCase
         $plainTextToken = $response->json('plain_text_token');
         $this->assertIsString($plainTextToken);
         $this->assertSame('Postman', $response->json('data.name'));
-        $this->assertSame(['account:read', 'favourites:write', 'rental-requests:read'], $response->json('data.abilities'));
+        $this->assertSame(['account:read', 'favourites:read', 'rental-requests:read'], $response->json('data.abilities'));
         $this->assertSame('no-store, private', $response->headers->get('Cache-Control'));
 
         $token = PersonalAccessToken::query()->firstOrFail();
@@ -67,6 +67,7 @@ class PersonalAccessTokensTest extends TestCase
 
         $this->actingAs($user, 'web')->postJson(self::PATH, $payload)->assertCreated();
         $this->postJson(self::PATH, [...$payload, 'abilities' => ['admin:*']])->assertUnprocessable()->assertJsonValidationErrors('abilities.0');
+        $this->postJson(self::PATH, [...$payload, 'abilities' => ['favourites:write']])->assertUnprocessable()->assertJsonValidationErrors('abilities.0');
         $this->postJson(self::PATH, [...$payload, 'expires_at' => now()->subDay()->toDateString()])->assertUnprocessable()->assertJsonValidationErrors('expires_at');
         $this->postJson(self::PATH, [...$payload, 'expires_at' => null])->assertCreated();
         $this->assertDatabaseCount('personal_access_tokens', 2);

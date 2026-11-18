@@ -17,7 +17,7 @@ class RentalRequestPolicy
         }
 
         if ($user->currentAccessToken() instanceof PersonalAccessToken) {
-            return $user->tokenCan('rental-requests:read');
+            return false;
         }
 
         return Auth::guard('web')->id() === $user->id;
@@ -46,6 +46,19 @@ class RentalRequestPolicy
         return $user->canManageOwnerProducts()
             && ! ($user->currentAccessToken() instanceof PersonalAccessToken)
             && Auth::guard('web')->id() === $user->id;
+    }
+
+    public function viewOwnerRequests(User $user): bool
+    {
+        if ($user->account_status !== 'ACTIVE' || ! $user->hasVerifiedEmail() || ! $user->canManageOwnerProducts()) {
+            return false;
+        }
+
+        if ($user->currentAccessToken() instanceof PersonalAccessToken) {
+            return $user->tokenCan('rental-requests:read');
+        }
+
+        return Auth::guard('web')->id() === $user->id;
     }
 
     public function reject(User $user, RentalRequest $rentalRequest): Response

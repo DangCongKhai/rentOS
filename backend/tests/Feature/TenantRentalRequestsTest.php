@@ -6,8 +6,8 @@ use App\Models\RentalRequest;
 use App\Models\User;
 use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 use PHPUnit\Framework\Attributes\TestWith;
@@ -273,7 +273,7 @@ class TenantRentalRequestsTest extends TestCase
             ->assertJsonPath('data.counts.pending', 0);
     }
 
-    public function test_personal_access_token_can_read_scoped_requests_but_cannot_withdraw(): void
+    public function test_personal_access_token_cannot_read_tenant_requests(): void
     {
         $listing = PublicListingFixture::published();
         $tenant = User::factory()->create();
@@ -284,13 +284,8 @@ class TenantRentalRequestsTest extends TestCase
         Auth::forgetGuards();
         $token = $tenant->createToken('Read rental requests', ['rental-requests:read'], now()->addHour());
 
-        $this->withToken($token->plainTextToken)->getJson(self::PATH)->assertOk()
-            ->assertJsonPath('data.items.0.id', $request->id);
-        $this->getJson(self::PATH.'/'.$request->id)->assertOk()->assertJsonPath('data.id', $request->id);
-        $this->postJson(self::PATH.'/'.$request->id.'/withdraw', [
-            'expected_updated_at' => $request->refresh()->updated_at->format('Y-m-d\TH:i:s.uP'),
-            'client_operation_id' => (string) Str::uuid(),
-        ])->assertForbidden();
+        $this->withToken($token->plainTextToken)->getJson(self::PATH)->assertForbidden();
+        $this->getJson(self::PATH.'/'.$request->id)->assertForbidden();
     }
 
     public function test_accepted_request_exposes_the_linked_confirmation_state_and_cannot_be_withdrawn(): void

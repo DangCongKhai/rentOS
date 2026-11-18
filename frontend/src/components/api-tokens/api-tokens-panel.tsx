@@ -1,17 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiError } from "@/lib/http/client";
 import {
   listPersonalAccessTokens,
   revokePersonalAccessToken,
 } from "@/lib/tokens/api";
+import {
+  clearNewlyCreatedToken,
+  getNewlyCreatedToken,
+  type NewlyCreatedToken,
+} from "@/lib/tokens/new-token-secret";
 import type { PersonalAccessToken } from "@/lib/tokens/types";
-
-const NEW_TOKEN_STORAGE_KEY = "rentos:new-api-token";
-
-type NewlyCreatedToken = { name: string; plainTextToken: string };
 
 function formatDate(value: string | null): string {
   if (!value) return "Không hết hạn";
@@ -30,22 +31,16 @@ export function ApiTokensPanel() {
   const [newlyCreatedToken, setNewlyCreatedToken] =
     useState<NewlyCreatedToken | null>(null);
   const [copied, setCopied] = useState(false);
+  const lifecycleGeneration = useRef(0);
 
   useEffect(() => {
     let isMounted = true;
+    lifecycleGeneration.current += 1;
     void listPersonalAccessTokens()
       .then((items) => {
         if (!isMounted) return;
         setTokens(items);
-        try {
-          const storedToken = window.sessionStorage.getItem(
-            NEW_TOKEN_STORAGE_KEY,
-          );
-          if (storedToken)
-            setNewlyCreatedToken(JSON.parse(storedToken) as NewlyCreatedToken);
-        } catch {
-          window.sessionStorage.removeItem(NEW_TOKEN_STORAGE_KEY);
-        }
+        setNewlyCreatedToken(getNewlyCreatedToken());
       })
       .catch((cause: unknown) => {
         if (isMounted)
@@ -60,6 +55,12 @@ export function ApiTokensPanel() {
       });
     return () => {
       isMounted = false;
+      const cleanupGeneration = ++lifecycleGeneration.current;
+      queueMicrotask(() => {
+        if (lifecycleGeneration.current === cleanupGeneration) {
+          clearNewlyCreatedToken();
+        }
+      });
     };
   }, []);
 
@@ -90,11 +91,6 @@ export function ApiTokensPanel() {
     } catch {
       setError("Không thể sao chép mã. Hãy chọn và sao chép mã thủ công.");
     }
-  }
-
-  function dismissNewToken() {
-    window.sessionStorage.removeItem(NEW_TOKEN_STORAGE_KEY);
-    setNewlyCreatedToken(null);
   }
 
   return (
@@ -144,28 +140,35 @@ export function ApiTokensPanel() {
                 Mã “{newlyCreatedToken.name}” đã được tạo
               </h2>
               <p className="mt-1 text-sm text-amber-900">
-                Sao chép và lưu mã này ngay. Mã sẽ không thể xem lại sau khi bạn
-                đóng thông báo hoặc kết thúc phiên trình duyệt.
+                Sao chép và lưu mã này ngay. Mã chỉ được giữ tạm trong bộ nhớ
+                của trang và sẽ biến mất khi tải lại hoặc rời trang.
               </p>
-              <code className="mt-3 block break-all rounded-lg border border-amber-200 bg-white p-3 text-xs text-slate-800">
-                {newlyCreatedToken.plainTextToken}
-              </code>
+              <div className="mt-3 flex items-center gap-2">
+                <code className="min-w-0 flex-1 break-all rounded-lg border border-amber-200 bg-white p-3 text-xs text-slate-800">
+                  {newlyCreatedToken.plainTextToken}
+                </code>
+                <button
+                  type="button"
+                  aria-label={copied ? "Đã sao chép mã" : "Sao chép mã"}
+                  title={copied ? "Đã sao chép" : "Sao chép mã"}
+                  onClick={() => void copyNewToken()}
+                  className="inline-flex size-10 shrink-0 items-center justify-center rounded-lg border border-amber-300 bg-white text-slate-700 hover:bg-amber-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#3368a0]"
+                >
+                  {copied ? (
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="size-5">
+                      <path d="m4 10 4 4 8-8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  ) : (
+                    <svg aria-hidden="true" viewBox="0 0 20 20" fill="none" className="size-5">
+                      <rect x="7" y="6" width="9" height="11" rx="2" stroke="currentColor" strokeWidth="1.6" />
+                      <path d="M13 6V4.8A1.8 1.8 0 0 0 11.2 3H5.8A1.8 1.8 0 0 0 4 4.8v7.4A1.8 1.8 0 0 0 5.8 14H7" stroke="currentColor" strokeWidth="1.6" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {copied && <p role="status" className="mt-2 text-xs font-medium text-emerald-800">Đã sao chép mã vào clipboard.</p>}
             </div>
-            <button
-              type="button"
-              onClick={() => void copyNewToken()}
-              className="min-h-10 shrink-0 rounded-lg bg-[#3368a0] px-4 text-sm font-semibold text-white hover:bg-[#285584]"
-            >
-              {copied ? "Đã sao chép" : "Sao chép mã"}
-            </button>
           </div>
-          <button
-            type="button"
-            onClick={dismissNewToken}
-            className="mt-3 text-xs font-semibold text-amber-950 underline"
-          >
-            Đóng và ẩn mã
-          </button>
         </section>
       )}
       <section className="mt-7 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
@@ -306,28 +309,16 @@ function ApiUsageGuide() {
       description: "ID các mục yêu thích",
     },
     {
-      method: "PUT",
-      path: "/api/v1/favourite-properties/{propertyId}",
-      ability: "favourites:write",
-      description: "Thêm mục yêu thích",
-    },
-    {
-      method: "DELETE",
-      path: "/api/v1/favourite-properties/{propertyId}",
-      ability: "favourites:write",
-      description: "Xóa mục yêu thích",
+      method: "GET",
+      path: "/api/v1/owner/rental-requests?status=ALL",
+      ability: "rental-requests:read",
+      description: "Tất cả yêu cầu trên các bất động sản của bạn",
     },
     {
       method: "GET",
-      path: "/api/v1/tenant/rental-requests",
+      path: "/api/v1/owner/rental-requests/{requestId}",
       ability: "rental-requests:read",
-      description: "Danh sách yêu cầu thuê của bạn",
-    },
-    {
-      method: "GET",
-      path: "/api/v1/tenant/rental-requests/{requestId}",
-      ability: "rental-requests:read",
-      description: "Chi tiết một yêu cầu thuê của bạn",
+      description: "Chi tiết yêu cầu thuộc bất động sản của bạn",
     },
   ];
   return (
@@ -379,7 +370,7 @@ function ApiUsageGuide() {
       <h3 className="mt-5 text-sm font-bold text-slate-800">Ví dụ với cURL</h3>
       <pre className="mt-2 overflow-x-auto rounded-xl bg-slate-950 p-4 text-xs leading-6 text-slate-100">
         <code>
-          `curl &quot;{process.env.NEXT_PUBLIC_API_URL}/api/v1/tenant/rental-requests&quot; -H &quot;Accept: application/json&quot; -H &quot;Authorization: Bearer YOUR_TOKEN&quot;`
+          `curl &quot;{process.env.NEXT_PUBLIC_API_URL}/api/v1/owner/rental-requests?status=ALL&quot; -H &quot;Accept: application/json&quot; -H &quot;Authorization: Bearer YOUR_TOKEN&quot;`
         </code>
       </pre>
     </section>

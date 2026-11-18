@@ -33,9 +33,14 @@ describe("API token list", () => {
 
     expect(await screen.findByText("Postman laptop", { selector: "p" })).toBeTruthy();
     expect(screen.getByRole("link", { name: "Tạo mã mới" }).getAttribute("href")).toBe("/api-tokens/new");
-    expect(screen.getByText("/api/v1/tenant/rental-requests/{requestId}")).toBeTruthy();
+    expect(screen.getByText("/api/v1/owner/rental-requests?status=ALL")).toBeTruthy();
+    expect(screen.getByText("/api/v1/owner/rental-requests/{requestId}")).toBeTruthy();
+    expect(screen.queryByText("favourites:write")).toBeNull();
     expect(screen.getAllByText("rental-requests:read").length).toBeGreaterThan(1);
     await user.click(screen.getByRole("button", { name: "Thu hồi" }));
+    expect(revokePersonalAccessToken).not.toHaveBeenCalled();
+    expect(screen.getByRole("alertdialog")).toBeTruthy();
+    await user.click(screen.getByRole("button", { name: "Tôi hiểu, thu hồi mã này" }));
     await waitFor(() => expect(revokePersonalAccessToken).toHaveBeenCalledWith("1"));
     expect(screen.queryByText("Postman laptop", { selector: "p" })).toBeNull();
   });

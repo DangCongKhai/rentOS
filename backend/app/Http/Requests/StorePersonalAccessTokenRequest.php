@@ -29,7 +29,7 @@ class StorePersonalAccessTokenRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'min:1', 'max:100'],
             'abilities' => ['required', 'array', 'min:1'],
-            'abilities.*' => ['required', 'string', 'distinct', 'in:account:read,favourites:read,favourites:write,rental-requests:read'],
+            'abilities.*' => ['required', 'string', 'distinct', 'in:account:read,favourites:read,rental-requests:read'],
             'expires_at' => ['present', 'nullable', 'date_format:Y-m-d', 'after:today'],
         ];
     }

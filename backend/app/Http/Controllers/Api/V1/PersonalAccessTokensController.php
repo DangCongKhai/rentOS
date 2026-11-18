@@ -8,6 +8,7 @@ use App\Http\Resources\PersonalAccessTokenResource;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Response;
 use Laravel\Sanctum\PersonalAccessToken;
 
 class PersonalAccessTokensController extends Controller
@@ -43,13 +44,13 @@ class PersonalAccessTokensController extends Controller
         ], 201)->header('Cache-Control', 'private, no-store');
     }
 
-    public function destroy(string $tokenId): JsonResponse
+    public function destroy(string $tokenId): Response
     {
         $user = request()->user();
         abort_unless($user instanceof User && ! ($user->currentAccessToken() instanceof PersonalAccessToken), 403);
 
         $user->tokens()->whereKey($tokenId)->firstOrFail()->delete();
 
-        return response()->json([], 204)->header('Cache-Control', 'private, no-store');
+        return response()->noContent()->header('Cache-Control', 'private, no-store');
     }
 }

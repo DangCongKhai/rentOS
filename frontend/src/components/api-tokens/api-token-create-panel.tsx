@@ -5,17 +5,16 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { ApiError } from "@/lib/http/client";
 import { createPersonalAccessToken } from "@/lib/tokens/api";
+import { saveNewlyCreatedToken } from "@/lib/tokens/new-token-secret";
 import { tokenAbilities, type TokenAbility } from "@/lib/tokens/types";
 
 const fieldClass = "mt-1 w-full rounded-lg border border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 outline-none focus:border-[#3368a0] focus:ring-2 focus:ring-blue-100";
 const abilityLabels: Record<TokenAbility, string> = {
   "account:read": "Đọc thông tin tài khoản",
   "favourites:read": "Xem danh sách yêu thích",
-  "favourites:write": "Thêm hoặc xóa mục yêu thích",
-  "rental-requests:read": "Đọc yêu cầu thuê và chi tiết yêu cầu",
+  "rental-requests:read": "Đọc yêu cầu gửi đến bất động sản của bạn",
 };
 type ExpirationChoice = "1" | "7" | "30" | "custom" | "never";
-const NEW_TOKEN_STORAGE_KEY = "rentos:new-api-token";
 
 function localDateString(date: Date): string {
   const year = date.getFullYear();
@@ -61,10 +60,10 @@ export function ApiTokenCreatePanel() {
         abilities,
         expires_at: expiresAt,
       });
-      window.sessionStorage.setItem(NEW_TOKEN_STORAGE_KEY, JSON.stringify({
+      saveNewlyCreatedToken({
         name: result.data.name,
         plainTextToken: result.plain_text_token,
-      }));
+      });
       router.push("/api-tokens");
     } catch (cause) {
       if (cause instanceof ApiError) {
