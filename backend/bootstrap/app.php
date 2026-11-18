@@ -24,7 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->respond(function (Response $response): Response {
             if (request()->is('api/*') && $response->getStatusCode() === Response::HTTP_FORBIDDEN) {
                 $response->setContent(json_encode([
-                    'message' => 'This action is unauthorized.',
+                    'message' => 'You do not have permission to perform this action.',
                 ], JSON_THROW_ON_ERROR));
                 $response->headers->set('Content-Type', 'application/json');
             }

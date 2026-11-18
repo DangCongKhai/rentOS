@@ -111,4 +111,79 @@ class PersonalAccessTokensTest extends TestCase
         ])->assertStatus(419);
         $this->assertDatabaseCount('personal_access_tokens', 0);
     }
+
+    public function test_created_token_can_read_allowed_resources_and_unauthenticated_requests_are_rejected(): void
+    {
+        $user = User::factory()->create();
+
+        $response = $this->actingAs($user, 'web')
+            ->postJson(self::PATH, [
+                'name' => 'Integration test',
+                'abilities' => [
+                    'account:read',
+                    'favourites:read',
+                    'rental-requests:read',
+                ],
+                'expires_at' => now()->addDay()->toDateString(),
+            ])
+            ->assertCreated();
+
+        $token = $response->json('plain_text_token');
+        $this->assertIsString($token);
+
+        Auth::forgetGuards();
+
+        $this->withToken($token)
+            ->getJson('/api/v1/me')
+            ->assertOk()
+            ->assertJsonPath('data.id', $user->id);
+
+        $this->getJson('/api/v1/favourite-properties')->assertOk();
+
+        Auth::forgetGuards();
+        $this->withoutToken();
+
+        $this->getJson('/api/v1/me')->assertUnauthorized();
+        $this->getJson('/api/v1/notifications')->assertUnauthorized();
+        $this->getJson('/api/v1/favourite-properties')->assertUnauthorized();
+        $this->getJson('/api/v1/owner/properties')->assertUnauthorized();
+        $this->getJson('/api/v1/tenant/tenancies')->assertUnauthorized();
+        $this->getJson('/api/v1/tenant/reports')->assertUnauthorized();
+    }
+
+    public function test_token_without_required_ability_is_forbidden(): void
+    {
+        $user = User::factory()->create();
+
+        $token = $user->createToken(
+            'account only',
+            ['account:read'],
+            now()->addDay()
+        )->plainTextToken;
+
+        $this->withToken($token)
+            ->getJson('/api/v1/favourite-properties')
+            ->assertForbidden()
+            ->assertJsonPath('message', 'You do not have permission to perform this action.');
+
+        $this->getJson('/api/v1/notifications')->assertForbidden();
+        $this->getJson('/api/v1/tenant/tenancies')->assertForbidden();
+        $this->getJson('/api/v1/tenant/reports')->assertForbidden();
+        $this->getJson('/api/v1/owner/properties')->assertForbidden();
+    }
+
+    public function test_revoked_token_cannot_access_allowed_resources(): void
+    {
+        $user = User::factory()->create();
+        $created = $user->createToken('live', ['account:read', 'favourites:read'], now()->addDay());
+        $token = $created->plainTextToken;
+
+        $this->withToken($token)->getJson('/api/v1/me')->assertOk();
+
+        $created->accessToken->delete();
+        Auth::forgetGuards();
+
+        $this->withToken($token)->getJson('/api/v1/me')->assertUnauthorized();
+        $this->withToken($token)->getJson('/api/v1/favourite-properties')->assertUnauthorized();
+    }
 }

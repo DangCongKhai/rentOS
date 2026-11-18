@@ -4,9 +4,10 @@ use App\Http\Controllers\Api\V1\TenancyTimelineController;
 use App\Http\Controllers\Api\V1\TenantRentalRequestsController;
 use App\Http\Controllers\Api\V1\TenantTenanciesController;
 use App\Http\Controllers\Api\V1\TenantTenancyRenewalRequestsController;
+use App\Http\Middleware\DenyPersonalAccessToken;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('v1')->name('api.v1.')->group(function (): void {
+Route::middleware(['auth:sanctum', 'throttle:api', DenyPersonalAccessToken::class])->prefix('v1')->name('api.v1.')->group(function (): void {
     Route::get('/tenant/tenancies', [TenantTenanciesController::class, 'index'])->name('tenant.tenancies');
     Route::get('/tenant/tenancies/{tenancy}', [TenancyTimelineController::class, 'show'])
         ->name('tenant.tenancies.show');
