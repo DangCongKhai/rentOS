@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\V1\OwnerListingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->prefix('v1')->name('api.v1.owner.')->group(function (): void {
+Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('v1')->name('api.v1.owner.')->group(function (): void {
     Route::get('/owner/listings/{listing}', [OwnerListingsController::class, 'showOwned'])->name('listings.show');
     Route::get('/owner/properties/{property}/listing', [OwnerListingsController::class, 'show'])->name('properties.listing.show');
     Route::post('/owner/properties/{property}/listing', [OwnerListingsController::class, 'store'])->name('properties.listing.store');

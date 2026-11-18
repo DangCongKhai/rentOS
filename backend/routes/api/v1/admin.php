@@ -7,7 +7,7 @@ use App\Http\Controllers\Api\V1\AdminListingsController;
 use App\Http\Middleware\EnsureAdminSession;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth:sanctum', EnsureAdminSession::class])->prefix('v1/admin')->name('api.v1.admin.')->group(function (): void {
+Route::middleware(['auth:sanctum', 'throttle:api', EnsureAdminSession::class])->prefix('v1/admin')->name('api.v1.admin.')->group(function (): void {
     Route::get('/dashboard', AdminDashboardController::class)->name('dashboard');
     Route::get('/listing-reviews', [AdminListingReviewsController::class, 'index'])->name('listing-reviews.index');
     Route::get('/listing-reviews/{listing}', [AdminListingReviewsController::class, 'show'])->whereUuid('listing')->name('listing-reviews.show');

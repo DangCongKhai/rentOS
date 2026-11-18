@@ -6,7 +6,7 @@ use App\Http\Controllers\Api\V1\ListingReportsController;
 use App\Http\Controllers\Api\V1\TenantReportsController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->prefix('v1')->name('api.v1.')->group(function (): void {
+Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('v1')->name('api.v1.')->group(function (): void {
     // Listing Reports (Reporter Flow)
     Route::post('/listings/{listing}/reports', [ListingReportsController::class, 'store'])
         ->middleware('throttle:10,1')

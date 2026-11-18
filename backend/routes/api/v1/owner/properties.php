@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\V1\OwnerPropertiesController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->prefix('v1')->name('api.v1.owner.')->group(function (): void {
+Route::middleware(['auth:sanctum', 'throttle:api'])->prefix('v1')->name('api.v1.owner.')->group(function (): void {
     // Properties
     Route::get('/owner/properties', [OwnerPropertiesController::class, 'index'])->name('properties.index');
     Route::post('/owner/properties', [OwnerPropertiesController::class, 'store'])->name('properties.store');

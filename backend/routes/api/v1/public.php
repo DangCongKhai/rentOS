@@ -5,7 +5,7 @@ use App\Http\Controllers\Api\V1\LocationsController;
 use App\Http\Controllers\Api\V1\PublicListingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('v1')->group(function (): void {
+Route::middleware('throttle:public-api')->prefix('v1')->group(function (): void {
     Route::get('/listings', [PublicListingsController::class, 'index'])->name('api.v1.listings.index');
     Route::get('/listings/{listing}', [PublicListingsController::class, 'show'])->name('api.v1.listings.show');
     Route::get('/amenities', [AmenitiesController::class, 'index'])->name('api.v1.amenities.index');
