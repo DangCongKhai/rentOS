@@ -16,7 +16,7 @@ Non-browser API clients can use narrowly scoped Sanctum personal access tokens. 
 ## In scope
 
 - [x] Split frontend HTTP/CSRF/localization, auth, tenancy, owner, notification, and token APIs into focused modules with separate type contracts; remove the unused `auth-api.ts` compatibility barrel.
-- [x] Add personal token create/list/revoke using a signed-in browser session and CSRF, allowlisted abilities (`account:read`, `favourites:read`, `favourites:write`, `rental-requests:read`), and preset/custom/no-expiry options.
+- [x] Add personal token create/list/revoke using a signed-in browser session and CSRF, allowlisted abilities (`account:read,favourites:read,rental-requests:read`), and preset/custom/no-expiry options.
 - [x] Show token plaintext only in the create response and once in the UI; store only the Sanctum hash and return metadata when listing tokens.
 - [x] Reject PAT-only callers from token management, contract confirmation, and admin actions; enforce token abilities on supported API routes.
 - [x] Record representative CSRF evidence: a browser mutation without CSRF returns 419 and does not write; an allowed bearer-token favourite write works without browser cookies or CSRF.
